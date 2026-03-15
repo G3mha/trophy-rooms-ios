@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		EB1FC3082F66DF8200BB871E /* ClerkSDK in Frameworks */ = {isa = PBXBuildFile; productRef = EB1FC3072F66DF8200BB871E /* ClerkSDK */; };
+		EB1FC3082F66DF8200BB871E /* Clerk in Frameworks */ = {isa = PBXBuildFile; productRef = EB1FC3072F66DF8200BB871E /* Clerk */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,7 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EB1FC3082F66DF8200BB871E /* ClerkSDK in Frameworks */,
+				EB1FC3082F66DF8200BB871E /* Clerk in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,7 +125,7 @@
 			);
 			name = "Trophy Rooms";
 			packageProductDependencies = (
-				EB1FC3072F66DF8200BB871E /* ClerkSDK */,
+				EB1FC3072F66DF8200BB871E /* Clerk */,
 			);
 			productName = "Trophy Rooms";
 			productReference = EB7016802F549F3B0099D8C5 /* Trophy Rooms.app */;
@@ -616,10 +616,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EB1FC3072F66DF8200BB871E /* ClerkSDK */ = {
+		EB1FC3072F66DF8200BB871E /* Clerk */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = EB7016B02F54A0000099D8C5 /* XCRemoteSwiftPackageReference "clerk-ios" */;
-			productName = ClerkSDK;
+			productName = Clerk;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

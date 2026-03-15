@@ -1,5 +1,5 @@
 import SwiftUI
-import ClerkSDK
+import Clerk
 
 @main
 struct TrophyRoomsApp: App {
