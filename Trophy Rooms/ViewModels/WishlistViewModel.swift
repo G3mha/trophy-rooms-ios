@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class WishlistViewModel: ObservableObject {
     @Published var wishlistItems: [WishlistItem] = []

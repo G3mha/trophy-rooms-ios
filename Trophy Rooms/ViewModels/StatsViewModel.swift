@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class StatsViewModel: ObservableObject {
     @Published var stats: UserStats?

@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 enum LeaderboardType: String, CaseIterable, Identifiable {
     case trophies

@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class GameProgressViewModel: ObservableObject {
     @Published var allProgress: [GameProgress] = []

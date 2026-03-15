@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class GameDetailViewModel: ObservableObject {
     @Published var game: GameDetail?

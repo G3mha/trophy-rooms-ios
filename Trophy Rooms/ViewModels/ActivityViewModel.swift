@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 enum ActivityFilter: String, CaseIterable, Identifiable {
     case all
