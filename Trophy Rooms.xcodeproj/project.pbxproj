@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		EB1FC3082F66DF8200BB871E /* ClerkSDK in Frameworks */ = {isa = PBXBuildFile; productRef = EB1FC3072F66DF8200BB871E /* ClerkSDK */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		EB7016902F549F3D0099D8C5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EB1FC3082F66DF8200BB871E /* ClerkSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,12 +77,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		EB1FC3042F66DF4F00BB871E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		EB7016772F549F3B0099D8C5 = {
 			isa = PBXGroup;
 			children = (
 				EB7016822F549F3B0099D8C5 /* Trophy Rooms */,
 				EB7016922F549F3D0099D8C5 /* Trophy RoomsTests */,
 				EB70169C2F549F3D0099D8C5 /* Trophy RoomsUITests */,
+				EB1FC3042F66DF4F00BB871E /* Frameworks */,
 				EB7016812F549F3B0099D8C5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -112,7 +125,7 @@
 			);
 			name = "Trophy Rooms";
 			packageProductDependencies = (
-				EB7016B12F54A0000099D8C5 /* ClerkSDK */,
+				EB1FC3072F66DF8200BB871E /* ClerkSDK */,
 			);
 			productName = "Trophy Rooms";
 			productReference = EB7016802F549F3B0099D8C5 /* Trophy Rooms.app */;
@@ -196,10 +209,10 @@
 			);
 			mainGroup = EB7016772F549F3B0099D8C5;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			packageReferences = (
 				EB7016B02F54A0000099D8C5 /* XCRemoteSwiftPackageReference "clerk-ios" */,
 			);
+			preferredProjectObjectVersion = 77;
 			productRefGroup = EB7016812F549F3B0099D8C5 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -405,7 +418,9 @@
 				DEVELOPMENT_TEAM = F35MJXTR84;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Trophy Rooms/Info.plist";
+				INFOPLIST_FILE = "Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Trophy Rooms";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -439,7 +454,9 @@
 				DEVELOPMENT_TEAM = F35MJXTR84;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Trophy Rooms/Info.plist";
+				INFOPLIST_FILE = "Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Trophy Rooms";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -599,7 +616,7 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EB7016B12F54A0000099D8C5 /* ClerkSDK */ = {
+		EB1FC3072F66DF8200BB871E /* ClerkSDK */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = EB7016B02F54A0000099D8C5 /* XCRemoteSwiftPackageReference "clerk-ios" */;
 			productName = ClerkSDK;
