@@ -375,7 +375,7 @@ struct AuthView: View {
 
         do {
             let signUp = try await clerk.client?.signUp?.attemptVerification(
-                .emailCode(code: verificationCode)
+                strategy: .emailCode(code: verificationCode)
             )
 
             if signUp?.status == .complete {
@@ -406,9 +406,9 @@ struct AuthView: View {
 
         do {
             if mode == .signIn {
-                _ = try await SignIn.create(strategy: .oauth(.google))
+                _ = try await SignIn.create(strategy: .oauth(provider: .google))
             } else {
-                _ = try await SignUp.create(strategy: .oauth(.google))
+                _ = try await SignUp.create(strategy: .oauth(provider: .google))
             }
         } catch {
             errorMessage = parseClerkError(error)
