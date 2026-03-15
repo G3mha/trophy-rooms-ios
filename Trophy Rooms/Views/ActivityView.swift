@@ -46,7 +46,7 @@ struct ActivityView: View {
             }
         }
         .navigationTitle("Activity")
-        .onChange(of: viewModel.selectedFilter) { _ in
+        .onChange(of: viewModel.selectedFilter) {
             Task {
                 await viewModel.fetchActivity()
             }

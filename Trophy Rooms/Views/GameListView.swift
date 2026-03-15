@@ -111,7 +111,7 @@ struct GameListView: View {
             AuthView()
         }
         .searchable(text: $searchText)
-        .onChange(of: searchText) { _ in
+        .onChange(of: searchText) {
             Task {
                 await viewModel.fetchGames(
                     search: searchText,
@@ -121,7 +121,7 @@ struct GameListView: View {
                 )
             }
         }
-        .onChange(of: selectedPlatformId) { _ in
+        .onChange(of: selectedPlatformId) {
             Task {
                 await viewModel.fetchGames(
                     search: searchText,
@@ -131,7 +131,7 @@ struct GameListView: View {
                 )
             }
         }
-        .onChange(of: achievementFilter) { _ in
+        .onChange(of: achievementFilter) {
             Task {
                 await viewModel.fetchGames(
                     search: searchText,
@@ -141,7 +141,7 @@ struct GameListView: View {
                 )
             }
         }
-        .onChange(of: sortOption) { _ in
+        .onChange(of: sortOption) {
             Task {
                 await viewModel.fetchGames(
                     search: searchText,

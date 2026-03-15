@@ -74,7 +74,7 @@ struct WishlistView: View {
                 await viewModel.fetchWishlist()
             }
         }
-        .onChange(of: clerk.user?.id) { _ in
+        .onChange(of: clerk.user?.id) {
             if clerk.user != nil {
                 Task {
                     await viewModel.fetchWishlist()

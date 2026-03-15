@@ -32,7 +32,7 @@ struct LeaderboardView: View {
             }
         }
         .navigationTitle("Leaderboards")
-        .onChange(of: viewModel.selectedType) { _ in
+        .onChange(of: viewModel.selectedType) {
             Task {
                 await viewModel.fetchLeaderboard()
             }

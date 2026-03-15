@@ -120,7 +120,7 @@ struct TrophyRoomView: View {
                 await statsViewModel.fetchStats()
             }
         }
-        .onChange(of: clerk.user?.id) { _ in
+        .onChange(of: clerk.user?.id) {
             if clerk.user != nil {
                 Task {
                     await progressViewModel.fetchGameProgress()
