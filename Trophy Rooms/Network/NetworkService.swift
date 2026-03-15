@@ -11,7 +11,7 @@ class NetworkService {
            let parsedUrl = URL(string: configuredUrl) {
             self.url = parsedUrl
         } else {
-            self.url = URL(string: "http://localhost:4000/graphql")!
+            self.url = URL(string: "https://api.trophyrooms.org/graphql")!
         }
     }
 
