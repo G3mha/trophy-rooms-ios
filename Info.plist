@@ -4,5 +4,7 @@
 <dict>
 	<key>CLERK_PUBLISHABLE_KEY</key>
 	<string>$(CLERK_PUBLISHABLE_KEY)</string>
+	<key>GRAPHQL_URL</key>
+	<string>$(GRAPHQL_URL)</string>
 </dict>
 </plist>
