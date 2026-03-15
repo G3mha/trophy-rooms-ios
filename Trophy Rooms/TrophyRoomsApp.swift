@@ -16,6 +16,12 @@ struct TrophyRoomsApp: App {
                         try? await clerk.load()
                     }
                 }
+                .onOpenURL { url in
+                    // Handle OAuth callback from Clerk
+                    Task {
+                        await clerk.handleUrl(url)
+                    }
+                }
         }
     }
 }
