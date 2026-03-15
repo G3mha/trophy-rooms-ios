@@ -4,6 +4,8 @@ class GameDetailViewModel: ObservableObject {
     @Published var game: GameDetail?
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var isInWishlist = false
+    @Published var isWishlistLoading = false
 
     func fetchGame(id: String) async {
         DispatchQueue.main.async {
@@ -19,6 +21,13 @@ class GameDetailViewModel: ObservableObject {
                 description
                 coverUrl
                 trophyCount
+                releaseDate
+                developer
+                publisher
+                genre
+                esrbRating
+                screenshots
+                platform { id name slug }
                 achievementSets {
                     id
                     title
@@ -31,6 +40,7 @@ class GameDetailViewModel: ObservableObject {
                         description
                         iconUrl
                         points
+                        tier
                         isCompleted
                         userCount
                         achievementSetId
@@ -76,6 +86,55 @@ class GameDetailViewModel: ObservableObject {
         } catch {
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func checkWishlist(gameId: String) async {
+        let query = """
+        query IsGameInWishlist($gameId: ID!) {
+            isGameInWishlist(gameId: $gameId)
+        }
+        """
+
+        do {
+            let response: WishlistCheckResponse = try await NetworkService.shared.fetch(query: query, variables: ["gameId": gameId])
+            DispatchQueue.main.async {
+                self.isInWishlist = response.isGameInWishlist
+            }
+        } catch {
+            // Silently fail - user might not be logged in
+        }
+    }
+
+    func toggleWishlist() async {
+        guard let gameId = game?.id else { return }
+
+        DispatchQueue.main.async {
+            self.isWishlistLoading = true
+        }
+
+        let mutation = """
+        mutation ToggleWishlist($gameId: ID!) {
+            toggleWishlist(gameId: $gameId) {
+                success
+                isInWishlist
+            }
+        }
+        """
+
+        do {
+            let response: WishlistMutationResponse = try await NetworkService.shared.fetch(query: mutation, variables: ["gameId": gameId])
+            DispatchQueue.main.async {
+                if let result = response.toggleWishlist {
+                    self.isInWishlist = result.isInWishlist
+                }
+                self.isWishlistLoading = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+                self.isWishlistLoading = false
             }
         }
     }
