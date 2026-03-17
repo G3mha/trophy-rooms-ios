@@ -31,6 +31,19 @@ class ActivityViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    private var allActivities: [ActivityEntry] = []
+
+    var filteredActivities: [ActivityEntry] {
+        switch selectedFilter {
+        case .all:
+            return allActivities
+        case .achievements:
+            return allActivities.filter { $0.type == "achievement" }
+        case .trophies:
+            return allActivities.filter { $0.type == "trophy" }
+        }
+    }
+
     func fetchActivity() async {
         DispatchQueue.main.async {
             self.isLoading = true
@@ -38,8 +51,8 @@ class ActivityViewModel: ObservableObject {
         }
 
         let query = """
-        query GetActivityFeed($limit: Int, $type: String) {
-            activityFeed(limit: $limit, type: $type) {
+        query GetActivityFeed($limit: Int) {
+            activityFeed(limit: $limit) {
                 id
                 type
                 userId
@@ -57,15 +70,13 @@ class ActivityViewModel: ObservableObject {
         }
         """
 
-        var variables: [String: Any] = ["limit": 50]
-        if let typeFilter = selectedFilter.graphqlValue {
-            variables["type"] = typeFilter
-        }
+        let variables: [String: Any] = ["limit": 50]
 
         do {
             let response: ActivityResponse = try await NetworkService.shared.fetch(query: query, variables: variables)
             DispatchQueue.main.async {
-                self.activities = response.activityFeed
+                self.allActivities = response.activityFeed
+                self.activities = self.filteredActivities
                 self.isLoading = false
             }
         } catch {
@@ -74,5 +85,9 @@ class ActivityViewModel: ObservableObject {
                 self.isLoading = false
             }
         }
+    }
+
+    func applyFilter() {
+        activities = filteredActivities
     }
 }

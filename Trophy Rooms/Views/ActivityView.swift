@@ -39,7 +39,9 @@ struct ActivityView: View {
                     Spacer()
                 } else {
                     List(viewModel.activities) { activity in
-                        ActivityEntryRow(activity: activity)
+                        NavigationLink(destination: UserProfileView(userId: activity.userId, userName: activity.userName)) {
+                            ActivityEntryRow(activity: activity)
+                        }
                     }
                     .listStyle(.plain)
                 }
@@ -47,9 +49,7 @@ struct ActivityView: View {
         }
         .navigationTitle("Activity")
         .onChange(of: viewModel.selectedFilter) {
-            Task {
-                await viewModel.fetchActivity()
-            }
+            viewModel.applyFilter()
         }
         .task {
             await viewModel.fetchActivity()
