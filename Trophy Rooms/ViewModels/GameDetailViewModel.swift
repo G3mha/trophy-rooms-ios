@@ -7,6 +7,11 @@ class GameDetailViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isInWishlist = false
     @Published var isWishlistLoading = false
+    @Published var currentStatus: GameStatus?
+    @Published var currentPlatformId: String?
+    @Published var isStatusLoading = false
+    @Published var collectionItems: [CollectionItem] = []
+    @Published var isCollectionLoading = false
 
     func fetchGame(id: String) async {
         DispatchQueue.main.async {
@@ -136,6 +141,149 @@ class GameDetailViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
                 self.isWishlistLoading = false
+            }
+        }
+    }
+
+    // MARK: - Game Status Methods
+
+    func checkGameStatus(gameId: String) async {
+        let query = """
+        query GetGameStatus($gameId: ID!) {
+            getGameStatus(gameId: $gameId) {
+                status
+                platformId
+            }
+        }
+        """
+
+        do {
+            let response: GameStatusResponse = try await NetworkService.shared.fetch(query: query, variables: ["gameId": gameId])
+            DispatchQueue.main.async {
+                self.currentStatus = response.getGameStatus?.status
+                self.currentPlatformId = response.getGameStatus?.platformId
+            }
+        } catch {
+            // Silently fail - user might not be logged in
+        }
+    }
+
+    func setGameStatus(_ status: GameStatus, platformId: String? = nil) async {
+        guard let gameId = game?.id else { return }
+
+        DispatchQueue.main.async {
+            self.isStatusLoading = true
+        }
+
+        let mutation = """
+        mutation SetGameStatus($gameId: ID!, $status: GameStatus!, $platformId: ID) {
+            setGameStatus(gameId: $gameId, status: $status, platformId: $platformId) {
+                success
+                status
+                platformId
+            }
+        }
+        """
+
+        var variables: [String: Any] = ["gameId": gameId, "status": status.rawValue]
+        if let platformId = platformId {
+            variables["platformId"] = platformId
+        }
+
+        do {
+            let response: SetGameStatusResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: variables
+            )
+            DispatchQueue.main.async {
+                if response.setGameStatus.success {
+                    self.currentStatus = response.setGameStatus.status
+                    self.currentPlatformId = response.setGameStatus.platformId
+                }
+                self.isStatusLoading = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+                self.isStatusLoading = false
+            }
+        }
+    }
+
+    func clearGameStatus() async {
+        guard let gameId = game?.id else { return }
+
+        DispatchQueue.main.async {
+            self.isStatusLoading = true
+        }
+
+        let mutation = """
+        mutation ClearGameStatus($gameId: ID!) {
+            clearGameStatus(gameId: $gameId) {
+                success
+            }
+        }
+        """
+
+        do {
+            let response: ClearGameStatusResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["gameId": gameId]
+            )
+            DispatchQueue.main.async {
+                if response.clearGameStatus.success {
+                    self.currentStatus = nil
+                    self.currentPlatformId = nil
+                }
+                self.isStatusLoading = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+                self.isStatusLoading = false
+            }
+        }
+    }
+
+    // MARK: - Collection Methods
+
+    func fetchCollectionForGame(gameId: String) async {
+        DispatchQueue.main.async {
+            self.isCollectionLoading = true
+        }
+
+        let query = """
+        query GetMyCollectionForGame($gameId: ID!) {
+            myCollectionForGame(gameId: $gameId) {
+                id
+                gameId
+                game { id title coverUrl }
+                platform { id name slug }
+                hasDisc
+                hasBox
+                hasManual
+                hasExtras
+                isSealed
+                region
+                notes
+                createdAt
+                updatedAt
+            }
+        }
+        """
+
+        do {
+            let response: CollectionForGameResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: ["gameId": gameId]
+            )
+            DispatchQueue.main.async {
+                self.collectionItems = response.myCollectionForGame
+                self.isCollectionLoading = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.isCollectionLoading = false
             }
         }
     }
