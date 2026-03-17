@@ -13,7 +13,7 @@ struct PlatformIcon: View {
     }
 
     var body: some View {
-        AsyncImage(url: URL(string: "\(baseURL)/\(slug).svg")) { phase in
+        AsyncImage(url: URL(string: "\(baseURL)/\(slug).png")) { phase in
             switch phase {
             case .success(let image):
                 image
