@@ -1,5 +1,5 @@
 import Foundation
-import Clerk
+import ClerkKit
 
 class NetworkService {
     static let shared = NetworkService()
@@ -21,7 +21,7 @@ class NetworkService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if let session = Clerk.shared.session {
-            if let token = try await session.getToken()?.jwt {
+            if let token = try await session.getToken() {
                 request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             }
         }
