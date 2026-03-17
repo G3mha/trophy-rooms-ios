@@ -1,5 +1,5 @@
 import SwiftUI
-import Clerk
+import ClerkKit
 
 struct RootView: View {
     var body: some View {
@@ -26,10 +26,17 @@ struct RootView: View {
             }
 
             NavigationStack {
-                WishlistView()
+                LibraryView()
             }
             .tabItem {
-                Label("Wishlist", systemImage: "heart")
+                Label("Library", systemImage: "books.vertical")
+            }
+
+            NavigationStack {
+                CollectionView()
+            }
+            .tabItem {
+                Label("Collection", systemImage: "archivebox")
             }
 
             NavigationStack {

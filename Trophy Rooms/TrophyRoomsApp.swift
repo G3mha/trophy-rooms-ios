@@ -1,27 +1,25 @@
 import SwiftUI
-import Clerk
+import ClerkKit
 
 @main
 struct TrophyRoomsApp: App {
-    @State private var clerk = Clerk.shared
+
+    init() {
+        let publishableKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as? String ?? ""
+
+        let options = Clerk.Options(
+            redirectConfig: .init(
+                redirectUrl: "clerk.trophyrooms.org://callback",
+                callbackUrlScheme: "clerk.trophyrooms.org"
+            )
+        )
+        Clerk.configure(publishableKey: publishableKey, options: options)
+    }
 
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environment(\.clerk, clerk)
-                .task {
-                    if let publishableKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as? String,
-                       !publishableKey.isEmpty {
-                        clerk.configure(publishableKey: publishableKey)
-                        try? await clerk.load()
-                    }
-                }
-                .onOpenURL { url in
-                    // Handle OAuth callback from Clerk
-                    Task {
-                        await clerk.handleUrl(url)
-                    }
-                }
+                .environment(Clerk.shared)
         }
     }
 }
