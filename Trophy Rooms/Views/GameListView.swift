@@ -80,9 +80,18 @@ struct GameListView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(game.title)
                                             .font(.headline)
-                                        Text(game.platform?.name ?? "Unknown Platform")
+                                        if let platform = game.platform {
+                                            HStack(spacing: 4) {
+                                                PlatformIcon(slug: platform.slug, size: 12)
+                                                Text(platform.name)
+                                            }
                                             .font(.subheadline)
                                             .foregroundColor(.secondary)
+                                        } else {
+                                            Text("Unknown Platform")
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                        }
                                         Text("\(game.achievementCount) achievements")
                                             .font(.caption)
                                             .foregroundColor(.secondary)

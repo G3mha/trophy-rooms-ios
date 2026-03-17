@@ -209,7 +209,9 @@ private struct LibraryItemRow: View {
 
                 HStack(spacing: 6) {
                     StatusBadge(status: item.status)
-                    if let platformName = item.platformName {
+                    if let platformSlug = item.platformSlug, let platformName = item.platformName {
+                        PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
+                    } else if let platformName = item.platformName {
                         PlatformBadge(name: platformName)
                     }
                 }

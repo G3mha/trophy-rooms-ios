@@ -300,9 +300,12 @@ private struct CollectionItemRow: View {
                 .foregroundColor(.secondary)
 
                 if let platform = item.platform {
-                    Text(platform.name)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 4) {
+                        PlatformIcon(slug: platform.slug, size: 12)
+                        Text(platform.name)
+                            .font(.caption)
+                    }
+                    .foregroundColor(.secondary)
                 }
             }
 
