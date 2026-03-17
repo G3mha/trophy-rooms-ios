@@ -108,7 +108,7 @@ struct TrophyRoomView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 if clerk.user != nil {
                     UserButton()
-                        .frame(width: 28, height: 28)
+                        .frame(width: 30, height: 30)
                         .clipShape(Circle())
                 }
             }
