@@ -197,6 +197,9 @@ private struct CompletedGameCard: View {
                     Image(systemName: "trophy.fill")
                         .foregroundColor(Color(red: 0.863, green: 0.078, blue: 0.235))
                 }
+                if let platformName = progress.platformName {
+                    PlatformBadge(name: platformName)
+                }
                 Text("\(progress.earnedCount)/\(progress.totalCount) achievements • \(progress.earnedPoints) pts")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -242,6 +245,10 @@ private struct GameProgressCard: View {
                 Text(progress.gameTitle)
                     .font(.headline)
                     .foregroundColor(.primary)
+
+                if let platformName = progress.platformName {
+                    PlatformBadge(name: platformName)
+                }
 
                 ProgressBar(progress: progress.percentComplete, foregroundColor: progressColor)
 

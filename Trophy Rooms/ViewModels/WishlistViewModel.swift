@@ -21,6 +21,9 @@ class WishlistViewModel: ObservableObject {
                 gameCoverUrl
                 gameDescription
                 achievementCount
+                platformId
+                platformName
+                platformSlug
                 addedAt
             }
         }

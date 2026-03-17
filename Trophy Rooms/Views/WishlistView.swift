@@ -109,6 +109,10 @@ private struct WishlistItemRow: View {
                     .font(.headline)
                     .lineLimit(2)
 
+                if let platformName = item.platformName {
+                    PlatformBadge(name: platformName)
+                }
+
                 Text("\(item.achievementCount) achievements")
                     .font(.subheadline)
                     .foregroundColor(.secondary)

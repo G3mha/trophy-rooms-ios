@@ -224,7 +224,7 @@ private struct LibraryItemRow: View {
     }
 }
 
-private struct PlatformBadge: View {
+struct PlatformBadge: View {
     let name: String
 
     var body: some View {

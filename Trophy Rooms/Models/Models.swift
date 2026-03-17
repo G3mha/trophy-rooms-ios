@@ -106,6 +106,7 @@ struct ActivityEntry: Codable, Identifiable {
     let achievementPoints: Int?
     let gameId: String
     let gameTitle: String
+    let platformName: String?
     let earnedAt: String
 }
 
@@ -118,6 +119,9 @@ struct WishlistItem: Codable, Identifiable {
     let gameCoverUrl: String?
     let gameDescription: String?
     let achievementCount: Int
+    let platformId: String?
+    let platformName: String?
+    let platformSlug: String?
     let addedAt: String
 }
 
@@ -250,6 +254,9 @@ struct GameProgress: Codable, Identifiable {
     let hasTrophy: Bool
     let trophyEarnedAt: String?
     let lastActivityAt: String?
+    let platformId: String?
+    let platformName: String?
+    let platformSlug: String?
 
     var id: String { gameId }
 }

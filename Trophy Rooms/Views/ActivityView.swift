@@ -116,9 +116,14 @@ private struct ActivityEntryRow: View {
                 }
 
                 if activity.type == "TROPHY" {
-                    Text("Earned a trophy in \(activity.gameTitle)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 6) {
+                        Text("Earned a trophy in \(activity.gameTitle)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        if let platformName = activity.platformName {
+                            PlatformBadge(name: platformName)
+                        }
+                    }
                 } else {
                     HStack(spacing: 4) {
                         Text(activity.achievementTitle ?? "Achievement")
@@ -127,9 +132,14 @@ private struct ActivityEntryRow: View {
                             TierBadge(tier: tier)
                         }
                     }
-                    Text(activity.gameTitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 6) {
+                        Text(activity.gameTitle)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        if let platformName = activity.platformName {
+                            PlatformBadge(name: platformName)
+                        }
+                    }
                 }
             }
         }
