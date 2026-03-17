@@ -1,9 +1,11 @@
 import SwiftUI
-import Clerk
+import ClerkKit
 
 struct GameDetailView: View {
-    @Environment(\.clerk) private var clerk
+    @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = GameDetailViewModel()
+    @State private var showStatusPicker = false
+    @State private var showAddToCollection = false
 
     let gameId: String
 
@@ -20,14 +22,23 @@ struct GameDetailView: View {
                         // Header with cover and title
                         GameHeader(game: game)
 
-                        // Wishlist button (authenticated only)
+                        // Library status and Collection buttons (authenticated only)
                         if clerk.user != nil {
-                            LargeWishlistButton(
-                                isInWishlist: viewModel.isInWishlist,
-                                isLoading: viewModel.isWishlistLoading
-                            ) {
-                                Task {
-                                    await viewModel.toggleWishlist()
+                            VStack(spacing: 12) {
+                                // Library Status Button
+                                GameStatusButton(
+                                    currentStatus: viewModel.currentStatus,
+                                    isLoading: viewModel.isStatusLoading
+                                ) {
+                                    showStatusPicker = true
+                                }
+
+                                // Collection Button
+                                CollectionButton(
+                                    itemCount: viewModel.collectionItems.count,
+                                    isLoading: viewModel.isCollectionLoading
+                                ) {
+                                    showAddToCollection = true
                                 }
                             }
                         }
@@ -74,22 +85,254 @@ struct GameDetailView: View {
         .toolbar {
             if clerk.user != nil {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    WishlistButton(
-                        isInWishlist: viewModel.isInWishlist,
-                        isLoading: viewModel.isWishlistLoading
-                    ) {
-                        Task {
-                            await viewModel.toggleWishlist()
+                    Menu {
+                        ForEach(GameStatus.allCases, id: \.self) { status in
+                            Button {
+                                Task {
+                                    await viewModel.setGameStatus(status)
+                                }
+                            } label: {
+                                Label(status.displayName, systemImage: status.iconName)
+                            }
                         }
+                        if viewModel.currentStatus != nil {
+                            Divider()
+                            Button(role: .destructive) {
+                                Task {
+                                    await viewModel.clearGameStatus()
+                                }
+                            } label: {
+                                Label("Remove from Library", systemImage: "trash")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: viewModel.currentStatus?.iconName ?? "plus.circle")
+                            .foregroundColor(viewModel.currentStatus != nil ? statusColor(for: viewModel.currentStatus!) : .secondary)
                     }
                 }
+            }
+        }
+        .sheet(isPresented: $showStatusPicker) {
+            StatusPickerSheet(
+                currentStatus: viewModel.currentStatus,
+                currentPlatformId: viewModel.currentPlatformId,
+                onSelect: { status, platformId in
+                    Task {
+                        await viewModel.setGameStatus(status, platformId: platformId)
+                    }
+                },
+                onClear: {
+                    Task {
+                        await viewModel.clearGameStatus()
+                    }
+                }
+            )
+        }
+        .sheet(isPresented: $showAddToCollection) {
+            if let game = viewModel.game {
+                AddToCollectionSheet(
+                    gameId: game.id,
+                    gameTitle: game.title,
+                    existingItems: viewModel.collectionItems,
+                    onSave: {
+                        Task {
+                            await viewModel.fetchCollectionForGame(gameId: gameId)
+                        }
+                    }
+                )
             }
         }
         .task {
             await viewModel.fetchGame(id: gameId)
             if clerk.user != nil {
-                await viewModel.checkWishlist(gameId: gameId)
+                await viewModel.checkGameStatus(gameId: gameId)
+                await viewModel.fetchCollectionForGame(gameId: gameId)
             }
+        }
+    }
+
+    func statusColor(for status: GameStatus) -> Color {
+        switch status {
+        case .WISHLIST: return .pink
+        case .BACKLOG: return .blue
+        case .PLAYING: return .green
+        case .PAUSED: return .orange
+        case .COMPLETED: return .purple
+        case .DROPPED: return .gray
+        }
+    }
+}
+
+private struct GameStatusButton: View {
+    let currentStatus: GameStatus?
+    let isLoading: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                } else if let status = currentStatus {
+                    Image(systemName: status.iconName)
+                    Text(status.displayName)
+                        .fontWeight(.medium)
+                } else {
+                    Image(systemName: "plus.circle")
+                    Text("Add to Library")
+                        .fontWeight(.medium)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(currentStatus != nil ? statusColor.opacity(0.15) : Color(.secondarySystemBackground))
+            .foregroundColor(currentStatus != nil ? statusColor : .primary)
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
+    }
+
+    var statusColor: Color {
+        guard let status = currentStatus else { return .primary }
+        switch status {
+        case .WISHLIST: return .pink
+        case .BACKLOG: return .blue
+        case .PLAYING: return .green
+        case .PAUSED: return .orange
+        case .COMPLETED: return .purple
+        case .DROPPED: return .gray
+        }
+    }
+}
+
+private struct CollectionButton: View {
+    let itemCount: Int
+    let isLoading: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                } else {
+                    Image(systemName: "archivebox")
+                    if itemCount > 0 {
+                        Text("In Collection (\(itemCount))")
+                            .fontWeight(.medium)
+                    } else {
+                        Text("Add to Collection")
+                            .fontWeight(.medium)
+                    }
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(itemCount > 0 ? Color.orange.opacity(0.15) : Color(.secondarySystemBackground))
+            .foregroundColor(itemCount > 0 ? .orange : .primary)
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct StatusPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var platformsViewModel = PlatformsViewModel.shared
+    @State private var selectedPlatformId: String?
+
+    let currentStatus: GameStatus?
+    let currentPlatformId: String?
+    let onSelect: (GameStatus, String?) -> Void
+    let onClear: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                // Platform picker
+                Section("Platform (Optional)") {
+                    Picker("Platform", selection: $selectedPlatformId) {
+                        Text("No Platform").tag(nil as String?)
+                        ForEach(platformsViewModel.platforms) { platform in
+                            Text(platform.name).tag(platform.id as String?)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+
+                // Status options
+                Section("Status") {
+                    ForEach(GameStatus.allCases, id: \.self) { status in
+                        Button {
+                            onSelect(status, selectedPlatformId)
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Image(systemName: status.iconName)
+                                    .foregroundColor(statusColor(for: status))
+                                    .frame(width: 24)
+                                Text(status.displayName)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                if currentStatus == status {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if currentStatus != nil {
+                    Section {
+                        Button(role: .destructive) {
+                            onClear()
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Image(systemName: "trash")
+                                    .frame(width: 24)
+                                Text("Remove from Library")
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Set Status")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+            .task {
+                await platformsViewModel.fetchPlatforms()
+                selectedPlatformId = currentPlatformId
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    func statusColor(for status: GameStatus) -> Color {
+        switch status {
+        case .WISHLIST: return .pink
+        case .BACKLOG: return .blue
+        case .PLAYING: return .green
+        case .PAUSED: return .orange
+        case .COMPLETED: return .purple
+        case .DROPPED: return .gray
         }
     }
 }
