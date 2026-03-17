@@ -1,5 +1,5 @@
 import SwiftUI
-import Clerk
+import ClerkKit
 import AuthenticationServices
 
 enum AuthMode {
@@ -13,7 +13,7 @@ enum AuthStep {
 }
 
 struct AuthView: View {
-    @Environment(\.clerk) private var clerk
+    @Environment(Clerk.self) private var clerk
     @Environment(\.dismiss) private var dismiss
 
     @State private var mode: AuthMode = .signIn
@@ -24,6 +24,7 @@ struct AuthView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showPassword = false
+    @State private var currentSignUp: SignUp?
 
     var body: some View {
         NavigationStack {
@@ -330,7 +331,10 @@ struct AuthView: View {
         errorMessage = nil
 
         do {
-            let signIn = try await SignIn.create(strategy: .identifier(email, password: password))
+            let signIn = try await clerk.auth.signInWithPassword(
+                identifier: email,
+                password: password
+            )
 
             if signIn.status == .complete {
                 dismiss()
@@ -351,11 +355,13 @@ struct AuthView: View {
         errorMessage = nil
 
         do {
-            _ = try await SignUp.create(
-                strategy: .standard(emailAddress: email, password: password)
+            var signUp = try await clerk.auth.signUp(
+                emailAddress: email,
+                password: password
             )
 
-            try await clerk.client?.signUp?.prepareVerification(strategy: .emailCode)
+            signUp = try await signUp.sendEmailCode()
+            currentSignUp = signUp
 
             withAnimation {
                 step = .verification
@@ -368,17 +374,15 @@ struct AuthView: View {
     }
 
     private func handleVerification() async {
-        guard verificationCode.count == 6 else { return }
+        guard verificationCode.count == 6, var signUp = currentSignUp else { return }
 
         isLoading = true
         errorMessage = nil
 
         do {
-            let signUp = try await clerk.client?.signUp?.attemptVerification(
-                strategy: .emailCode(code: verificationCode)
-            )
+            signUp = try await signUp.verifyEmailCode(verificationCode)
 
-            if signUp?.status == .complete {
+            if signUp.status == .complete {
                 dismiss()
             } else {
                 errorMessage = "Verification incomplete. Please try again."
@@ -391,10 +395,12 @@ struct AuthView: View {
     }
 
     private func handleResendCode() async {
+        guard var signUp = currentSignUp else { return }
         errorMessage = nil
 
         do {
-            try await clerk.client?.signUp?.prepareVerification(strategy: .emailCode)
+            signUp = try await signUp.sendEmailCode()
+            currentSignUp = signUp
         } catch {
             errorMessage = parseClerkError(error)
         }
@@ -406,10 +412,11 @@ struct AuthView: View {
 
         do {
             if mode == .signIn {
-                _ = try await SignIn.create(strategy: .oauth(provider: .google))
+                _ = try await clerk.auth.signInWithOAuth(provider: .google)
             } else {
-                _ = try await SignUp.create(strategy: .oauth(provider: .google))
+                _ = try await clerk.auth.signUpWithOAuth(provider: .google)
             }
+            dismiss()
         } catch {
             errorMessage = parseClerkError(error)
         }

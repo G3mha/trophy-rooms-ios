@@ -55,7 +55,9 @@ private struct LeaderboardList: View {
             Spacer()
         } else {
             List(entries) { entry in
-                LeaderboardEntryRow(entry: entry, type: type)
+                NavigationLink(destination: UserProfileView(userId: entry.userId, userName: entry.userName)) {
+                    LeaderboardEntryRow(entry: entry, type: type)
+                }
             }
             .listStyle(.plain)
         }
@@ -105,7 +107,9 @@ private struct FastestCompletionsList: View {
             Spacer()
         } else {
             List(entries) { entry in
-                FastestCompletionRow(entry: entry)
+                NavigationLink(destination: UserProfileView(userId: entry.userId, userName: entry.userName)) {
+                    FastestCompletionRow(entry: entry)
+                }
             }
             .listStyle(.plain)
         }
