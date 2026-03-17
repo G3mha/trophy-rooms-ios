@@ -63,6 +63,7 @@ struct WishlistView: View {
                 if clerk.user != nil {
                     UserButton()
                         .frame(width: 28, height: 28)
+                        .clipShape(Circle())
                 }
             }
         }

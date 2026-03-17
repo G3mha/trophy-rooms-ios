@@ -100,6 +100,7 @@ struct GameListView: View {
                 if clerk.user != nil {
                     UserButton()
                         .frame(width: 28, height: 28)
+                        .clipShape(Circle())
                 } else {
                     Button("Sign In") {
                         showAuth = true
