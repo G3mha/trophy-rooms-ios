@@ -6,35 +6,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/clerk/clerk-ios",
       "state" : {
-        "revision" : "8d16727fbe58609e18759e3020488b840201c83d",
-        "version" : "0.71.4"
+        "revision" : "1b2d4d56743902477bb72532bea6c145ef615136",
+        "version" : "1.0.5"
       }
     },
     {
-      "identity" : "factory",
+      "identity" : "nuke",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/hmlongco/Factory",
+      "location" : "https://github.com/kean/Nuke.git",
       "state" : {
-        "revision" : "ccc898f21992ebc130bc04cc197460a5ae230bcf",
-        "version" : "2.5.3"
-      }
-    },
-    {
-      "identity" : "get",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kean/Get",
-      "state" : {
-        "revision" : "31249885da1052872e0ac91a2943f62567c0d96d",
-        "version" : "2.2.1"
-      }
-    },
-    {
-      "identity" : "kingfisher",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/onevcat/Kingfisher.git",
-      "state" : {
-        "revision" : "c92b84898e34ab46ff0dad86c02a0acbe2d87008",
-        "version" : "8.8.0"
+        "revision" : "83e19143355b02e9261edb2323b3e1e93287ebb9",
+        "version" : "12.9.0"
       }
     },
     {
@@ -44,15 +26,6 @@
       "state" : {
         "revision" : "54f678c2fb115e68bb173face494954c1de9df10",
         "version" : "4.2.8"
-      }
-    },
-    {
-      "identity" : "simplekeychain",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/auth0/SimpleKeychain",
-      "state" : {
-        "revision" : "776c4a6db74d5c6c143974be91c383680d468630",
-        "version" : "1.3.0"
       }
     }
   ],

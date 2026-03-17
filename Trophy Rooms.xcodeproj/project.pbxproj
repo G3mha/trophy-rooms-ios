@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		EB1FC3082F66DF8200BB871E /* Clerk in Frameworks */ = {isa = PBXBuildFile; productRef = EB1FC3072F66DF8200BB871E /* Clerk */; };
+		EB454BB72F6735F10033B7C6 /* TrophyRoomsIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EB454BB62F6735F00033B7C6 /* TrophyRoomsIcon.icon */; };
+		EB454BBA2F6737260033B7C6 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = EB454BB92F6737260033B7C6 /* ClerkKit */; };
+		EB454BBC2F6737260033B7C6 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = EB454BBB2F6737260033B7C6 /* ClerkKitUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,6 +30,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		EB454BB62F6735F00033B7C6 /* TrophyRoomsIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = TrophyRoomsIcon.icon; sourceTree = "<group>"; };
+		EB454BBD2F6737300033B7C6 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		EB7016802F549F3B0099D8C5 /* Trophy Rooms.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Trophy Rooms.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB70168F2F549F3D0099D8C5 /* Trophy RoomsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Trophy RoomsTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB7016992F549F3D0099D8C5 /* Trophy RoomsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Trophy RoomsUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -56,7 +60,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EB1FC3082F66DF8200BB871E /* Clerk in Frameworks */,
+				EB454BBA2F6737260033B7C6 /* ClerkKit in Frameworks */,
+				EB454BBC2F6737260033B7C6 /* ClerkKitUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -87,11 +92,13 @@
 		EB7016772F549F3B0099D8C5 = {
 			isa = PBXGroup;
 			children = (
+				EB454BBD2F6737300033B7C6 /* Config.xcconfig */,
 				EB7016822F549F3B0099D8C5 /* Trophy Rooms */,
 				EB7016922F549F3D0099D8C5 /* Trophy RoomsTests */,
 				EB70169C2F549F3D0099D8C5 /* Trophy RoomsUITests */,
 				EB1FC3042F66DF4F00BB871E /* Frameworks */,
 				EB7016812F549F3B0099D8C5 /* Products */,
+				EB454BB62F6735F00033B7C6 /* TrophyRoomsIcon.icon */,
 			);
 			sourceTree = "<group>";
 		};
@@ -125,7 +132,8 @@
 			);
 			name = "Trophy Rooms";
 			packageProductDependencies = (
-				EB1FC3072F66DF8200BB871E /* Clerk */,
+				EB454BB92F6737260033B7C6 /* ClerkKit */,
+				EB454BBB2F6737260033B7C6 /* ClerkKitUI */,
 			);
 			productName = "Trophy Rooms";
 			productReference = EB7016802F549F3B0099D8C5 /* Trophy Rooms.app */;
@@ -210,7 +218,7 @@
 			mainGroup = EB7016772F549F3B0099D8C5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				EB7016B02F54A0000099D8C5 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+				EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EB7016812F549F3B0099D8C5 /* Products */;
@@ -229,6 +237,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EB454BB72F6735F10033B7C6 /* TrophyRoomsIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -409,10 +418,11 @@
 		};
 		EB7016A42F549F3D0099D8C5 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EB454BBD2F6737300033B7C6 /* Config.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = TrophyRoomsIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLERK_PUBLISHABLE_KEY = "";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = F35MJXTR84;
@@ -446,10 +456,11 @@
 		};
 		EB7016A52F549F3D0099D8C5 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EB454BBD2F6737300033B7C6 /* Config.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = TrophyRoomsIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLERK_PUBLISHABLE_KEY = "";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = F35MJXTR84;
@@ -607,21 +618,26 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		EB7016B02F54A0000099D8C5 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+		EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/clerk/clerk-ios";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.50.0;
+				minimumVersion = 1.0.5;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EB1FC3072F66DF8200BB871E /* Clerk */ = {
+		EB454BB92F6737260033B7C6 /* ClerkKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = EB7016B02F54A0000099D8C5 /* XCRemoteSwiftPackageReference "clerk-ios" */;
-			productName = Clerk;
+			package = EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKit;
+		};
+		EB454BBB2F6737260033B7C6 /* ClerkKitUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKitUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
