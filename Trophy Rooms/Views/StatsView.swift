@@ -1,8 +1,9 @@
 import SwiftUI
-import Clerk
+import ClerkKit
+import ClerkKitUI
 
 struct StatsView: View {
-    @Environment(\.clerk) private var clerk
+    @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = StatsViewModel()
     @State private var showAuth = false
 

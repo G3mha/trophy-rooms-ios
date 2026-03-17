@@ -1,8 +1,9 @@
 import SwiftUI
-import Clerk
+import ClerkKit
+import ClerkKitUI
 
 struct TrophyRoomView: View {
-    @Environment(\.clerk) private var clerk
+    @Environment(Clerk.self) private var clerk
     @StateObject private var progressViewModel = GameProgressViewModel()
     @StateObject private var statsViewModel = StatsViewModel()
     @State private var showAuth = false

@@ -1,8 +1,9 @@
 import SwiftUI
-import Clerk
+import ClerkKit
+import ClerkKitUI
 
 struct GameListView: View {
-    @Environment(\.clerk) private var clerk
+    @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = GameListViewModel()
     @State private var showAuth = false
     @State private var searchText = ""
