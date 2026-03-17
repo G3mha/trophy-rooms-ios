@@ -111,7 +111,9 @@ private struct WishlistItemRow: View {
                     .font(.headline)
                     .lineLimit(2)
 
-                if let platformName = item.platformName {
+                if let platformSlug = item.platformSlug, let platformName = item.platformName {
+                    PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
+                } else if let platformName = item.platformName {
                     PlatformBadge(name: platformName)
                 }
 
