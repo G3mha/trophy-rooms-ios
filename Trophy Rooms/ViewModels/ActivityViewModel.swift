@@ -65,6 +65,7 @@ class ActivityViewModel: ObservableObject {
                 gameId
                 gameTitle
                 platformName
+                platformSlug
                 earnedAt
             }
         }

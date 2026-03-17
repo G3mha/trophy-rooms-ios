@@ -107,6 +107,7 @@ struct ActivityEntry: Codable, Identifiable {
     let gameId: String
     let gameTitle: String
     let platformName: String?
+    let platformSlug: String?
     let earnedAt: String
 }
 

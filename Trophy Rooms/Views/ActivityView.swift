@@ -120,7 +120,9 @@ private struct ActivityEntryRow: View {
                         Text("Earned a trophy in \(activity.gameTitle)")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                        if let platformName = activity.platformName {
+                        if let platformSlug = activity.platformSlug, let platformName = activity.platformName {
+                            PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
+                        } else if let platformName = activity.platformName {
                             PlatformBadge(name: platformName)
                         }
                     }
@@ -136,7 +138,9 @@ private struct ActivityEntryRow: View {
                         Text(activity.gameTitle)
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        if let platformName = activity.platformName {
+                        if let platformSlug = activity.platformSlug, let platformName = activity.platformName {
+                            PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
+                        } else if let platformName = activity.platformName {
                             PlatformBadge(name: platformName)
                         }
                     }
