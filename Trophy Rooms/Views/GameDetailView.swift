@@ -359,8 +359,7 @@ private struct GameHeader: View {
 
                 if let platform = game.platform {
                     HStack(spacing: 4) {
-                        Image(systemName: "gamecontroller")
-                            .font(.caption)
+                        PlatformIcon(slug: platform.slug, size: 14)
                         Text(platform.name)
                             .font(.subheadline)
                     }
