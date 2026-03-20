@@ -35,6 +35,8 @@ struct AchievementSet: Identifiable, Decodable {
     let type: String
     let visibility: String
     let createdByUserId: String?
+    let gameVersionId: String?
+    let gameVersion: GameVersionRef?
     let achievements: [Achievement]
 }
 

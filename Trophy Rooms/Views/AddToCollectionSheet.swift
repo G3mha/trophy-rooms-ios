@@ -12,13 +12,13 @@ struct AddToCollectionSheet: View {
     let gameTitle: String
     let existingItems: [CollectionItem]
     let editingItem: CollectionItem?
-    let versions: [GameVersionRef]
+    let versions: [GameVersion]
     let onSave: () -> Void
 
     var isEditing: Bool { editingItem != nil || internalEditingItem != nil }
     var activeEditingItem: CollectionItem? { editingItem ?? internalEditingItem }
 
-    init(gameId: String, gameTitle: String, existingItems: [CollectionItem] = [], editingItem: CollectionItem? = nil, versions: [GameVersionRef] = [], onSave: @escaping () -> Void) {
+    init(gameId: String, gameTitle: String, existingItems: [CollectionItem] = [], editingItem: CollectionItem? = nil, versions: [GameVersion] = [], onSave: @escaping () -> Void) {
         self.gameId = gameId
         self.gameTitle = gameTitle
         self.existingItems = existingItems

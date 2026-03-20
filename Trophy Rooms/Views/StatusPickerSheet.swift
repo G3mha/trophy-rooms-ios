@@ -9,7 +9,7 @@ struct StatusPickerSheet: View {
     let currentStatus: GameStatus?
     let currentPlatformId: String?
     let currentVersionId: String?
-    let versions: [GameVersionRef]
+    let versions: [GameVersion]
     let onSelect: (GameStatus, String?, String?) -> Void
     let onClear: () -> Void
 
