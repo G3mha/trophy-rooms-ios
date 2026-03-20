@@ -7,6 +7,7 @@ class CollectionViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedRegion: GameRegion?
+    @Published var selectedPlatformId: String?
     @Published var showSealedOnly = false
     @Published var showCompleteOnly = false
 
@@ -15,6 +16,10 @@ class CollectionViewModel: ObservableObject {
 
         if let region = selectedRegion {
             items = items.filter { $0.region == region }
+        }
+
+        if let platformId = selectedPlatformId {
+            items = items.filter { $0.platform?.id == platformId }
         }
 
         if showSealedOnly {
@@ -26,6 +31,19 @@ class CollectionViewModel: ObservableObject {
         }
 
         return items
+    }
+
+    // Get unique platforms from collection items
+    var availablePlatforms: [Platform] {
+        var seen = Set<String>()
+        var platforms: [Platform] = []
+        for item in collectionItems {
+            if let platform = item.platform, !seen.contains(platform.id) {
+                seen.insert(platform.id)
+                platforms.append(platform)
+            }
+        }
+        return platforms.sorted { $0.name < $1.name }
     }
 
     func fetchCollection() async {
@@ -41,6 +59,8 @@ class CollectionViewModel: ObservableObject {
                 gameId
                 game { id title coverUrl }
                 platform { id name slug }
+                gameVersion { id name }
+                gameVersionId
                 hasDisc
                 hasBox
                 hasManual

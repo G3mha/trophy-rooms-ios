@@ -1,12 +1,13 @@
 import SwiftUI
 import ClerkKit
-import ClerkKitUI
 
 struct CollectionView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = CollectionViewModel()
     @State private var showAuth = false
     @State private var showFilters = false
+    @State private var editingItem: CollectionItem?
+    @State private var showEditSheet = false
 
     var body: some View {
         Group {
@@ -57,6 +58,8 @@ struct CollectionView: View {
                     // Filter bar
                     CollectionFilterBar(
                         selectedRegion: $viewModel.selectedRegion,
+                        selectedPlatformId: $viewModel.selectedPlatformId,
+                        availablePlatforms: viewModel.availablePlatforms,
                         showSealedOnly: $viewModel.showSealedOnly,
                         showCompleteOnly: $viewModel.showCompleteOnly
                     )
@@ -66,6 +69,15 @@ struct CollectionView: View {
                         ForEach(viewModel.filteredItems) { item in
                             NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
                                 CollectionItemRow(item: item)
+                            }
+                            .swipeActions(edge: .leading) {
+                                Button {
+                                    editingItem = item
+                                    showEditSheet = true
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
                             }
                         }
                         .onDelete { indexSet in
@@ -81,17 +93,22 @@ struct CollectionView: View {
                 }
             }
         }
-        .navigationTitle("Collection")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if clerk.user != nil {
-                    UserButton()
-                        .frame(width: 30, height: 30)
-                }
-            }
-        }
+        .navigationBar(title: "Collection")
         .sheet(isPresented: $showAuth) {
             AuthView()
+        }
+        .sheet(isPresented: $showEditSheet) {
+            if let item = editingItem {
+                AddToCollectionSheet(
+                    gameId: item.gameId,
+                    gameTitle: item.game.title,
+                    editingItem: item
+                ) {
+                    Task {
+                        await viewModel.fetchCollection()
+                    }
+                }
+            }
         }
         .task {
             if clerk.user != nil {
@@ -170,12 +187,41 @@ private struct StatCard: View {
 
 private struct CollectionFilterBar: View {
     @Binding var selectedRegion: GameRegion?
+    @Binding var selectedPlatformId: String?
+    let availablePlatforms: [Platform]
     @Binding var showSealedOnly: Bool
     @Binding var showCompleteOnly: Bool
+
+    var selectedPlatformName: String? {
+        availablePlatforms.first { $0.id == selectedPlatformId }?.name
+    }
+
+    var hasActiveFilters: Bool {
+        selectedRegion != nil || selectedPlatformId != nil || showSealedOnly || showCompleteOnly
+    }
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                // Platform filter
+                if !availablePlatforms.isEmpty {
+                    Menu {
+                        Button("All Platforms") {
+                            selectedPlatformId = nil
+                        }
+                        ForEach(availablePlatforms) { platform in
+                            Button(platform.name) {
+                                selectedPlatformId = platform.id
+                            }
+                        }
+                    } label: {
+                        FilterChip(
+                            title: selectedPlatformName ?? "Platform",
+                            isActive: selectedPlatformId != nil
+                        )
+                    }
+                }
+
                 // Region filter
                 Menu {
                     Button("All Regions") {
@@ -208,9 +254,10 @@ private struct CollectionFilterBar: View {
                 }
 
                 // Clear all button
-                if selectedRegion != nil || showSealedOnly || showCompleteOnly {
+                if hasActiveFilters {
                     Button {
                         selectedRegion = nil
+                        selectedPlatformId = nil
                         showSealedOnly = false
                         showCompleteOnly = false
                     } label: {
@@ -269,6 +316,10 @@ private struct CollectionItemRow: View {
 
                 HStack(spacing: 6) {
                     RegionBadge(region: item.region)
+
+                    if let version = item.gameVersion {
+                        Badge(text: version.name, color: .blue)
+                    }
 
                     if item.isSealed {
                         Badge(text: "Sealed", color: .purple)

@@ -1,11 +1,12 @@
 import SwiftUI
 import ClerkKit
-import ClerkKitUI
 
 struct LibraryView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = LibraryViewModel()
     @State private var showAuth = false
+    @State private var editingItem: LibraryItem?
+    @State private var showStatusPicker = false
 
     var body: some View {
         Group {
@@ -48,10 +49,12 @@ struct LibraryView: View {
                 .padding()
             } else {
                 VStack(spacing: 0) {
-                    // Status filter pills
-                    StatusFilterView(
+                    // Status and platform filter pills
+                    LibraryFilterView(
                         selectedStatus: $viewModel.selectedStatus,
-                        statusCounts: viewModel.statusCounts
+                        statusCounts: viewModel.statusCounts,
+                        selectedPlatformId: $viewModel.selectedPlatformId,
+                        availablePlatforms: viewModel.availablePlatforms
                     )
 
                     // Game list
@@ -60,12 +63,22 @@ struct LibraryView: View {
                             NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
                                 LibraryItemRow(item: item)
                             }
-                        }
-                        .onDelete { indexSet in
-                            for index in indexSet {
-                                let item = viewModel.filteredItems[index]
-                                Task {
-                                    await viewModel.clearGameStatus(gameId: item.gameId)
+                            .swipeActions(edge: .leading) {
+                                Button {
+                                    editingItem = item
+                                    showStatusPicker = true
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    Task {
+                                        await viewModel.clearGameStatus(gameId: item.gameId)
+                                    }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
                                 }
                             }
                         }
@@ -74,18 +87,29 @@ struct LibraryView: View {
                 }
             }
         }
-        .navigationTitle("Library")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if clerk.user != nil {
-                    UserButton()
-                        .frame(width: 30, height: 30)
-                        .clipShape(Circle())
-                }
-            }
-        }
+        .navigationBar(title: "Library")
         .sheet(isPresented: $showAuth) {
             AuthView()
+        }
+        .sheet(isPresented: $showStatusPicker) {
+            if let item = editingItem {
+                StatusPickerSheet(
+                    currentStatus: item.status,
+                    currentPlatformId: item.platformId,
+                    currentVersionId: item.gameVersionId,
+                    versions: [],
+                    onSelect: { status, platformId, versionId in
+                        Task {
+                            await viewModel.setGameStatus(gameId: item.gameId, status: status, platformId: platformId, gameVersionId: versionId)
+                        }
+                    },
+                    onClear: {
+                        Task {
+                            await viewModel.clearGameStatus(gameId: item.gameId)
+                        }
+                    }
+                )
+            }
         }
         .task {
             if clerk.user != nil {
@@ -102,9 +126,15 @@ struct LibraryView: View {
     }
 }
 
-private struct StatusFilterView: View {
+private struct LibraryFilterView: View {
     @Binding var selectedStatus: GameStatus?
     let statusCounts: [GameStatus: Int]
+    @Binding var selectedPlatformId: String?
+    let availablePlatforms: [(id: String, name: String, slug: String?)]
+
+    var selectedPlatformName: String? {
+        availablePlatforms.first { $0.id == selectedPlatformId }?.name
+    }
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -113,10 +143,11 @@ private struct StatusFilterView: View {
                 StatusPill(
                     title: "All",
                     count: statusCounts.values.reduce(0, +),
-                    isSelected: selectedStatus == nil,
+                    isSelected: selectedStatus == nil && selectedPlatformId == nil,
                     color: .primary
                 ) {
                     selectedStatus = nil
+                    selectedPlatformId = nil
                 }
 
                 // Status filters
@@ -131,6 +162,25 @@ private struct StatusFilterView: View {
                         ) {
                             selectedStatus = status
                         }
+                    }
+                }
+
+                // Platform filter menu
+                if !availablePlatforms.isEmpty {
+                    Menu {
+                        Button("All Platforms") {
+                            selectedPlatformId = nil
+                        }
+                        ForEach(availablePlatforms, id: \.id) { platform in
+                            Button(platform.name) {
+                                selectedPlatformId = platform.id
+                            }
+                        }
+                    } label: {
+                        LibraryFilterChip(
+                            title: selectedPlatformName ?? "Platform",
+                            isActive: selectedPlatformId != nil
+                        )
                     }
                 }
             }
@@ -182,6 +232,21 @@ private struct StatusPill: View {
     }
 }
 
+private struct LibraryFilterChip: View {
+    let title: String
+    let isActive: Bool
+
+    var body: some View {
+        Text(title)
+            .font(.subheadline)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(isActive ? Color.blue : Color(.secondarySystemBackground))
+            .foregroundColor(isActive ? .white : .primary)
+            .cornerRadius(16)
+    }
+}
+
 private struct LibraryItemRow: View {
     let item: LibraryItem
 
@@ -209,6 +274,9 @@ private struct LibraryItemRow: View {
 
                 HStack(spacing: 6) {
                     StatusBadge(status: item.status)
+                    if let versionName = item.gameVersionName {
+                        VersionBadge(name: versionName)
+                    }
                     if let platformSlug = item.platformSlug, let platformName = item.platformName {
                         PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
                     } else if let platformName = item.platformName {
@@ -273,5 +341,24 @@ struct StatusBadge: View {
         case .COMPLETED: return .purple
         case .DROPPED: return .gray
         }
+    }
+}
+
+struct VersionBadge: View {
+    let name: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "square.stack.3d.up")
+                .font(.caption2)
+            Text(name)
+                .font(.caption)
+                .fontWeight(.medium)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.indigo.opacity(0.15))
+        .foregroundColor(.indigo)
+        .cornerRadius(8)
     }
 }

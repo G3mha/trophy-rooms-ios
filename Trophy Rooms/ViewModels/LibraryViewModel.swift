@@ -6,12 +6,35 @@ class LibraryViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedStatus: GameStatus?
+    @Published var selectedPlatformId: String?
 
     var filteredItems: [LibraryItem] {
+        var items = libraryItems
+
         if let status = selectedStatus {
-            return libraryItems.filter { $0.status == status }
+            items = items.filter { $0.status == status }
         }
-        return libraryItems
+
+        if let platformId = selectedPlatformId {
+            items = items.filter { $0.platformId == platformId }
+        }
+
+        return items
+    }
+
+    // Get unique platforms from library items
+    var availablePlatforms: [(id: String, name: String, slug: String?)] {
+        var seen = Set<String>()
+        var platforms: [(id: String, name: String, slug: String?)] = []
+        for item in libraryItems {
+            if let platformId = item.platformId,
+               let platformName = item.platformName,
+               !seen.contains(platformId) {
+                seen.insert(platformId)
+                platforms.append((id: platformId, name: platformName, slug: item.platformSlug))
+            }
+        }
+        return platforms.sorted { $0.name < $1.name }
     }
 
     var statusCounts: [GameStatus: Int] {
@@ -40,6 +63,8 @@ class LibraryViewModel: ObservableObject {
                 platformId
                 platformName
                 platformSlug
+                gameVersionId
+                gameVersionName
                 status
                 addedAt
                 updatedAt
@@ -61,13 +86,14 @@ class LibraryViewModel: ObservableObject {
         }
     }
 
-    func setGameStatus(gameId: String, status: GameStatus, platformId: String? = nil) async -> Bool {
+    func setGameStatus(gameId: String, status: GameStatus, platformId: String? = nil, gameVersionId: String? = nil) async -> Bool {
         let mutation = """
-        mutation SetGameStatus($gameId: ID!, $status: GameStatus!, $platformId: ID) {
-            setGameStatus(gameId: $gameId, status: $status, platformId: $platformId) {
+        mutation SetGameStatus($gameId: ID!, $status: GameStatus!, $platformId: ID, $gameVersionId: ID) {
+            setGameStatus(gameId: $gameId, status: $status, platformId: $platformId, gameVersionId: $gameVersionId) {
                 success
                 status
                 platformId
+                gameVersionId
             }
         }
         """
@@ -75,6 +101,9 @@ class LibraryViewModel: ObservableObject {
         var variables: [String: Any] = ["gameId": gameId, "status": status.rawValue]
         if let platformId = platformId {
             variables["platformId"] = platformId
+        }
+        if let gameVersionId = gameVersionId {
+            variables["gameVersionId"] = gameVersionId
         }
 
         do {
