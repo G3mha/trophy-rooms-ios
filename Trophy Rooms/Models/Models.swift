@@ -64,6 +64,9 @@ struct GameDetail: Identifiable, Decodable {
     let screenshots: [String]?
     let platform: Platform?
     let achievementSets: [AchievementSet]
+    let versions: [GameVersion]?
+    let versionCount: Int?
+    let defaultVersion: GameVersion?
 }
 
 // MARK: - Leaderboard Models
@@ -180,6 +183,8 @@ struct LibraryItem: Codable, Identifiable {
     let platformId: String?
     let platformName: String?
     let platformSlug: String?
+    let gameVersionId: String?
+    let gameVersionName: String?
     let status: GameStatus
     let addedAt: String
     let updatedAt: String
@@ -208,6 +213,8 @@ struct CollectionItem: Decodable, Identifiable {
     let gameId: String
     let game: CollectionGame
     let platform: Platform?
+    let gameVersion: GameVersionRef?
+    let gameVersionId: String?
     let hasDisc: Bool
     let hasBox: Bool
     let hasManual: Bool
@@ -357,6 +364,7 @@ struct LibraryResponse: Decodable {
 struct GameStatusInfo: Decodable {
     let status: GameStatus
     let platformId: String?
+    let gameVersionId: String?
 }
 
 struct GameStatusResponse: Decodable {
@@ -371,6 +379,7 @@ struct SetGameStatusResult: Decodable {
     let success: Bool
     let status: GameStatus?
     let platformId: String?
+    let gameVersionId: String?
 }
 
 struct ClearGameStatusResponse: Decodable {
@@ -500,6 +509,66 @@ struct AdminPlatformsResponse: Decodable {
     let platforms: [AdminPlatform]
 }
 
+// MARK: - Game Version Models
+
+struct GameVersion: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+    let description: String?
+    let coverUrl: String?
+    let effectiveCoverUrl: String?
+    let releaseDate: String?
+    let includedDlc: [String]?
+    let isDefault: Bool
+    let gameId: String
+    let game: GameVersionGame?
+    let achievementSetCount: Int?
+}
+
+struct GameVersionGame: Decodable {
+    let id: String
+    let title: String
+}
+
+struct GameVersionsResponse: Decodable {
+    let gameVersions: [GameVersion]
+}
+
+struct GameVersionResponse: Decodable {
+    let gameVersion: GameVersion?
+}
+
+struct CreateGameVersionResponse: Decodable {
+    let createGameVersion: GameVersionMutationResult
+}
+
+struct UpdateGameVersionResponse: Decodable {
+    let updateGameVersion: GameVersionMutationResult
+}
+
+struct DeleteGameVersionResponse: Decodable {
+    let deleteGameVersion: DeleteGameVersionResult
+}
+
+struct SetDefaultVersionResponse: Decodable {
+    let setDefaultVersion: GameVersionMutationResult
+}
+
+struct BulkDeleteGameVersionsResponse: Decodable {
+    let bulkDeleteGameVersions: BulkDeleteResult
+}
+
+struct GameVersionMutationResult: Decodable {
+    let success: Bool
+    let gameVersion: GameVersion?
+}
+
+struct DeleteGameVersionResult: Decodable {
+    let success: Bool
+    let deletedId: String?
+}
+
 // Admin Game
 struct AdminGame: Identifiable, Decodable {
     let id: String
@@ -557,6 +626,8 @@ struct AdminAchievementSet: Identifiable, Decodable {
     let type: String
     let visibility: String
     let game: AdminSetGame?
+    let gameVersionId: String?
+    let gameVersion: GameVersionRef?
     let achievementCount: Int?
 
     var typeEnum: AchievementSetType {
@@ -566,6 +637,11 @@ struct AdminAchievementSet: Identifiable, Decodable {
     var visibilityEnum: AchievementSetVisibility {
         AchievementSetVisibility(rawValue: visibility) ?? .PUBLIC
     }
+}
+
+struct GameVersionRef: Decodable {
+    let id: String
+    let name: String
 }
 
 struct AdminSetGame: Decodable {
