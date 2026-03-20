@@ -6,20 +6,51 @@ struct AddToCollectionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = AddToCollectionViewModel()
     @StateObject private var platformsViewModel = PlatformsViewModel.shared
+    @State private var internalEditingItem: CollectionItem?
 
     let gameId: String
     let gameTitle: String
     let existingItems: [CollectionItem]
+    let editingItem: CollectionItem?
+    let versions: [GameVersionRef]
     let onSave: () -> Void
+
+    var isEditing: Bool { editingItem != nil || internalEditingItem != nil }
+    var activeEditingItem: CollectionItem? { editingItem ?? internalEditingItem }
+
+    init(gameId: String, gameTitle: String, existingItems: [CollectionItem] = [], editingItem: CollectionItem? = nil, versions: [GameVersionRef] = [], onSave: @escaping () -> Void) {
+        self.gameId = gameId
+        self.gameTitle = gameTitle
+        self.existingItems = existingItems
+        self.editingItem = editingItem
+        self.versions = versions
+        self.onSave = onSave
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                // Existing collection items
-                if !existingItems.isEmpty {
-                    Section("In Your Collection") {
+                // Existing collection items (hidden when editing via external editingItem)
+                if editingItem == nil && !existingItems.isEmpty {
+                    Section(internalEditingItem != nil ? "Editing" : "In Your Collection") {
                         ForEach(existingItems) { item in
-                            CollectionItemSummaryRow(item: item)
+                            Button {
+                                internalEditingItem = item
+                                viewModel.populateFromItem(item)
+                            } label: {
+                                HStack {
+                                    CollectionItemSummaryRow(item: item)
+                                    Spacer()
+                                    if internalEditingItem?.id == item.id {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.blue)
+                                    } else {
+                                        Image(systemName: "pencil.circle")
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .buttonStyle(.plain)
                         }
                         .onDelete { indexSet in
                             for index in indexSet {
@@ -33,13 +64,47 @@ struct AddToCollectionSheet: View {
                     }
                 }
 
-                // Add new item form
-                Section("Add New Copy") {
+                // Add/Edit item form
+                Section {
+                    if internalEditingItem != nil {
+                        Button {
+                            internalEditingItem = nil
+                            viewModel.resetToDefaults()
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle")
+                                Text("Add New Copy Instead")
+                            }
+                            .foregroundColor(.blue)
+                        }
+                    }
+                } header: {
+                    Text(isEditing ? "Edit Copy" : "Add New Copy")
+                }
+
+                Section {
                     // Platform
                     Picker("Platform", selection: $viewModel.platformId) {
                         Text("No Platform").tag(nil as String?)
                         ForEach(platformsViewModel.platforms) { platform in
                             Text(platform.name).tag(platform.id as String?)
+                        }
+                    }
+
+                    // Version (only show if multiple versions)
+                    if versions.count > 1 {
+                        Picker("Version", selection: $viewModel.gameVersionId) {
+                            Text("No Version").tag(nil as String?)
+                            ForEach(versions, id: \.id) { version in
+                                HStack {
+                                    Text(version.name)
+                                    if version.isDefault {
+                                        Text("(Default)")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .tag(version.id as String?)
+                            }
                         }
                     }
 
@@ -65,7 +130,12 @@ struct AddToCollectionSheet: View {
                 Section {
                     Button {
                         Task {
-                            let success = await viewModel.addToCollection(gameId: gameId)
+                            let success: Bool
+                            if let item = activeEditingItem {
+                                success = await viewModel.updateCollectionItem(id: item.id)
+                            } else {
+                                success = await viewModel.addToCollection(gameId: gameId)
+                            }
                             if success {
                                 onSave()
                                 dismiss()
@@ -77,7 +147,7 @@ struct AddToCollectionSheet: View {
                             if viewModel.isLoading {
                                 ProgressView()
                             } else {
-                                Text("Add to Collection")
+                                Text(isEditing ? "Save Changes" : "Add to Collection")
                                     .fontWeight(.semibold)
                             }
                             Spacer()
@@ -104,6 +174,9 @@ struct AddToCollectionSheet: View {
             }
             .task {
                 await platformsViewModel.fetchPlatforms()
+                if let item = editingItem {
+                    viewModel.populateFromItem(item)
+                }
             }
         }
     }
@@ -117,6 +190,15 @@ private struct CollectionItemSummaryRow: View {
             HStack {
                 Text(item.region.displayName)
                     .font(.headline)
+                if let version = item.gameVersion {
+                    Text(version.name)
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.2))
+                        .foregroundColor(.blue)
+                        .cornerRadius(4)
+                }
                 if item.isSealed {
                     Text("Sealed")
                         .font(.caption)
@@ -171,6 +253,7 @@ private struct CollectionItemSummaryRow: View {
 class AddToCollectionViewModel: ObservableObject {
     @Published var region: GameRegion = .NTSC_U
     @Published var platformId: String?
+    @Published var gameVersionId: String?
     @Published var hasDisc = true
     @Published var hasBox = true
     @Published var hasManual = true
@@ -209,6 +292,9 @@ class AddToCollectionViewModel: ObservableObject {
         ]
         if let platformId = platformId {
             input["platformId"] = platformId
+        }
+        if let gameVersionId = gameVersionId {
+            input["gameVersionId"] = gameVersionId
         }
 
         do {
@@ -250,5 +336,80 @@ class AddToCollectionViewModel: ObservableObject {
             }
             return false
         }
+    }
+
+    func updateCollectionItem(id: String) async -> Bool {
+        DispatchQueue.main.async {
+            self.isLoading = true
+            self.errorMessage = nil
+        }
+
+        let mutation = """
+        mutation UpdateCollectionItem($id: ID!, $input: UpdateCollectionItemInput!) {
+            updateCollectionItem(id: $id, input: $input) {
+                success
+                collectionItem {
+                    id
+                }
+            }
+        }
+        """
+
+        var input: [String: Any] = [
+            "hasDisc": hasDisc,
+            "hasBox": hasBox,
+            "hasManual": hasManual,
+            "hasExtras": hasExtras,
+            "isSealed": isSealed,
+            "region": region.rawValue,
+            "notes": notes.isEmpty ? NSNull() : notes
+        ]
+        if let platformId = platformId {
+            input["platformId"] = platformId
+        }
+        if let gameVersionId = gameVersionId {
+            input["gameVersionId"] = gameVersionId
+        }
+
+        do {
+            let response: UpdateCollectionItemResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["id": id, "input": input]
+            )
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+            return response.updateCollectionItem.success
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
+            return false
+        }
+    }
+
+    func populateFromItem(_ item: CollectionItem) {
+        region = item.region
+        platformId = item.platform?.id
+        gameVersionId = item.gameVersionId
+        hasDisc = item.hasDisc
+        hasBox = item.hasBox
+        hasManual = item.hasManual
+        hasExtras = item.hasExtras
+        isSealed = item.isSealed
+        notes = item.notes ?? ""
+    }
+
+    func resetToDefaults() {
+        region = .NTSC_U
+        platformId = nil
+        gameVersionId = nil
+        hasDisc = true
+        hasBox = true
+        hasManual = true
+        hasExtras = false
+        isSealed = false
+        notes = ""
     }
 }
