@@ -7,6 +7,7 @@ struct CollectionView: View {
     @State private var showAuth = false
     @State private var showFilters = false
     @State private var editingItem: CollectionItem?
+    @State private var editingItemVersions: [GameVersion] = []
     @State private var showEditSheet = false
 
     var body: some View {
@@ -73,7 +74,10 @@ struct CollectionView: View {
                             .swipeActions(edge: .leading) {
                                 Button {
                                     editingItem = item
-                                    showEditSheet = true
+                                    Task {
+                                        await fetchVersionsForGame(gameId: item.gameId)
+                                        showEditSheet = true
+                                    }
                                 } label: {
                                     Label("Edit", systemImage: "pencil")
                                 }
@@ -102,7 +106,8 @@ struct CollectionView: View {
                 AddToCollectionSheet(
                     gameId: item.gameId,
                     gameTitle: item.game.title,
-                    editingItem: item
+                    editingItem: item,
+                    versions: editingItemVersions
                 ) {
                     Task {
                         await viewModel.fetchCollection()
@@ -120,6 +125,40 @@ struct CollectionView: View {
                 Task {
                     await viewModel.fetchCollection()
                 }
+            }
+        }
+    }
+
+    private func fetchVersionsForGame(gameId: String) async {
+        let query = """
+        query GetGameVersions($gameId: ID!) {
+            gameVersions(gameId: $gameId) {
+                id
+                name
+                slug
+                description
+                coverUrl
+                effectiveCoverUrl
+                releaseDate
+                includedDlc
+                isDefault
+                gameId
+                achievementSetCount
+            }
+        }
+        """
+
+        do {
+            let response: GameVersionsResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: ["gameId": gameId]
+            )
+            DispatchQueue.main.async {
+                self.editingItemVersions = response.gameVersions
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.editingItemVersions = []
             }
         }
     }
