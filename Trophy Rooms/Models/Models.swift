@@ -255,9 +255,6 @@ struct GameProgress: Codable, Identifiable {
     let hasTrophy: Bool
     let trophyEarnedAt: String?
     let lastActivityAt: String?
-    let platformId: String?
-    let platformName: String?
-    let platformSlug: String?
 
     var id: String { gameId }
 }
@@ -412,7 +409,11 @@ struct RemoveFromCollectionResponse: Decodable {
 
 struct CollectionMutationResult: Decodable {
     let success: Bool
-    let collectionItem: CollectionItem?
+    let collectionItem: CollectionItemRef?
+}
+
+struct CollectionItemRef: Decodable {
+    let id: String
 }
 
 struct RemoveFromCollectionResult: Decodable {
@@ -442,4 +443,292 @@ struct UserProfileStats: Codable {
 
 struct PublicUserResponse: Decodable {
     let user: PublicUser?
+}
+
+// MARK: - Admin Models
+
+enum UserRole: String, Codable, CaseIterable {
+    case USER
+    case TRUSTED
+    case ADMIN
+
+    var displayName: String {
+        switch self {
+        case .USER: return "User"
+        case .TRUSTED: return "Trusted"
+        case .ADMIN: return "Admin"
+        }
+    }
+}
+
+struct CurrentUser: Decodable {
+    let id: String
+    let role: UserRole
+}
+
+struct CurrentUserResponse: Decodable {
+    let me: CurrentUser?
+}
+
+struct AdminUser: Identifiable, Decodable {
+    let id: String
+    let email: String
+    let name: String?
+    let role: UserRole
+}
+
+struct AdminUsersResponse: Decodable {
+    let users: AdminUsersConnection
+}
+
+struct AdminUsersConnection: Decodable {
+    let edges: [AdminUserEdge]
+}
+
+struct AdminUserEdge: Decodable {
+    let node: AdminUser
+}
+
+// Admin Platform (same as Platform but explicit for admin context)
+struct AdminPlatform: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+}
+
+struct AdminPlatformsResponse: Decodable {
+    let platforms: [AdminPlatform]
+}
+
+// Admin Game
+struct AdminGame: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let description: String?
+    let coverUrl: String?
+    let platform: Platform?
+    let achievementSetCount: Int
+}
+
+struct AdminGamesResponse: Decodable {
+    let games: AdminGamesConnection
+}
+
+struct AdminGamesConnection: Decodable {
+    let edges: [AdminGameEdge]
+}
+
+struct AdminGameEdge: Decodable {
+    let node: AdminGame
+}
+
+// Admin Achievement Set
+enum AchievementSetType: String, Codable, CaseIterable {
+    case OFFICIAL
+    case COMMUNITY
+    case CUSTOM
+
+    var displayName: String {
+        switch self {
+        case .OFFICIAL: return "Official"
+        case .COMMUNITY: return "Community"
+        case .CUSTOM: return "Custom"
+        }
+    }
+}
+
+enum AchievementSetVisibility: String, Codable, CaseIterable {
+    case PUBLIC
+    case PRIVATE
+    case UNLISTED
+
+    var displayName: String {
+        switch self {
+        case .PUBLIC: return "Public"
+        case .PRIVATE: return "Private"
+        case .UNLISTED: return "Unlisted"
+        }
+    }
+}
+
+struct AdminAchievementSet: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let type: String
+    let visibility: String
+    let game: AdminSetGame?
+    let achievementCount: Int?
+
+    var typeEnum: AchievementSetType {
+        AchievementSetType(rawValue: type) ?? .OFFICIAL
+    }
+
+    var visibilityEnum: AchievementSetVisibility {
+        AchievementSetVisibility(rawValue: visibility) ?? .PUBLIC
+    }
+}
+
+struct AdminSetGame: Decodable {
+    let id: String
+    let title: String
+}
+
+struct AdminAchievementSetsResponse: Decodable {
+    let achievementSets: [AdminAchievementSet]
+}
+
+// Admin Achievement
+struct AdminAchievement: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let description: String?
+    let iconUrl: String?
+    let points: Int
+    let tier: AchievementTier?
+    let achievementSetId: String
+}
+
+struct AdminAchievementsResponse: Decodable {
+    let achievementSet: AdminAchievementSetWithAchievements?
+}
+
+struct AdminAchievementSetWithAchievements: Decodable {
+    let id: String
+    let title: String
+    let achievements: [AdminAchievement]
+}
+
+// MARK: - Admin Mutation Responses
+
+struct CreatePlatformResponse: Decodable {
+    let createPlatform: CreatePlatformResult
+}
+
+struct CreatePlatformResult: Decodable {
+    let success: Bool
+    let platform: AdminPlatform?
+}
+
+struct UpdatePlatformResponse: Decodable {
+    let updatePlatform: UpdatePlatformResult
+}
+
+struct UpdatePlatformResult: Decodable {
+    let success: Bool
+    let platform: AdminPlatform?
+}
+
+struct DeletePlatformResponse: Decodable {
+    let deletePlatform: DeleteResult
+}
+
+struct DeleteResult: Decodable {
+    let success: Bool
+}
+
+struct CreateGameResponse: Decodable {
+    let createGame: CreateGameResult
+}
+
+struct CreateGameResult: Decodable {
+    let success: Bool
+    let game: AdminGame?
+}
+
+struct UpdateGameResponse: Decodable {
+    let updateGame: UpdateGameResult
+}
+
+struct UpdateGameResult: Decodable {
+    let success: Bool
+    let game: AdminGame?
+}
+
+struct DeleteGameResponse: Decodable {
+    let deleteGame: DeleteResult
+}
+
+struct CreateAchievementSetResponse: Decodable {
+    let createAchievementSet: CreateSetResult
+}
+
+struct CreateSetResult: Decodable {
+    let success: Bool
+    let achievementSet: AdminAchievementSet?
+}
+
+struct UpdateAchievementSetResponse: Decodable {
+    let updateAchievementSet: UpdateSetResult
+}
+
+struct UpdateSetResult: Decodable {
+    let success: Bool
+    let achievementSet: AdminAchievementSet?
+}
+
+struct DeleteAchievementSetResponse: Decodable {
+    let deleteAchievementSet: DeleteResult
+}
+
+struct CreateAchievementResponse: Decodable {
+    let createAchievement: CreateAchievementResult
+}
+
+struct CreateAchievementResult: Decodable {
+    let success: Bool
+    let achievement: AdminAchievement?
+}
+
+struct UpdateAchievementResponse: Decodable {
+    let updateAchievement: UpdateAchievementResult
+}
+
+struct UpdateAchievementResult: Decodable {
+    let success: Bool
+    let achievement: AdminAchievement?
+}
+
+struct DeleteAchievementResponse: Decodable {
+    let deleteAchievement: DeleteResult
+}
+
+struct BulkCreateAchievementsResponse: Decodable {
+    let bulkCreateAchievements: BulkCreateResult
+}
+
+struct BulkCreateResult: Decodable {
+    let success: Bool
+    let createdCount: Int
+    let skippedCount: Int
+}
+
+struct SetUserRoleResponse: Decodable {
+    let setUserRole: SetUserRoleResult
+}
+
+struct SetUserRoleResult: Decodable {
+    let success: Bool
+    let user: AdminUser?
+}
+
+// Bulk delete responses
+struct BulkDeleteResult: Decodable {
+    let success: Bool
+    let deletedCount: Int
+}
+
+struct BulkDeletePlatformsResponse: Decodable {
+    let bulkDeletePlatforms: BulkDeleteResult
+}
+
+struct BulkDeleteGamesResponse: Decodable {
+    let bulkDeleteGames: BulkDeleteResult
+}
+
+struct BulkDeleteAchievementSetsResponse: Decodable {
+    let bulkDeleteAchievementSets: BulkDeleteResult
+}
+
+struct BulkDeleteAchievementsResponse: Decodable {
+    let bulkDeleteAchievements: BulkDeleteResult
 }
