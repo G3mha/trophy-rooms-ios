@@ -116,9 +116,11 @@ struct GameDetailView: View {
             StatusPickerSheet(
                 currentStatus: viewModel.currentStatus,
                 currentPlatformId: viewModel.currentPlatformId,
-                onSelect: { status, platformId in
+                currentVersionId: viewModel.currentVersionId,
+                versions: viewModel.game?.versions ?? [],
+                onSelect: { status, platformId, versionId in
                     Task {
-                        await viewModel.setGameStatus(status, platformId: platformId)
+                        await viewModel.setGameStatus(status, platformId: platformId, gameVersionId: versionId)
                     }
                 },
                 onClear: {
@@ -134,6 +136,7 @@ struct GameDetailView: View {
                     gameId: game.id,
                     gameTitle: game.title,
                     existingItems: viewModel.collectionItems,
+                    versions: game.versions ?? [],
                     onSave: {
                         Task {
                             await viewModel.fetchCollectionForGame(gameId: gameId)
@@ -243,97 +246,6 @@ private struct CollectionButton: View {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
-    }
-}
-
-private struct StatusPickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @StateObject private var platformsViewModel = PlatformsViewModel.shared
-    @State private var selectedPlatformId: String?
-
-    let currentStatus: GameStatus?
-    let currentPlatformId: String?
-    let onSelect: (GameStatus, String?) -> Void
-    let onClear: () -> Void
-
-    var body: some View {
-        NavigationStack {
-            List {
-                // Platform picker
-                Section("Platform (Optional)") {
-                    Picker("Platform", selection: $selectedPlatformId) {
-                        Text("No Platform").tag(nil as String?)
-                        ForEach(platformsViewModel.platforms) { platform in
-                            Text(platform.name).tag(platform.id as String?)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-
-                // Status options
-                Section("Status") {
-                    ForEach(GameStatus.allCases, id: \.self) { status in
-                        Button {
-                            onSelect(status, selectedPlatformId)
-                            dismiss()
-                        } label: {
-                            HStack {
-                                Image(systemName: status.iconName)
-                                    .foregroundColor(statusColor(for: status))
-                                    .frame(width: 24)
-                                Text(status.displayName)
-                                    .foregroundColor(.primary)
-                                Spacer()
-                                if currentStatus == status {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if currentStatus != nil {
-                    Section {
-                        Button(role: .destructive) {
-                            onClear()
-                            dismiss()
-                        } label: {
-                            HStack {
-                                Image(systemName: "trash")
-                                    .frame(width: 24)
-                                Text("Remove from Library")
-                            }
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Set Status")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-            .task {
-                await platformsViewModel.fetchPlatforms()
-                selectedPlatformId = currentPlatformId
-            }
-        }
-        .presentationDetents([.medium])
-    }
-
-    func statusColor(for status: GameStatus) -> Color {
-        switch status {
-        case .WISHLIST: return .pink
-        case .BACKLOG: return .blue
-        case .PLAYING: return .green
-        case .PAUSED: return .orange
-        case .COMPLETED: return .purple
-        case .DROPPED: return .gray
-        }
     }
 }
 
@@ -468,9 +380,16 @@ private struct AchievementSetView: View {
                 VStack(alignment: .leading) {
                     Text(set.title)
                         .font(.headline)
-                    Text("\(set.type) • \(set.visibility.lowercased())")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 4) {
+                        Text("\(set.type) • \(set.visibility.lowercased())")
+                        if let version = set.gameVersion {
+                            Text("•")
+                            Text(version.name)
+                                .fontWeight(.medium)
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 }
                 Spacer()
                 Text("\(set.achievements.count)")

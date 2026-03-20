@@ -9,6 +9,7 @@ class GameDetailViewModel: ObservableObject {
     @Published var isWishlistLoading = false
     @Published var currentStatus: GameStatus?
     @Published var currentPlatformId: String?
+    @Published var currentVersionId: String?
     @Published var isStatusLoading = false
     @Published var collectionItems: [CollectionItem] = []
     @Published var isCollectionLoading = false
@@ -34,12 +35,32 @@ class GameDetailViewModel: ObservableObject {
                 esrbRating
                 screenshots
                 platform { id name slug }
+                versions {
+                    id
+                    name
+                    slug
+                    description
+                    coverUrl
+                    effectiveCoverUrl
+                    isDefault
+                    includedDlc
+                }
+                versionCount
+                defaultVersion {
+                    id
+                    name
+                }
                 achievementSets {
                     id
                     title
                     type
                     visibility
                     createdByUserId
+                    gameVersionId
+                    gameVersion {
+                        id
+                        name
+                    }
                     achievements {
                         id
                         title
@@ -153,6 +174,7 @@ class GameDetailViewModel: ObservableObject {
             getGameStatus(gameId: $gameId) {
                 status
                 platformId
+                gameVersionId
             }
         }
         """
@@ -162,13 +184,14 @@ class GameDetailViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.currentStatus = response.getGameStatus?.status
                 self.currentPlatformId = response.getGameStatus?.platformId
+                self.currentVersionId = response.getGameStatus?.gameVersionId
             }
         } catch {
             // Silently fail - user might not be logged in
         }
     }
 
-    func setGameStatus(_ status: GameStatus, platformId: String? = nil) async {
+    func setGameStatus(_ status: GameStatus, platformId: String? = nil, gameVersionId: String? = nil) async {
         guard let gameId = game?.id else { return }
 
         DispatchQueue.main.async {
@@ -176,11 +199,12 @@ class GameDetailViewModel: ObservableObject {
         }
 
         let mutation = """
-        mutation SetGameStatus($gameId: ID!, $status: GameStatus!, $platformId: ID) {
-            setGameStatus(gameId: $gameId, status: $status, platformId: $platformId) {
+        mutation SetGameStatus($gameId: ID!, $status: GameStatus!, $platformId: ID, $gameVersionId: ID) {
+            setGameStatus(gameId: $gameId, status: $status, platformId: $platformId, gameVersionId: $gameVersionId) {
                 success
                 status
                 platformId
+                gameVersionId
             }
         }
         """
@@ -188,6 +212,9 @@ class GameDetailViewModel: ObservableObject {
         var variables: [String: Any] = ["gameId": gameId, "status": status.rawValue]
         if let platformId = platformId {
             variables["platformId"] = platformId
+        }
+        if let gameVersionId = gameVersionId {
+            variables["gameVersionId"] = gameVersionId
         }
 
         do {
@@ -199,6 +226,7 @@ class GameDetailViewModel: ObservableObject {
                 if response.setGameStatus.success {
                     self.currentStatus = response.setGameStatus.status
                     self.currentPlatformId = response.setGameStatus.platformId
+                    self.currentVersionId = response.setGameStatus.gameVersionId
                 }
                 self.isStatusLoading = false
             }
@@ -234,6 +262,7 @@ class GameDetailViewModel: ObservableObject {
                 if response.clearGameStatus.success {
                     self.currentStatus = nil
                     self.currentPlatformId = nil
+                    self.currentVersionId = nil
                 }
                 self.isStatusLoading = false
             }
@@ -259,6 +288,8 @@ class GameDetailViewModel: ObservableObject {
                 gameId
                 game { id title coverUrl }
                 platform { id name slug }
+                gameVersion { id name }
+                gameVersionId
                 hasDisc
                 hasBox
                 hasManual
