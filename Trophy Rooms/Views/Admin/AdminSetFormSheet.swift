@@ -9,6 +9,7 @@ struct AdminSetFormSheet: View {
     @State private var selectedType: AchievementSetType = .OFFICIAL
     @State private var selectedVisibility: AchievementSetVisibility = .PUBLIC
     @State private var selectedGameId: String = ""
+    @State private var selectedVersionId: String = ""
     @State private var gameSearchText: String = ""
     @State private var isSaving = false
 
@@ -59,8 +60,41 @@ struct AdminSetFormSheet: View {
                         }
                     }
                     .pickerStyle(.navigationLink)
+                    .onChange(of: selectedGameId) { _, newValue in
+                        selectedVersionId = ""
+                        if !newValue.isEmpty {
+                            Task {
+                                await viewModel.fetchVersions(gameId: newValue)
+                            }
+                        } else {
+                            viewModel.versions = []
+                        }
+                    }
                 } header: {
                     Text("Game")
+                }
+
+                if !selectedGameId.isEmpty && viewModel.versions.count > 1 {
+                    Section {
+                        Picker("Version", selection: $selectedVersionId) {
+                            Text("All Versions").tag("")
+                            ForEach(viewModel.versions, id: \.id) { version in
+                                HStack {
+                                    Text(version.name)
+                                    if version.isDefault {
+                                        Text("(Default)")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .tag(version.id)
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
+                    } header: {
+                        Text("Version (Optional)")
+                    } footer: {
+                        Text("Select a specific version or leave as 'All Versions' to apply to the entire game")
+                    }
                 }
 
                 if let error = viewModel.errorMessage {
@@ -94,8 +128,17 @@ struct AdminSetFormSheet: View {
                 selectedType = set.typeEnum
                 selectedVisibility = set.visibilityEnum
                 selectedGameId = set.game?.id ?? ""
+                selectedVersionId = set.gameVersionId ?? ""
+                if !selectedGameId.isEmpty {
+                    Task {
+                        await viewModel.fetchVersions(gameId: selectedGameId)
+                    }
+                }
             } else if selectedGameId.isEmpty, let firstGame = viewModel.games.first {
                 selectedGameId = firstGame.id
+                Task {
+                    await viewModel.fetchVersions(gameId: firstGame.id)
+                }
             }
         }
     }
@@ -105,20 +148,23 @@ struct AdminSetFormSheet: View {
 
         Task {
             let success: Bool
+            let versionId = selectedVersionId.isEmpty ? nil : selectedVersionId
             if let set = achievementSet {
                 success = await viewModel.updateAchievementSet(
                     id: set.id,
                     title: title.trimmingCharacters(in: .whitespaces),
                     type: selectedType,
                     visibility: selectedVisibility,
-                    gameId: selectedGameId
+                    gameId: selectedGameId,
+                    gameVersionId: versionId
                 )
             } else {
                 success = await viewModel.createAchievementSet(
                     title: title.trimmingCharacters(in: .whitespaces),
                     type: selectedType,
                     visibility: selectedVisibility,
-                    gameId: selectedGameId
+                    gameId: selectedGameId,
+                    gameVersionId: versionId
                 )
             }
 

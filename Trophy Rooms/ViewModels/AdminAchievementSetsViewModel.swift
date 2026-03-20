@@ -4,6 +4,7 @@ import Combine
 class AdminAchievementSetsViewModel: ObservableObject {
     @Published var achievementSets: [AdminAchievementSet] = []
     @Published var games: [AdminGame] = []
+    @Published var versions: [GameVersion] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
@@ -89,7 +90,45 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
     }
 
-    func createAchievementSet(title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String) async -> Bool {
+    func fetchVersions(gameId: String) async {
+        let query = """
+        query GetGameVersions($gameId: ID!) {
+            gameVersions(gameId: $gameId) {
+                id
+                name
+                slug
+                description
+                coverUrl
+                effectiveCoverUrl
+                releaseDate
+                includedDlc
+                isDefault
+                gameId
+                game {
+                    id
+                    title
+                }
+                achievementSetCount
+            }
+        }
+        """
+
+        do {
+            let response: GameVersionsResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: ["gameId": gameId]
+            )
+            DispatchQueue.main.async {
+                self.versions = response.gameVersions
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.versions = []
+            }
+        }
+    }
+
+    func createAchievementSet(title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String, gameVersionId: String? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -114,12 +153,16 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
         """
 
-        let input: [String: Any] = [
+        var input: [String: Any] = [
             "title": title,
             "type": type.rawValue,
             "visibility": visibility.rawValue,
             "gameId": gameId
         ]
+
+        if let gameVersionId = gameVersionId, !gameVersionId.isEmpty {
+            input["gameVersionId"] = gameVersionId
+        }
 
         let variables: [String: Any] = ["input": input]
 
@@ -148,7 +191,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
     }
 
-    func updateAchievementSet(id: String, title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String) async -> Bool {
+    func updateAchievementSet(id: String, title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String, gameVersionId: String? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -173,12 +216,16 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
         """
 
-        let input: [String: Any] = [
+        var input: [String: Any] = [
             "title": title,
             "type": type.rawValue,
             "visibility": visibility.rawValue,
             "gameId": gameId
         ]
+
+        if let gameVersionId = gameVersionId {
+            input["gameVersionId"] = gameVersionId.isEmpty ? NSNull() : gameVersionId
+        }
 
         let variables: [String: Any] = [
             "id": id,

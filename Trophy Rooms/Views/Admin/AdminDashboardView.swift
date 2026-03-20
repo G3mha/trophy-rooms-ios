@@ -17,6 +17,12 @@ struct AdminDashboardView: View {
                 }
 
                 NavigationLink {
+                    AdminGameVersionsView()
+                } label: {
+                    Label("Game Versions", systemImage: "square.stack.3d.up")
+                }
+
+                NavigationLink {
                     AdminAchievementSetsView()
                 } label: {
                     Label("Achievement Sets", systemImage: "list.bullet.rectangle")
