@@ -7,6 +7,15 @@ class GameListViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    // Pagination state
+    @Published var currentPage: Int = 1
+    @Published var totalPages: Int = 1
+    @Published var totalCount: Int = 0
+    @Published var pageSize: Int = 25
+
+    var hasNextPage: Bool { currentPage < totalPages }
+    var hasPreviousPage: Bool { currentPage > 1 }
+
     func fetchPlatforms() async {
         let query = """
         query GetPlatforms {
@@ -30,32 +39,37 @@ class GameListViewModel: ObservableObject {
         }
     }
 
-    func fetchGames(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?) async {
+    func fetchGames(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, page: Int = 1) async {
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
         }
 
         let query = """
-        query GetGames($first: Int, $filter: GamesFilterInput, $orderBy: GameOrderBy) {
-            games(first: $first, filter: $filter, orderBy: $orderBy) {
-                edges {
-                    node {
-                        id
-                        title
-                        description
-                        coverUrl
-                        achievementSetCount
-                        achievementCount
-                        trophyCount
-                        platform { id name slug }
-                    }
+        query GetGamesPage($page: Int, $pageSize: Int, $filter: GamesFilterInput, $orderBy: GameOrderBy) {
+            gamesPage(page: $page, pageSize: $pageSize, filter: $filter, orderBy: $orderBy) {
+                items {
+                    id
+                    title
+                    description
+                    coverUrl
+                    achievementSetCount
+                    achievementCount
+                    trophyCount
+                    platform { id name slug }
                 }
+                totalCount
+                page
+                pageSize
+                totalPages
             }
         }
         """
 
-        var variables: [String: Any] = ["first": 50]
+        var variables: [String: Any] = [
+            "page": page,
+            "pageSize": pageSize
+        ]
         var filter: [String: Any] = [:]
 
         if let search = search, !search.isEmpty {
@@ -79,9 +93,12 @@ class GameListViewModel: ObservableObject {
         }
 
         do {
-            let response: GameListResponse = try await NetworkService.shared.fetch(query: query, variables: variables)
+            let response: GamesPageResponse = try await NetworkService.shared.fetch(query: query, variables: variables)
             DispatchQueue.main.async {
-                self.games = response.games.edges.map { $0.node }
+                self.games = response.gamesPage.items
+                self.currentPage = response.gamesPage.page
+                self.totalPages = response.gamesPage.totalPages
+                self.totalCount = response.gamesPage.totalCount
                 self.isLoading = false
             }
         } catch {
@@ -91,5 +108,20 @@ class GameListViewModel: ObservableObject {
             }
             print("Error fetching games: \(error)")
         }
+    }
+
+    func goToNextPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?) async {
+        guard hasNextPage else { return }
+        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, page: currentPage + 1)
+    }
+
+    func goToPreviousPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?) async {
+        guard hasPreviousPage else { return }
+        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, page: currentPage - 1)
+    }
+
+    func goToPage(_ page: Int, search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?) async {
+        let targetPage = max(1, min(page, totalPages))
+        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, page: targetPage)
     }
 }

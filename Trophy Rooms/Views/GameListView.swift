@@ -1,6 +1,5 @@
 import SwiftUI
 import ClerkKit
-import ClerkKitUI
 
 struct GameListView: View {
     @Environment(Clerk.self) private var clerk
@@ -20,7 +19,7 @@ struct GameListView: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading {
+            if viewModel.isLoading && viewModel.games.isEmpty {
                 ProgressView("Loading games...")
             } else if let error = viewModel.errorMessage {
                 Text("Error: \(error)")
@@ -99,25 +98,56 @@ struct GameListView: View {
                                 }
                             }
                         }
+                    } header: {
+                        if viewModel.totalCount > 0 {
+                            Text("\(viewModel.totalCount) games")
+                        }
                     }
                 }
                 .listStyle(.insetGrouped)
-            }
-        }
-        .navigationTitle("Trophy Rooms")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if clerk.user != nil {
-                    UserButton()
-                        .frame(width: 30, height: 30)
-                        .clipShape(Circle())
-                } else {
-                    Button("Sign In") {
-                        showAuth = true
+                .safeAreaInset(edge: .bottom) {
+                    if viewModel.totalPages > 1 {
+                        PaginationControls(
+                            currentPage: viewModel.currentPage,
+                            totalPages: viewModel.totalPages,
+                            isLoading: viewModel.isLoading,
+                            onPrevious: {
+                                Task {
+                                    await viewModel.goToPreviousPage(
+                                        search: searchText,
+                                        platformId: selectedPlatformId,
+                                        hasAchievements: achievementFilter.boolValue,
+                                        orderBy: sortOption.graphqlValue
+                                    )
+                                }
+                            },
+                            onNext: {
+                                Task {
+                                    await viewModel.goToNextPage(
+                                        search: searchText,
+                                        platformId: selectedPlatformId,
+                                        hasAchievements: achievementFilter.boolValue,
+                                        orderBy: sortOption.graphqlValue
+                                    )
+                                }
+                            },
+                            onGoToPage: { page in
+                                Task {
+                                    await viewModel.goToPage(
+                                        page,
+                                        search: searchText,
+                                        platformId: selectedPlatformId,
+                                        hasAchievements: achievementFilter.boolValue,
+                                        orderBy: sortOption.graphqlValue
+                                    )
+                                }
+                            }
+                        )
                     }
                 }
             }
         }
+        .navigationBar(title: "Games", showAuth: $showAuth)
         .sheet(isPresented: $showAuth) {
             AuthView()
         }
@@ -128,7 +158,8 @@ struct GameListView: View {
                     search: searchText,
                     platformId: selectedPlatformId,
                     hasAchievements: achievementFilter.boolValue,
-                    orderBy: sortOption.graphqlValue
+                    orderBy: sortOption.graphqlValue,
+                    page: 1
                 )
             }
         }
@@ -138,7 +169,8 @@ struct GameListView: View {
                     search: searchText,
                     platformId: selectedPlatformId,
                     hasAchievements: achievementFilter.boolValue,
-                    orderBy: sortOption.graphqlValue
+                    orderBy: sortOption.graphqlValue,
+                    page: 1
                 )
             }
         }
@@ -148,7 +180,8 @@ struct GameListView: View {
                     search: searchText,
                     platformId: selectedPlatformId,
                     hasAchievements: achievementFilter.boolValue,
-                    orderBy: sortOption.graphqlValue
+                    orderBy: sortOption.graphqlValue,
+                    page: 1
                 )
             }
         }
@@ -158,7 +191,8 @@ struct GameListView: View {
                     search: searchText,
                     platformId: selectedPlatformId,
                     hasAchievements: achievementFilter.boolValue,
-                    orderBy: sortOption.graphqlValue
+                    orderBy: sortOption.graphqlValue,
+                    page: 1
                 )
             }
         }
@@ -168,8 +202,137 @@ struct GameListView: View {
                 search: searchText,
                 platformId: selectedPlatformId,
                 hasAchievements: achievementFilter.boolValue,
-                orderBy: sortOption.graphqlValue
+                orderBy: sortOption.graphqlValue,
+                page: 1
             )
+        }
+    }
+}
+
+// MARK: - Pagination Controls
+
+private struct PaginationControls: View {
+    let currentPage: Int
+    let totalPages: Int
+    let isLoading: Bool
+    let onPrevious: () -> Void
+    let onNext: () -> Void
+    let onGoToPage: (Int) -> Void
+
+    @State private var showPagePicker = false
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Previous button
+            Button(action: onPrevious) {
+                Image(systemName: "chevron.left")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 44, height: 44)
+            }
+            .disabled(currentPage <= 1 || isLoading)
+            .opacity(currentPage <= 1 ? 0.3 : 1)
+
+            Spacer()
+
+            // Page indicator - tappable to show page picker
+            Button {
+                showPagePicker = true
+            } label: {
+                HStack(spacing: 4) {
+                    if isLoading {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Text("Page \(currentPage) of \(totalPages)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                }
+                .foregroundStyle(.primary)
+            }
+            .disabled(isLoading)
+
+            Spacer()
+
+            // Next button
+            Button(action: onNext) {
+                Image(systemName: "chevron.right")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 44, height: 44)
+            }
+            .disabled(currentPage >= totalPages || isLoading)
+            .opacity(currentPage >= totalPages ? 0.3 : 1)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(.bar)
+        .sheet(isPresented: $showPagePicker) {
+            PagePickerSheet(
+                currentPage: currentPage,
+                totalPages: totalPages,
+                onSelect: { page in
+                    showPagePicker = false
+                    onGoToPage(page)
+                }
+            )
+            .presentationDetents([.medium])
+        }
+    }
+}
+
+private struct PagePickerSheet: View {
+    let currentPage: Int
+    let totalPages: Int
+    let onSelect: (Int) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedPage: Int
+
+    init(currentPage: Int, totalPages: Int, onSelect: @escaping (Int) -> Void) {
+        self.currentPage = currentPage
+        self.totalPages = totalPages
+        self.onSelect = onSelect
+        self._selectedPage = State(initialValue: currentPage)
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text("Go to Page")
+                    .font(.headline)
+
+                Picker("Page", selection: $selectedPage) {
+                    ForEach(1...totalPages, id: \.self) { page in
+                        Text("\(page)").tag(page)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(height: 150)
+
+                Button {
+                    onSelect(selectedPage)
+                } label: {
+                    Text("Go to Page \(selectedPage)")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding(.top)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }
