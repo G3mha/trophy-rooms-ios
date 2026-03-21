@@ -5,6 +5,7 @@ class CollectionViewModel: ObservableObject {
     @Published var collectionItems: [CollectionItem] = []
     @Published var stats: CollectionStats?
     @Published var isLoading = false
+    @Published var hasLoadedOnce = false
     @Published var errorMessage: String?
     @Published var selectedRegion: GameRegion?
     @Published var selectedPlatformId: String?
@@ -89,11 +90,13 @@ class CollectionViewModel: ObservableObject {
                 self.collectionItems = response.myCollection
                 self.stats = response.collectionStats
                 self.isLoading = false
+                self.hasLoadedOnce = true
             }
         } catch {
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
+                self.hasLoadedOnce = true
             }
         }
     }

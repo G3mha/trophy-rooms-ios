@@ -24,7 +24,7 @@ struct CollectionView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
-            } else if viewModel.isLoading {
+            } else if viewModel.isLoading || !viewModel.hasLoadedOnce {
                 ProgressView("Loading collection...")
             } else if let error = viewModel.errorMessage {
                 VStack(spacing: 16) {
