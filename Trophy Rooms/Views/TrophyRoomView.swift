@@ -1,6 +1,5 @@
 import SwiftUI
 import ClerkKit
-import ClerkKitUI
 
 struct TrophyRoomView: View {
     @Environment(Clerk.self) private var clerk
@@ -103,16 +102,7 @@ struct TrophyRoomView: View {
                 }
             }
         }
-        .navigationTitle("Trophy Room")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if clerk.user != nil {
-                    UserButton()
-                        .frame(width: 30, height: 30)
-                        .clipShape(Circle())
-                }
-            }
-        }
+        .navigationBar(title: "Trophy Room")
         .sheet(isPresented: $showAuth) {
             AuthView()
         }
@@ -199,11 +189,6 @@ private struct CompletedGameCard: View {
                     Image(systemName: "trophy.fill")
                         .foregroundColor(Color(red: 0.863, green: 0.078, blue: 0.235))
                 }
-                if let platformSlug = progress.platformSlug, let platformName = progress.platformName {
-                    PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
-                } else if let platformName = progress.platformName {
-                    PlatformBadge(name: platformName)
-                }
                 Text("\(progress.earnedCount)/\(progress.totalCount) achievements • \(progress.earnedPoints) pts")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -249,12 +234,6 @@ private struct GameProgressCard: View {
                 Text(progress.gameTitle)
                     .font(.headline)
                     .foregroundColor(.primary)
-
-                if let platformSlug = progress.platformSlug, let platformName = progress.platformName {
-                    PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
-                } else if let platformName = progress.platformName {
-                    PlatformBadge(name: platformName)
-                }
 
                 ProgressBar(progress: progress.percentComplete, foregroundColor: progressColor)
 
