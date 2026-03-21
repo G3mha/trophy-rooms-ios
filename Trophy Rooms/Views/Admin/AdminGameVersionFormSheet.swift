@@ -105,7 +105,7 @@ struct AdminGameVersionFormSheet: View {
         .onAppear {
             if let version = version {
                 name = version.name
-                slug = version.slug
+                slug = version.slug ?? ""
                 description = version.description ?? ""
                 coverUrl = version.coverUrl ?? ""
                 includedDlcText = version.includedDlc?.joined(separator: ", ") ?? ""

@@ -85,7 +85,7 @@ struct AdminGameVersionsView: View {
                                                 .font(.caption)
                                         }
                                     }
-                                    Text(version.slug)
+                                    Text(version.slug ?? "")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                     if let dlc = version.includedDlc, !dlc.isEmpty {

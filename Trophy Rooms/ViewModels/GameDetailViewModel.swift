@@ -44,11 +44,19 @@ class GameDetailViewModel: ObservableObject {
                     effectiveCoverUrl
                     isDefault
                     includedDlc
+                    gameId
                 }
                 versionCount
                 defaultVersion {
                     id
                     name
+                    slug
+                    description
+                    coverUrl
+                    effectiveCoverUrl
+                    isDefault
+                    includedDlc
+                    gameId
                 }
                 achievementSets {
                     id

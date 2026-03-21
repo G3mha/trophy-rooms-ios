@@ -516,14 +516,14 @@ struct AdminPlatformsResponse: Decodable {
 struct GameVersion: Identifiable, Decodable {
     let id: String
     let name: String
-    let slug: String
+    let slug: String?
     let description: String?
     let coverUrl: String?
     let effectiveCoverUrl: String?
     let releaseDate: String?
     let includedDlc: [String]?
     let isDefault: Bool
-    let gameId: String
+    let gameId: String?
     let game: GameVersionGame?
     let achievementSetCount: Int?
 }
