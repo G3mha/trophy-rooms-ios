@@ -12,6 +12,65 @@ struct AdminGamesView: View {
 
     var body: some View {
         List {
+            // Pagination controls
+            if viewModel.totalCount > 0 && viewModel.searchText.isEmpty {
+                Section {
+                    HStack(spacing: 16) {
+                        // First page button
+                        Button {
+                            Task { await viewModel.goToFirstPage() }
+                        } label: {
+                            Image(systemName: "chevron.backward.2")
+                        }
+                        .disabled(viewModel.currentPage == 1 || viewModel.isLoading)
+
+                        // Previous button
+                        Button {
+                            Task { await viewModel.goToPreviousPage() }
+                        } label: {
+                            Image(systemName: "chevron.backward")
+                        }
+                        .disabled(!viewModel.canGoPrevious)
+
+                        Spacer()
+
+                        // Page info
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Text("Page \(viewModel.currentPage) of \(viewModel.totalPages)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        // Next button
+                        Button {
+                            Task { await viewModel.goToNextPage() }
+                        } label: {
+                            Image(systemName: "chevron.forward")
+                        }
+                        .disabled(!viewModel.canGoNext)
+
+                        // Last page button
+                        Button {
+                            Task { await viewModel.goToLastPage() }
+                        } label: {
+                            Image(systemName: "chevron.forward.2")
+                        }
+                        .disabled(viewModel.currentPage == viewModel.totalPages || viewModel.isLoading)
+                    }
+                    .buttonStyle(.borderless)
+
+                    Text("\(viewModel.totalCount) games total")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+            }
+
             if viewModel.isLoading && viewModel.games.isEmpty {
                 ProgressView()
                     .frame(maxWidth: .infinity)
@@ -78,24 +137,6 @@ struct AdminGamesView: View {
                             .tint(.blue)
                         }
                     }
-                    .onAppear {
-                        // Load more when reaching the last few items
-                        if game.id == viewModel.filteredGames.last?.id && viewModel.canLoadMore {
-                            Task {
-                                await viewModel.loadMoreGames()
-                            }
-                        }
-                    }
-                }
-
-                // Loading more indicator
-                if viewModel.isLoadingMore {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                        Spacer()
-                    }
-                    .listRowSeparator(.hidden)
                 }
             }
         }
@@ -142,10 +183,10 @@ struct AdminGamesView: View {
             }
         }
         .refreshable {
-            await viewModel.fetchGames()
+            await viewModel.goToFirstPage()
         }
         .task {
-            await viewModel.fetchGames()
+            await viewModel.fetchGames(page: 1)
             await viewModel.fetchPlatforms()
         }
         .sheet(isPresented: $showingCreateSheet) {

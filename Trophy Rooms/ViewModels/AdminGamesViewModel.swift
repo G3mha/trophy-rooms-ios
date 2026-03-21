@@ -5,15 +5,15 @@ class AdminGamesViewModel: ObservableObject {
     @Published var games: [AdminGame] = []
     @Published var platforms: [AdminPlatform] = []
     @Published var isLoading = false
-    @Published var isLoadingMore = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
     @Published var searchText: String = ""
+    @Published var currentPage: Int = 1
 
-    private var endCursor: String?
+    private var pageCursors: [Int: String] = [:] // Store cursor for each page
     private var hasNextPage = false
-    private var totalCount: Int = 0
-    private let pageSize = 50
+    @Published var totalCount: Int = 0
+    let pageSize = 50
 
     var filteredGames: [AdminGame] {
         if searchText.isEmpty {
@@ -24,16 +24,22 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    var canLoadMore: Bool {
-        hasNextPage && !isLoadingMore && searchText.isEmpty
+    var totalPages: Int {
+        max(1, Int(ceil(Double(totalCount) / Double(pageSize))))
     }
 
-    func fetchGames() async {
+    var canGoNext: Bool {
+        hasNextPage && !isLoading
+    }
+
+    var canGoPrevious: Bool {
+        currentPage > 1 && !isLoading
+    }
+
+    func fetchGames(page: Int = 1) async {
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
-            self.endCursor = nil
-            self.hasNextPage = false
         }
 
         let query = """
@@ -62,7 +68,13 @@ class AdminGamesViewModel: ObservableObject {
         }
         """
 
-        let variables: [String: Any] = ["first": pageSize]
+        // Get cursor for the requested page (nil for first page)
+        let cursor: String? = page > 1 ? pageCursors[page] : nil
+
+        var variables: [String: Any] = ["first": pageSize]
+        if let cursor = cursor {
+            variables["after"] = cursor
+        }
 
         do {
             let response: AdminGamesResponse = try await NetworkService.shared.fetch(
@@ -71,9 +83,15 @@ class AdminGamesViewModel: ObservableObject {
             )
             DispatchQueue.main.async {
                 self.games = response.games.edges.map { $0.node }
-                self.endCursor = response.games.pageInfo?.endCursor
                 self.hasNextPage = response.games.pageInfo?.hasNextPage ?? false
                 self.totalCount = response.games.totalCount ?? 0
+                self.currentPage = page
+
+                // Store cursor for the next page
+                if let endCursor = response.games.pageInfo?.endCursor {
+                    self.pageCursors[page + 1] = endCursor
+                }
+
                 self.isLoading = false
             }
         } catch {
@@ -84,57 +102,79 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    func loadMoreGames() async {
-        guard canLoadMore, let cursor = endCursor else { return }
+    func goToNextPage() async {
+        guard canGoNext else { return }
+        await fetchGames(page: currentPage + 1)
+    }
+
+    func goToPreviousPage() async {
+        guard canGoPrevious else { return }
+        await fetchGames(page: currentPage - 1)
+    }
+
+    func goToFirstPage() async {
+        guard currentPage != 1 else { return }
+        pageCursors.removeAll()
+        await fetchGames(page: 1)
+    }
+
+    func goToLastPage() async {
+        // For last page, we need to fetch pages sequentially to get cursors
+        // This is a limitation of cursor-based pagination
+        guard totalPages > currentPage else { return }
 
         DispatchQueue.main.async {
-            self.isLoadingMore = true
+            self.isLoading = true
         }
 
+        // Fetch pages until we reach the last one
+        var page = currentPage
+        while page < totalPages {
+            if pageCursors[page + 1] == nil && page > 1 {
+                // Need to fetch this page first to get cursor
+                await fetchPageSilently(page: page)
+            }
+            page += 1
+        }
+
+        await fetchGames(page: totalPages)
+    }
+
+    private func fetchPageSilently(page: Int) async {
         let query = """
         query GetGames($first: Int!, $after: String) {
             games(first: $first, after: $after) {
                 edges {
                     node {
                         id
-                        title
-                        description
-                        coverUrl
-                        platform {
-                            id
-                            name
-                            slug
-                        }
-                        achievementSetCount
                     }
                 }
                 pageInfo {
                     hasNextPage
                     endCursor
                 }
-                totalCount
             }
         }
         """
 
-        let variables: [String: Any] = ["first": pageSize, "after": cursor]
+        let cursor: String? = page > 1 ? pageCursors[page] : nil
+        var variables: [String: Any] = ["first": pageSize]
+        if let cursor = cursor {
+            variables["after"] = cursor
+        }
 
         do {
             let response: AdminGamesResponse = try await NetworkService.shared.fetch(
                 query: query,
                 variables: variables
             )
-            DispatchQueue.main.async {
-                self.games.append(contentsOf: response.games.edges.map { $0.node })
-                self.endCursor = response.games.pageInfo?.endCursor
-                self.hasNextPage = response.games.pageInfo?.hasNextPage ?? false
-                self.isLoadingMore = false
+            if let endCursor = response.games.pageInfo?.endCursor {
+                DispatchQueue.main.async {
+                    self.pageCursors[page + 1] = endCursor
+                }
             }
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isLoadingMore = false
-            }
+            // Silently fail
         }
     }
 
