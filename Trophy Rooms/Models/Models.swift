@@ -37,6 +37,8 @@ struct AchievementSet: Identifiable, Decodable {
     let createdByUserId: String?
     let gameVersionId: String?
     let gameVersion: GameVersionRef?
+    let dlcId: String?
+    let dlc: DLCRef?
     let achievements: [Achievement]
 }
 
@@ -69,6 +71,38 @@ struct GameDetail: Identifiable, Decodable {
     let versions: [GameVersion]?
     let versionCount: Int?
     let defaultVersion: GameVersion?
+    let dlcs: [GameDLC]?
+    let dlcCount: Int?
+    let bundles: [GameBundle]?
+}
+
+// MARK: - User-Facing DLC
+
+struct GameDLC: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+    let type: DLCType
+    let description: String?
+    let coverUrl: String?
+    let effectiveCoverUrl: String?
+    let releaseDate: String?
+    let price: Double?
+    let isOwned: Bool?
+    let achievementSetCount: Int?
+}
+
+// MARK: - User-Facing Bundle
+
+struct GameBundle: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+    let type: BundleType
+    let description: String?
+    let coverUrl: String?
+    let gameCount: Int
+    let dlcCount: Int
 }
 
 // MARK: - Leaderboard Models
@@ -278,6 +312,20 @@ struct GameConnection: Decodable {
 
 struct GameEdge: Decodable {
     let node: GameSummary
+}
+
+// MARK: - Paginated Games Response
+
+struct GamesPageResponse: Decodable {
+    let gamesPage: GamesPage
+}
+
+struct GamesPage: Decodable {
+    let items: [GameSummary]
+    let totalCount: Int
+    let page: Int
+    let pageSize: Int
+    let totalPages: Int
 }
 
 struct PlatformsResponse: Decodable {
@@ -511,6 +559,167 @@ struct AdminPlatformsResponse: Decodable {
     let platforms: [AdminPlatform]
 }
 
+// MARK: - DLC Models
+
+enum DLCType: String, Codable, CaseIterable {
+    case DLC
+    case EXPANSION
+    case FREE_UPDATE
+
+    var displayName: String {
+        switch self {
+        case .DLC: return "DLC"
+        case .EXPANSION: return "Expansion"
+        case .FREE_UPDATE: return "Free Update"
+        }
+    }
+}
+
+struct DLC: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+    let type: DLCType
+    let description: String?
+    let coverUrl: String?
+    let effectiveCoverUrl: String?
+    let releaseDate: String?
+    let price: Double?
+    let gameId: String
+    let game: DLCGame?
+    let achievementSetCount: Int?
+}
+
+struct DLCGame: Decodable {
+    let id: String
+    let title: String
+}
+
+struct DLCRef: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+    let type: DLCType
+}
+
+struct DLCsResponse: Decodable {
+    let dlcs: [DLC]
+}
+
+struct DLCResponse: Decodable {
+    let dlc: DLC?
+}
+
+struct CreateDLCResponse: Decodable {
+    let createDLC: DLCMutationResult
+}
+
+struct UpdateDLCResponse: Decodable {
+    let updateDLC: DLCMutationResult
+}
+
+struct DeleteDLCResponse: Decodable {
+    let deleteDLC: DeleteDLCResult
+}
+
+struct BulkDeleteDLCsResponse: Decodable {
+    let bulkDeleteDLCs: BulkDeleteResult
+}
+
+struct DLCMutationResult: Decodable {
+    let success: Bool
+    let dlc: DLC?
+}
+
+struct DeleteDLCResult: Decodable {
+    let success: Bool
+    let deletedId: String?
+}
+
+// MARK: - Bundle Models
+
+enum BundleType: String, Codable, CaseIterable {
+    case BUNDLE
+    case SEASON_PASS
+    case COLLECTION
+    case SUBSCRIPTION
+
+    var displayName: String {
+        switch self {
+        case .BUNDLE: return "Bundle"
+        case .SEASON_PASS: return "Season Pass"
+        case .COLLECTION: return "Collection"
+        case .SUBSCRIPTION: return "Subscription"
+        }
+    }
+}
+
+struct AppBundle: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+    let type: BundleType
+    let description: String?
+    let coverUrl: String?
+    let releaseDate: String?
+    let price: Double?
+    let gameCount: Int
+    let dlcCount: Int
+    let games: [BundleGame]?
+    let dlcs: [BundleDLC]?
+    let isOwned: Bool?
+}
+
+struct BundleGame: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let coverUrl: String?
+    let platform: Platform?
+}
+
+struct BundleDLC: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String?
+    let type: DLCType?
+    let coverUrl: String?
+    let game: DLCGame?
+}
+
+struct BundlesResponse: Decodable {
+    let bundles: [AppBundle]
+}
+
+struct BundleResponse: Decodable {
+    let bundle: AppBundle?
+}
+
+struct CreateBundleResponse: Decodable {
+    let createBundle: BundleMutationResult
+}
+
+struct UpdateBundleResponse: Decodable {
+    let updateBundle: BundleMutationResult
+}
+
+struct DeleteBundleResponse: Decodable {
+    let deleteBundle: DeleteBundleResult
+}
+
+struct BulkDeleteBundlesResponse: Decodable {
+    let bulkDeleteBundles: BulkDeleteResult
+}
+
+struct BundleMutationResult: Decodable {
+    let success: Bool
+    let bundle: AppBundle?
+}
+
+struct DeleteBundleResult: Decodable {
+    let success: Bool
+    let deletedId: String?
+}
+
 // MARK: - Game Version Models
 
 struct GameVersion: Identifiable, Decodable {
@@ -521,7 +730,8 @@ struct GameVersion: Identifiable, Decodable {
     let coverUrl: String?
     let effectiveCoverUrl: String?
     let releaseDate: String?
-    let includedDlc: [String]?
+    let dlcs: [DLCRef]?
+    let dlcCount: Int?
     let isDefault: Bool
     let gameId: String?
     let game: GameVersionGame?
@@ -664,6 +874,8 @@ struct AdminAchievementSet: Identifiable, Decodable {
     let game: AdminSetGame?
     let gameVersionId: String?
     let gameVersion: GameVersionRef?
+    let dlcId: String?
+    let dlc: DLCRef?
     let achievementCount: Int?
 
     var typeEnum: AchievementSetType {
@@ -708,6 +920,47 @@ struct AdminAchievementSetWithAchievements: Decodable {
     let id: String
     let title: String
     let achievements: [AdminAchievement]
+}
+
+// MARK: - User-Facing Bundle List
+
+struct BundleListItem: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+    let type: BundleType
+    let description: String?
+    let coverUrl: String?
+    let gameCount: Int
+    let dlcCount: Int
+}
+
+struct BundlesListResponse: Decodable {
+    let bundles: [BundleListItem]
+}
+
+// Note: BundleDetail reuses Bundle from admin models with isOwned field
+
+// MARK: - Bundle Ownership Responses
+
+struct BundleOwnershipMutationResponse: Decodable {
+    let addBundleToOwned: BundleOwnershipResult?
+    let removeBundleFromOwned: BundleOwnershipResult?
+}
+
+struct BundleOwnershipResult: Decodable {
+    let success: Bool
+}
+
+// MARK: - DLC Ownership Responses
+
+struct DLCOwnershipMutationResponse: Decodable {
+    let addDLCToOwned: DLCOwnershipResult?
+    let removeDLCFromOwned: DLCOwnershipResult?
+}
+
+struct DLCOwnershipResult: Decodable {
+    let success: Bool
 }
 
 // MARK: - Admin Mutation Responses
