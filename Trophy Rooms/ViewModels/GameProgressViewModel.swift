@@ -34,9 +34,6 @@ class GameProgressViewModel: ObservableObject {
                 hasTrophy
                 trophyEarnedAt
                 lastActivityAt
-                platformId
-                platformName
-                platformSlug
             }
         }
         """
