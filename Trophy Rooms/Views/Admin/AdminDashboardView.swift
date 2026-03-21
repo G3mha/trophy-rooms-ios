@@ -33,6 +33,18 @@ struct AdminDashboardView: View {
                 } label: {
                     Label("Achievements", systemImage: "star")
                 }
+
+                NavigationLink {
+                    AdminDLCsView()
+                } label: {
+                    Label("DLCs & Expansions", systemImage: "puzzlepiece.extension")
+                }
+
+                NavigationLink {
+                    AdminBundlesView()
+                } label: {
+                    Label("Bundles", systemImage: "shippingbox")
+                }
             } header: {
                 Text("Content Management")
             }
