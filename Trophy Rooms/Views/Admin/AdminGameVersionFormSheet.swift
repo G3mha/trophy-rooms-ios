@@ -10,9 +10,11 @@ struct AdminGameVersionFormSheet: View {
     @State private var slug: String = ""
     @State private var description: String = ""
     @State private var coverUrl: String = ""
-    @State private var includedDlcText: String = ""
+    @State private var selectedDlcIds: [String] = []
     @State private var isDefault: Bool = false
     @State private var isSaving = false
+    @State private var availableDlcs: [DLC] = []
+    @State private var isLoadingDlcs = false
 
     var isEditing: Bool {
         version != nil
@@ -58,13 +60,42 @@ struct AdminGameVersionFormSheet: View {
                 }
 
                 Section {
-                    TextField("DLC names (comma-separated)", text: $includedDlcText, axis: .vertical)
-                        .lineLimit(2...4)
-                        .textInputAutocapitalization(.words)
+                    if isLoadingDlcs {
+                        ProgressView("Loading DLCs...")
+                    } else if availableDlcs.isEmpty {
+                        Text("No DLCs available for this game")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(availableDlcs, id: \.id) { dlc in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(dlc.name)
+                                    Text(dlc.type.displayName)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if selectedDlcIds.contains(dlc.id) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                if selectedDlcIds.contains(dlc.id) {
+                                    selectedDlcIds.removeAll { $0 == dlc.id }
+                                } else {
+                                    selectedDlcIds.append(dlc.id)
+                                }
+                            }
+                        }
+                    }
                 } header: {
                     Text("Included DLC")
                 } footer: {
-                    Text("Enter DLC names separated by commas. Example: Season Pass, Bonus Skins, Extra Maps")
+                    if !availableDlcs.isEmpty {
+                        Text("Tap to select DLCs included in this version")
+                    }
                 }
 
                 if !isEditing {
@@ -108,8 +139,40 @@ struct AdminGameVersionFormSheet: View {
                 slug = version.slug ?? ""
                 description = version.description ?? ""
                 coverUrl = version.coverUrl ?? ""
-                includedDlcText = version.includedDlc?.joined(separator: ", ") ?? ""
+                selectedDlcIds = version.dlcs?.map { $0.id } ?? []
                 isDefault = version.isDefault
+            }
+        }
+        .task {
+            await fetchDlcs()
+        }
+    }
+
+    private func fetchDlcs() async {
+        isLoadingDlcs = true
+        let query = """
+        query GetDLCs($gameId: ID!) {
+            dlcs(gameId: $gameId) {
+                id
+                name
+                slug
+                type
+            }
+        }
+        """
+
+        do {
+            let response: DLCsResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: ["gameId": gameId]
+            )
+            DispatchQueue.main.async {
+                self.availableDlcs = response.dlcs
+                self.isLoadingDlcs = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.isLoadingDlcs = false
             }
         }
     }
@@ -122,16 +185,7 @@ struct AdminGameVersionFormSheet: View {
         let trimmedDescription = description.trimmingCharacters(in: .whitespaces)
         let trimmedCoverUrl = coverUrl.trimmingCharacters(in: .whitespaces)
 
-        let dlcArray: [String]? = {
-            let trimmed = includedDlcText.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty {
-                return nil
-            }
-            return trimmed
-                .split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty }
-        }()
+        let dlcIds: [String]? = selectedDlcIds.isEmpty ? nil : selectedDlcIds
 
         Task {
             let success: Bool
@@ -143,7 +197,7 @@ struct AdminGameVersionFormSheet: View {
                     slug: trimmedSlug,
                     description: trimmedDescription.isEmpty ? nil : trimmedDescription,
                     coverUrl: trimmedCoverUrl.isEmpty ? nil : trimmedCoverUrl,
-                    includedDlc: dlcArray
+                    dlcIds: dlcIds
                 )
             } else {
                 success = await viewModel.createVersion(
@@ -152,7 +206,7 @@ struct AdminGameVersionFormSheet: View {
                     slug: trimmedSlug,
                     description: trimmedDescription.isEmpty ? nil : trimmedDescription,
                     coverUrl: trimmedCoverUrl.isEmpty ? nil : trimmedCoverUrl,
-                    includedDlc: dlcArray,
+                    dlcIds: dlcIds,
                     isDefault: isDefault
                 )
             }

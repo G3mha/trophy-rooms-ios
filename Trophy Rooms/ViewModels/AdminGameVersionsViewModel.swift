@@ -23,13 +23,19 @@ class AdminGameVersionsViewModel: ObservableObject {
                 coverUrl
                 effectiveCoverUrl
                 releaseDate
-                includedDlc
                 isDefault
                 gameId
                 game {
                     id
                     title
                 }
+                dlcs {
+                    id
+                    name
+                    slug
+                    type
+                }
+                dlcCount
                 achievementSetCount
             }
         }
@@ -58,7 +64,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         slug: String,
         description: String?,
         coverUrl: String?,
-        includedDlc: [String]?,
+        dlcIds: [String]?,
         isDefault: Bool
     ) async -> Bool {
         DispatchQueue.main.async {
@@ -77,9 +83,12 @@ class AdminGameVersionsViewModel: ObservableObject {
                     description
                     coverUrl
                     effectiveCoverUrl
-                    includedDlc
                     isDefault
                     gameId
+                    dlcs {
+                        id
+                        name
+                    }
                 }
             }
         }
@@ -97,8 +106,8 @@ class AdminGameVersionsViewModel: ObservableObject {
         if let coverUrl = coverUrl, !coverUrl.isEmpty {
             input["coverUrl"] = coverUrl
         }
-        if let includedDlc = includedDlc, !includedDlc.isEmpty {
-            input["includedDlc"] = includedDlc
+        if let dlcIds = dlcIds, !dlcIds.isEmpty {
+            input["dlcIds"] = dlcIds
         }
         if isDefault {
             input["isDefault"] = isDefault
@@ -136,7 +145,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         slug: String,
         description: String?,
         coverUrl: String?,
-        includedDlc: [String]?
+        dlcIds: [String]?
     ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
@@ -154,9 +163,12 @@ class AdminGameVersionsViewModel: ObservableObject {
                     description
                     coverUrl
                     effectiveCoverUrl
-                    includedDlc
                     isDefault
                     gameId
+                    dlcs {
+                        id
+                        name
+                    }
                 }
             }
         }
@@ -173,8 +185,8 @@ class AdminGameVersionsViewModel: ObservableObject {
         if let coverUrl = coverUrl {
             input["coverUrl"] = coverUrl
         }
-        if let includedDlc = includedDlc {
-            input["includedDlc"] = includedDlc
+        if let dlcIds = dlcIds {
+            input["dlcIds"] = dlcIds
         }
 
         do {
