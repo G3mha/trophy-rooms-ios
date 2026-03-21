@@ -10,6 +10,7 @@ struct AdminSetFormSheet: View {
     @State private var selectedVisibility: AchievementSetVisibility = .PUBLIC
     @State private var selectedGameId: String = ""
     @State private var selectedVersionId: String = ""
+    @State private var selectedDlcId: String = ""
     @State private var gameSearchText: String = ""
     @State private var isSaving = false
 
@@ -62,12 +63,15 @@ struct AdminSetFormSheet: View {
                     .pickerStyle(.navigationLink)
                     .onChange(of: selectedGameId) { _, newValue in
                         selectedVersionId = ""
+                        selectedDlcId = ""
                         if !newValue.isEmpty {
                             Task {
                                 await viewModel.fetchVersions(gameId: newValue)
+                                await viewModel.fetchDlcs(gameId: newValue)
                             }
                         } else {
                             viewModel.versions = []
+                            viewModel.dlcs = []
                         }
                     }
                 } header: {
@@ -94,6 +98,27 @@ struct AdminSetFormSheet: View {
                         Text("Version (Optional)")
                     } footer: {
                         Text("Select a specific version or leave as 'All Versions' to apply to the entire game")
+                    }
+                }
+
+                if !selectedGameId.isEmpty && !viewModel.dlcs.isEmpty {
+                    Section {
+                        Picker("DLC", selection: $selectedDlcId) {
+                            Text("Base Game").tag("")
+                            ForEach(viewModel.dlcs, id: \.id) { dlc in
+                                HStack {
+                                    Text(dlc.name)
+                                    Text("(\(dlc.type.displayName))")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .tag(dlc.id)
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
+                    } header: {
+                        Text("DLC (Optional)")
+                    } footer: {
+                        Text("Select a DLC if this achievement set belongs to specific downloadable content")
                     }
                 }
 
@@ -129,15 +154,18 @@ struct AdminSetFormSheet: View {
                 selectedVisibility = set.visibilityEnum
                 selectedGameId = set.game?.id ?? ""
                 selectedVersionId = set.gameVersionId ?? ""
+                selectedDlcId = set.dlcId ?? ""
                 if !selectedGameId.isEmpty {
                     Task {
                         await viewModel.fetchVersions(gameId: selectedGameId)
+                        await viewModel.fetchDlcs(gameId: selectedGameId)
                     }
                 }
             } else if selectedGameId.isEmpty, let firstGame = viewModel.games.first {
                 selectedGameId = firstGame.id
                 Task {
                     await viewModel.fetchVersions(gameId: firstGame.id)
+                    await viewModel.fetchDlcs(gameId: firstGame.id)
                 }
             }
         }
@@ -149,6 +177,7 @@ struct AdminSetFormSheet: View {
         Task {
             let success: Bool
             let versionId = selectedVersionId.isEmpty ? nil : selectedVersionId
+            let dlcId = selectedDlcId.isEmpty ? nil : selectedDlcId
             if let set = achievementSet {
                 success = await viewModel.updateAchievementSet(
                     id: set.id,
@@ -156,7 +185,8 @@ struct AdminSetFormSheet: View {
                     type: selectedType,
                     visibility: selectedVisibility,
                     gameId: selectedGameId,
-                    gameVersionId: versionId
+                    gameVersionId: versionId,
+                    dlcId: dlcId
                 )
             } else {
                 success = await viewModel.createAchievementSet(
@@ -164,7 +194,8 @@ struct AdminSetFormSheet: View {
                     type: selectedType,
                     visibility: selectedVisibility,
                     gameId: selectedGameId,
-                    gameVersionId: versionId
+                    gameVersionId: versionId,
+                    dlcId: dlcId
                 )
             }
 

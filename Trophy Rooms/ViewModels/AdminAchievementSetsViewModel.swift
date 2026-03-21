@@ -5,6 +5,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
     @Published var achievementSets: [AdminAchievementSet] = []
     @Published var games: [AdminGame] = []
     @Published var versions: [GameVersion] = []
+    @Published var dlcs: [DLC] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
@@ -36,6 +37,14 @@ class AdminAchievementSetsViewModel: ObservableObject {
                 game {
                     id
                     title
+                }
+                gameVersionId
+                dlcId
+                dlc {
+                    id
+                    name
+                    slug
+                    type
                 }
                 achievementCount
             }
@@ -101,13 +110,19 @@ class AdminAchievementSetsViewModel: ObservableObject {
                 coverUrl
                 effectiveCoverUrl
                 releaseDate
-                includedDlc
                 isDefault
                 gameId
                 game {
                     id
                     title
                 }
+                dlcs {
+                    id
+                    name
+                    slug
+                    type
+                }
+                dlcCount
                 achievementSetCount
             }
         }
@@ -128,7 +143,34 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
     }
 
-    func createAchievementSet(title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String, gameVersionId: String? = nil) async -> Bool {
+    func fetchDlcs(gameId: String) async {
+        let query = """
+        query GetDLCs($gameId: ID!) {
+            dlcs(gameId: $gameId) {
+                id
+                name
+                slug
+                type
+            }
+        }
+        """
+
+        do {
+            let response: DLCsResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: ["gameId": gameId]
+            )
+            DispatchQueue.main.async {
+                self.dlcs = response.dlcs
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.dlcs = []
+            }
+        }
+    }
+
+    func createAchievementSet(title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String, gameVersionId: String? = nil, dlcId: String? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -147,6 +189,10 @@ class AdminAchievementSetsViewModel: ObservableObject {
                         id
                         title
                     }
+                    dlc {
+                        id
+                        name
+                    }
                     achievementCount
                 }
             }
@@ -162,6 +208,10 @@ class AdminAchievementSetsViewModel: ObservableObject {
 
         if let gameVersionId = gameVersionId, !gameVersionId.isEmpty {
             input["gameVersionId"] = gameVersionId
+        }
+
+        if let dlcId = dlcId, !dlcId.isEmpty {
+            input["dlcId"] = dlcId
         }
 
         let variables: [String: Any] = ["input": input]
@@ -191,7 +241,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
     }
 
-    func updateAchievementSet(id: String, title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String, gameVersionId: String? = nil) async -> Bool {
+    func updateAchievementSet(id: String, title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String, gameVersionId: String? = nil, dlcId: String? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -210,6 +260,10 @@ class AdminAchievementSetsViewModel: ObservableObject {
                         id
                         title
                     }
+                    dlc {
+                        id
+                        name
+                    }
                     achievementCount
                 }
             }
@@ -225,6 +279,10 @@ class AdminAchievementSetsViewModel: ObservableObject {
 
         if let gameVersionId = gameVersionId {
             input["gameVersionId"] = gameVersionId.isEmpty ? NSNull() : gameVersionId
+        }
+
+        if let dlcId = dlcId {
+            input["dlcId"] = dlcId.isEmpty ? NSNull() : dlcId
         }
 
         let variables: [String: Any] = [
