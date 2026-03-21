@@ -603,6 +603,30 @@ struct AdminGameEdge: Decodable {
     let node: AdminGame
 }
 
+// Admin games with offset pagination
+struct AdminGamesPageResponse: Decodable {
+    let adminGames: AdminGamesPage
+}
+
+struct AdminGamesPage: Decodable {
+    let items: [AdminGameItem]
+    let totalCount: Int
+    let page: Int
+    let pageSize: Int
+    let totalPages: Int
+}
+
+struct AdminGameItem: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let description: String?
+    let coverUrl: String?
+    let platformId: String?
+    let platformName: String?
+    let platformSlug: String?
+    let achievementSetCount: Int
+}
+
 // Admin Achievement Set
 enum AchievementSetType: String, Codable, CaseIterable {
     case OFFICIAL

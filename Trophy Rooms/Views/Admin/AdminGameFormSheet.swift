@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AdminGameFormSheet: View {
     @ObservedObject var viewModel: AdminGamesViewModel
-    let game: AdminGame?
+    let game: AdminGameItem?
     @Environment(\.dismiss) private var dismiss
 
     @State private var title: String = ""
@@ -94,7 +94,7 @@ struct AdminGameFormSheet: View {
                 title = game.title
                 description = game.description ?? ""
                 coverUrl = game.coverUrl ?? ""
-                selectedPlatformId = game.platform?.id ?? ""
+                selectedPlatformId = game.platformId ?? ""
             } else if selectedPlatformId.isEmpty, let firstPlatform = viewModel.platforms.first {
                 selectedPlatformId = firstPlatform.id
             }

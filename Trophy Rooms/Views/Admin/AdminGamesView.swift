@@ -3,8 +3,8 @@ import SwiftUI
 struct AdminGamesView: View {
     @StateObject private var viewModel = AdminGamesViewModel()
     @State private var showingCreateSheet = false
-    @State private var gameToEdit: AdminGame?
-    @State private var gameToDelete: AdminGame?
+    @State private var gameToEdit: AdminGameItem?
+    @State private var gameToDelete: AdminGameItem?
     @State private var showingDeleteConfirmation = false
     @State private var selectedIds: Set<String> = []
     @State private var isSelecting = false
@@ -13,7 +13,7 @@ struct AdminGamesView: View {
     var body: some View {
         List {
             // Pagination controls
-            if viewModel.totalCount > 0 && viewModel.searchText.isEmpty {
+            if viewModel.totalCount > 0 {
                 Section {
                     HStack(spacing: 16) {
                         // First page button
@@ -101,8 +101,8 @@ struct AdminGamesView: View {
                             Text(game.title)
                                 .font(.headline)
                                 .lineLimit(1)
-                            if let platform = game.platform {
-                                Text(platform.name)
+                            if let platformName = game.platformName {
+                                Text(platformName)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -141,6 +141,18 @@ struct AdminGamesView: View {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search games")
+        .onSubmit(of: .search) {
+            Task {
+                await viewModel.search()
+            }
+        }
+        .onChange(of: viewModel.searchText) { _, newValue in
+            if newValue.isEmpty {
+                Task {
+                    await viewModel.fetchGames(page: 1)
+                }
+            }
+        }
         .navigationTitle("Games")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -183,7 +195,7 @@ struct AdminGamesView: View {
             }
         }
         .refreshable {
-            await viewModel.goToFirstPage()
+            await viewModel.fetchGames(page: viewModel.currentPage)
         }
         .task {
             await viewModel.fetchGames(page: 1)
