@@ -1,0 +1,293 @@
+import Foundation
+import Combine
+
+class AdminBundlesViewModel: ObservableObject {
+    @Published var bundles: [AppBundle] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var successMessage: String?
+
+    func fetchBundles(type: BundleType? = nil) async {
+        DispatchQueue.main.async {
+            self.isLoading = true
+            self.errorMessage = nil
+        }
+
+        let query = """
+        query GetBundles($type: BundleType) {
+            bundles(type: $type) {
+                id
+                name
+                slug
+                type
+                description
+                coverUrl
+                releaseDate
+                price
+                gameCount
+                dlcCount
+                games {
+                    id
+                    title
+                }
+                dlcs {
+                    id
+                    name
+                    game {
+                        id
+                        title
+                    }
+                }
+            }
+        }
+        """
+
+        var variables: [String: Any] = [:]
+        if let type = type {
+            variables["type"] = type.rawValue
+        }
+
+        do {
+            let response: BundlesResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: variables
+            )
+            DispatchQueue.main.async {
+                self.bundles = response.bundles
+                self.isLoading = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+
+    func createBundle(
+        name: String,
+        slug: String,
+        type: BundleType,
+        description: String?,
+        coverUrl: String?,
+        price: Double?
+    ) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation CreateBundle($input: CreateBundleInput!) {
+            createBundle(input: $input) {
+                success
+                bundle {
+                    id
+                    name
+                    slug
+                    type
+                    description
+                    coverUrl
+                    price
+                    gameCount
+                    dlcCount
+                }
+            }
+        }
+        """
+
+        var input: [String: Any] = [
+            "name": name,
+            "slug": slug,
+            "type": type.rawValue
+        ]
+
+        if let description = description, !description.isEmpty {
+            input["description"] = description
+        }
+        if let coverUrl = coverUrl, !coverUrl.isEmpty {
+            input["coverUrl"] = coverUrl
+        }
+        if let price = price {
+            input["price"] = price
+        }
+
+        do {
+            let response: CreateBundleResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["input": input]
+            )
+            if response.createBundle.success {
+                await fetchBundles()
+                DispatchQueue.main.async {
+                    self.successMessage = "Bundle created successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to create bundle"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    func updateBundle(
+        id: String,
+        name: String,
+        slug: String,
+        type: BundleType,
+        description: String?,
+        coverUrl: String?,
+        price: Double?
+    ) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation UpdateBundle($id: ID!, $input: UpdateBundleInput!) {
+            updateBundle(id: $id, input: $input) {
+                success
+                bundle {
+                    id
+                    name
+                    slug
+                    type
+                    description
+                    coverUrl
+                    price
+                    gameCount
+                    dlcCount
+                }
+            }
+        }
+        """
+
+        var input: [String: Any] = [
+            "name": name,
+            "slug": slug,
+            "type": type.rawValue
+        ]
+
+        if let description = description {
+            input["description"] = description
+        }
+        if let coverUrl = coverUrl {
+            input["coverUrl"] = coverUrl
+        }
+        if let price = price {
+            input["price"] = price
+        }
+
+        do {
+            let response: UpdateBundleResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["id": id, "input": input]
+            )
+            if response.updateBundle.success {
+                await fetchBundles()
+                DispatchQueue.main.async {
+                    self.successMessage = "Bundle updated successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to update bundle"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    func deleteBundle(id: String) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation DeleteBundle($id: ID!) {
+            deleteBundle(id: $id) {
+                success
+                deletedId
+            }
+        }
+        """
+
+        do {
+            let response: DeleteBundleResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["id": id]
+            )
+            if response.deleteBundle.success {
+                DispatchQueue.main.async {
+                    self.bundles.removeAll { $0.id == id }
+                    self.successMessage = "Bundle deleted successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to delete bundle"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    func bulkDeleteBundles(ids: [String]) async -> Int {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation BulkDeleteBundles($ids: [ID!]!) {
+            bulkDeleteBundles(ids: $ids) {
+                success
+                deletedCount
+            }
+        }
+        """
+
+        do {
+            let response: BulkDeleteBundlesResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["ids": ids]
+            )
+            if response.bulkDeleteBundles.success {
+                DispatchQueue.main.async {
+                    self.bundles.removeAll { ids.contains($0.id) }
+                    self.successMessage = "Deleted \(response.bulkDeleteBundles.deletedCount) bundle(s)"
+                }
+                return response.bulkDeleteBundles.deletedCount
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to delete bundles"
+                }
+                return 0
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return 0
+        }
+    }
+}
