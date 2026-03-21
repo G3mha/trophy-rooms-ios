@@ -61,6 +61,25 @@ struct GameDetailView: View {
                             }
                         }
 
+                        // DLCs Section
+                        if let dlcs = game.dlcs, !dlcs.isEmpty {
+                            DLCsSectionView(
+                                dlcs: dlcs,
+                                isAuthenticated: clerk.user != nil,
+                                isDlcOwnershipLoading: viewModel.isDlcOwnershipLoading,
+                                onToggleOwnership: { dlcId in
+                                    Task {
+                                        await viewModel.toggleDlcOwnership(dlcId: dlcId)
+                                    }
+                                }
+                            )
+                        }
+
+                        // Bundles Section
+                        if let bundles = game.bundles, !bundles.isEmpty {
+                            BundlesSectionView(bundles: bundles)
+                        }
+
                         // Achievement Sets
                         ForEach(game.achievementSets) { set in
                             AchievementSetView(
@@ -378,13 +397,23 @@ private struct AchievementSetView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 VStack(alignment: .leading) {
-                    Text(set.title)
-                        .font(.headline)
+                    HStack {
+                        Text(set.title)
+                            .font(.headline)
+                        if let dlc = set.dlc {
+                            DLCTypeBadge(type: dlc.type)
+                        }
+                    }
                     HStack(spacing: 4) {
                         Text("\(set.type) • \(set.visibility.lowercased())")
                         if let version = set.gameVersion {
                             Text("•")
                             Text(version.name)
+                                .fontWeight(.medium)
+                        }
+                        if let dlc = set.dlc {
+                            Text("•")
+                            Text(dlc.name)
                                 .fontWeight(.medium)
                         }
                     }
@@ -491,5 +520,152 @@ private struct AchievementRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - DLCs Section
+
+private struct DLCsSectionView: View {
+    let dlcs: [GameDLC]
+    let isAuthenticated: Bool
+    let isDlcOwnershipLoading: Set<String>
+    let onToggleOwnership: (String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("DLCs & Expansions")
+                    .font(.headline)
+                Spacer()
+                Text("\(dlcs.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(4)
+            }
+
+            ForEach(dlcs) { dlc in
+                DLCCard(
+                    dlc: dlc,
+                    isOwnershipLoading: isDlcOwnershipLoading.contains(dlc.id),
+                    isAuthenticated: isAuthenticated,
+                    onToggleOwnership: { onToggleOwnership(dlc.id) }
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Bundles Section
+
+private struct BundlesSectionView: View {
+    let bundles: [GameBundle]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Available In")
+                    .font(.headline)
+                Spacer()
+                Text("\(bundles.count) bundle\(bundles.count == 1 ? "" : "s")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            ForEach(bundles) { bundle in
+                BundleCard(bundle: bundle)
+            }
+        }
+    }
+}
+
+private struct BundleCard: View {
+    let bundle: GameBundle
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if let coverUrl = bundle.coverUrl, let url = URL(string: coverUrl) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color.gray.opacity(0.3)
+                }
+                .frame(width: 50, height: 50)
+                .cornerRadius(8)
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 50, height: 50)
+                    .overlay {
+                        Image(systemName: "shippingbox")
+                            .foregroundStyle(.gray)
+                    }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(bundle.name)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+
+                    BundleTypeBadgeSmall(type: bundle.type)
+                }
+
+                HStack(spacing: 8) {
+                    if bundle.gameCount > 0 {
+                        Text("\(bundle.gameCount) games")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    if bundle.dlcCount > 0 {
+                        Text("\(bundle.dlcCount) DLCs")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+}
+
+private struct BundleTypeBadgeSmall: View {
+    let type: BundleType
+
+    var body: some View {
+        Text(type.displayName)
+            .font(.caption2)
+            .fontWeight(.medium)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(badgeColor.opacity(0.2))
+            .foregroundStyle(badgeColor)
+            .cornerRadius(4)
+    }
+
+    var badgeColor: Color {
+        switch type {
+        case .BUNDLE:
+            return .blue
+        case .SEASON_PASS:
+            return .purple
+        case .COLLECTION:
+            return .orange
+        case .SUBSCRIPTION:
+            return .green
+        }
     }
 }

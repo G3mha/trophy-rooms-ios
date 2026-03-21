@@ -13,6 +13,8 @@ class GameDetailViewModel: ObservableObject {
     @Published var isStatusLoading = false
     @Published var collectionItems: [CollectionItem] = []
     @Published var isCollectionLoading = false
+    @Published var ownedDlcIds: Set<String> = []
+    @Published var isDlcOwnershipLoading: Set<String> = []
 
     func fetchGame(id: String) async {
         DispatchQueue.main.async {
@@ -43,8 +45,14 @@ class GameDetailViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
-                    includedDlc
                     gameId
+                    dlcs {
+                        id
+                        name
+                        slug
+                        type
+                    }
+                    dlcCount
                 }
                 versionCount
                 defaultVersion {
@@ -55,8 +63,38 @@ class GameDetailViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
-                    includedDlc
                     gameId
+                    dlcs {
+                        id
+                        name
+                        slug
+                        type
+                    }
+                    dlcCount
+                }
+                dlcs {
+                    id
+                    name
+                    slug
+                    type
+                    description
+                    coverUrl
+                    effectiveCoverUrl
+                    releaseDate
+                    price
+                    isOwned
+                    achievementSetCount
+                }
+                dlcCount
+                bundles {
+                    id
+                    name
+                    slug
+                    type
+                    description
+                    coverUrl
+                    gameCount
+                    dlcCount
                 }
                 achievementSets {
                     id
@@ -68,6 +106,12 @@ class GameDetailViewModel: ObservableObject {
                     gameVersion {
                         id
                         name
+                    }
+                    dlcId
+                    dlc {
+                        id
+                        name
+                        type
                     }
                     achievements {
                         id
@@ -323,6 +367,55 @@ class GameDetailViewModel: ObservableObject {
         } catch {
             DispatchQueue.main.async {
                 self.isCollectionLoading = false
+            }
+        }
+    }
+
+    // MARK: - DLC Ownership Methods
+
+    func toggleDlcOwnership(dlcId: String) async {
+        guard let dlc = game?.dlcs?.first(where: { $0.id == dlcId }) else { return }
+
+        DispatchQueue.main.async {
+            self.isDlcOwnershipLoading.insert(dlcId)
+        }
+
+        let isCurrentlyOwned = dlc.isOwned ?? false
+        let mutationName = isCurrentlyOwned ? "RemoveDLCFromOwned" : "AddDLCToOwned"
+        let mutationField = isCurrentlyOwned ? "removeDLCFromOwned" : "addDLCToOwned"
+
+        let mutation = """
+        mutation \(mutationName)($dlcId: ID!) {
+            \(mutationField)(dlcId: $dlcId) {
+                success
+            }
+        }
+        """
+
+        do {
+            let response: DLCOwnershipMutationResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["dlcId": dlcId]
+            )
+
+            let success = isCurrentlyOwned
+                ? response.removeDLCFromOwned?.success ?? false
+                : response.addDLCToOwned?.success ?? false
+
+            if success {
+                // Refetch game to get updated ownership state
+                if let gameId = game?.id {
+                    await fetchGame(id: gameId)
+                }
+            }
+
+            DispatchQueue.main.async {
+                self.isDlcOwnershipLoading.remove(dlcId)
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+                self.isDlcOwnershipLoading.remove(dlcId)
             }
         }
     }
