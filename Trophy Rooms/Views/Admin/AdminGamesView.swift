@@ -78,6 +78,24 @@ struct AdminGamesView: View {
                             .tint(.blue)
                         }
                     }
+                    .onAppear {
+                        // Load more when reaching the last few items
+                        if game.id == viewModel.filteredGames.last?.id && viewModel.canLoadMore {
+                            Task {
+                                await viewModel.loadMoreGames()
+                            }
+                        }
+                    }
+                }
+
+                // Loading more indicator
+                if viewModel.isLoadingMore {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
                 }
             }
         }

@@ -581,12 +581,22 @@ struct AdminGame: Identifiable, Decodable {
     let achievementSetCount: Int
 }
 
+// Pagination
+struct PageInfo: Decodable {
+    let hasNextPage: Bool
+    let hasPreviousPage: Bool?
+    let startCursor: String?
+    let endCursor: String?
+}
+
 struct AdminGamesResponse: Decodable {
     let games: AdminGamesConnection
 }
 
 struct AdminGamesConnection: Decodable {
     let edges: [AdminGameEdge]
+    let pageInfo: PageInfo?
+    let totalCount: Int?
 }
 
 struct AdminGameEdge: Decodable {

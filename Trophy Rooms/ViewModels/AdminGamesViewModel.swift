@@ -5,9 +5,15 @@ class AdminGamesViewModel: ObservableObject {
     @Published var games: [AdminGame] = []
     @Published var platforms: [AdminPlatform] = []
     @Published var isLoading = false
+    @Published var isLoadingMore = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
     @Published var searchText: String = ""
+
+    private var endCursor: String?
+    private var hasNextPage = false
+    private var totalCount: Int = 0
+    private let pageSize = 50
 
     var filteredGames: [AdminGame] {
         if searchText.isEmpty {
@@ -18,15 +24,21 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
+    var canLoadMore: Bool {
+        hasNextPage && !isLoadingMore && searchText.isEmpty
+    }
+
     func fetchGames() async {
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
+            self.endCursor = nil
+            self.hasNextPage = false
         }
 
         let query = """
-        query GetGames {
-            games(first: 500) {
+        query GetGames($first: Int!, $after: String) {
+            games(first: $first, after: $after) {
                 edges {
                     node {
                         id
@@ -41,20 +53,87 @@ class AdminGamesViewModel: ObservableObject {
                         achievementSetCount
                     }
                 }
+                pageInfo {
+                    hasNextPage
+                    endCursor
+                }
+                totalCount
             }
         }
         """
 
+        let variables: [String: Any] = ["first": pageSize]
+
         do {
-            let response: AdminGamesResponse = try await NetworkService.shared.fetch(query: query)
+            let response: AdminGamesResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: variables
+            )
             DispatchQueue.main.async {
                 self.games = response.games.edges.map { $0.node }
+                self.endCursor = response.games.pageInfo?.endCursor
+                self.hasNextPage = response.games.pageInfo?.hasNextPage ?? false
+                self.totalCount = response.games.totalCount ?? 0
                 self.isLoading = false
             }
         } catch {
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
+            }
+        }
+    }
+
+    func loadMoreGames() async {
+        guard canLoadMore, let cursor = endCursor else { return }
+
+        DispatchQueue.main.async {
+            self.isLoadingMore = true
+        }
+
+        let query = """
+        query GetGames($first: Int!, $after: String) {
+            games(first: $first, after: $after) {
+                edges {
+                    node {
+                        id
+                        title
+                        description
+                        coverUrl
+                        platform {
+                            id
+                            name
+                            slug
+                        }
+                        achievementSetCount
+                    }
+                }
+                pageInfo {
+                    hasNextPage
+                    endCursor
+                }
+                totalCount
+            }
+        }
+        """
+
+        let variables: [String: Any] = ["first": pageSize, "after": cursor]
+
+        do {
+            let response: AdminGamesResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: variables
+            )
+            DispatchQueue.main.async {
+                self.games.append(contentsOf: response.games.edges.map { $0.node })
+                self.endCursor = response.games.pageInfo?.endCursor
+                self.hasNextPage = response.games.pageInfo?.hasNextPage ?? false
+                self.isLoadingMore = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+                self.isLoadingMore = false
             }
         }
     }
