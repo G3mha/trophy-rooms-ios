@@ -3,6 +3,8 @@ import Combine
 
 class AdminBundlesViewModel: ObservableObject {
     @Published var bundles: [AppBundle] = []
+    @Published var availableGames: [GameSummary] = []
+    @Published var availableDLCs: [DLC] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
@@ -288,6 +290,163 @@ class AdminBundlesViewModel: ObservableObject {
                 self.errorMessage = error.localizedDescription
             }
             return 0
+        }
+    }
+
+    // MARK: - Bundle Contents Management
+
+    func fetchAvailableGames() async {
+        let query = """
+        query GetAllGames {
+            gamesPage(pageSize: 100) {
+                items {
+                    id
+                    title
+                    coverUrl
+                    platform { id name slug }
+                }
+            }
+        }
+        """
+
+        do {
+            let response: GamesPageResponse = try await NetworkService.shared.fetch(query: query)
+            DispatchQueue.main.async {
+                self.availableGames = response.gamesPage.items
+            }
+        } catch {
+            print("Error fetching games: \(error)")
+        }
+    }
+
+    func fetchAvailableDLCs() async {
+        let query = """
+        query GetAllDLCs {
+            allDlcs {
+                id
+                name
+                type
+                coverUrl
+                game { id title }
+            }
+        }
+        """
+
+        do {
+            let response: AllDLCsResponse = try await NetworkService.shared.fetch(query: query)
+            DispatchQueue.main.async {
+                self.availableDLCs = response.allDlcs
+            }
+        } catch {
+            print("Error fetching DLCs: \(error)")
+        }
+    }
+
+    func addGameToBundle(gameId: String, bundleId: String) async -> Bool {
+        let mutation = """
+        mutation AddGameToBundle($gameId: ID!, $bundleId: ID!) {
+            addGameToBundle(gameId: $gameId, bundleId: $bundleId) {
+                success
+            }
+        }
+        """
+
+        do {
+            let response: AddGameToBundleResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["gameId": gameId, "bundleId": bundleId]
+            )
+            if response.addGameToBundle.success {
+                await fetchBundles()
+                return true
+            }
+            return false
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    func removeGameFromBundle(gameId: String, bundleId: String) async -> Bool {
+        let mutation = """
+        mutation RemoveGameFromBundle($gameId: ID!, $bundleId: ID!) {
+            removeGameFromBundle(gameId: $gameId, bundleId: $bundleId) {
+                success
+            }
+        }
+        """
+
+        do {
+            let response: RemoveGameFromBundleResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["gameId": gameId, "bundleId": bundleId]
+            )
+            if response.removeGameFromBundle.success {
+                await fetchBundles()
+                return true
+            }
+            return false
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    func addDLCToBundle(dlcId: String, bundleId: String) async -> Bool {
+        let mutation = """
+        mutation AddDLCToBundle($dlcId: ID!, $bundleId: ID!) {
+            addDLCToBundle(dlcId: $dlcId, bundleId: $bundleId) {
+                success
+            }
+        }
+        """
+
+        do {
+            let response: AddDLCToBundleResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["dlcId": dlcId, "bundleId": bundleId]
+            )
+            if response.addDLCToBundle.success {
+                await fetchBundles()
+                return true
+            }
+            return false
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    func removeDLCFromBundle(dlcId: String, bundleId: String) async -> Bool {
+        let mutation = """
+        mutation RemoveDLCFromBundle($dlcId: ID!, $bundleId: ID!) {
+            removeDLCFromBundle(dlcId: $dlcId, bundleId: $bundleId) {
+                success
+            }
+        }
+        """
+
+        do {
+            let response: RemoveDLCFromBundleResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["dlcId": dlcId, "bundleId": bundleId]
+            )
+            if response.removeDLCFromBundle.success {
+                await fetchBundles()
+                return true
+            }
+            return false
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
         }
     }
 }
