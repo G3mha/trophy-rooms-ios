@@ -2,9 +2,8 @@ import SwiftUI
 
 struct AdminDLCsView: View {
     @StateObject private var viewModel = AdminDLCsViewModel()
-    @State private var games: [AdminGame] = []
-    @State private var isLoadingGames = false
-    @State private var selectedGameId: String?
+    @State private var selectedGame: GameSummary?
+    @State private var showingGamePicker = false
     @State private var showingCreateSheet = false
     @State private var dlcToEdit: DLC?
     @State private var dlcToDelete: DLC?
@@ -16,25 +15,36 @@ struct AdminDLCsView: View {
     var body: some View {
         List {
             Section {
-                Picker("Game", selection: $selectedGameId) {
-                    Text("Select a game").tag(nil as String?)
-                    ForEach(games, id: \.id) { game in
-                        HStack {
-                            Text(game.title)
-                            if let platform = game.platform {
-                                Text("(\(platform.name))")
+                Button {
+                    showingGamePicker = true
+                } label: {
+                    HStack {
+                        Text("Game")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if let game = selectedGame {
+                            HStack(spacing: 8) {
+                                if let platform = game.platform {
+                                    PlatformIcon(slug: platform.slug, size: 14)
+                                }
+                                Text(game.title)
                                     .foregroundStyle(.secondary)
+                                    .lineLimit(1)
                             }
+                        } else {
+                            Text("Select a game")
+                                .foregroundStyle(.secondary)
                         }
-                        .tag(game.id as String?)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
                     }
                 }
-                .pickerStyle(.navigationLink)
             } header: {
                 Text("Select Game")
             }
 
-            if selectedGameId != nil {
+            if selectedGame != nil {
                 Section {
                     if viewModel.isLoading && viewModel.dlcs.isEmpty {
                         ProgressView()
@@ -134,7 +144,7 @@ struct AdminDLCsView: View {
         .navigationTitle("DLCs & Expansions")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                if selectedGameId != nil {
+                if selectedGame != nil {
                     if isSelecting {
                         Button("Done") {
                             isSelecting = false
@@ -175,17 +185,14 @@ struct AdminDLCsView: View {
             }
         }
         .refreshable {
-            if let gameId = selectedGameId {
-                await viewModel.fetchDLCs(gameId: gameId)
+            if let game = selectedGame {
+                await viewModel.fetchDLCs(gameId: game.id)
             }
         }
-        .task {
-            await fetchGames()
-        }
-        .onChange(of: selectedGameId) { _, newValue in
-            if let gameId = newValue {
+        .onChange(of: selectedGame) { _, newValue in
+            if let game = newValue {
                 Task {
-                    await viewModel.fetchDLCs(gameId: gameId)
+                    await viewModel.fetchDLCs(gameId: game.id)
                 }
             } else {
                 viewModel.dlcs = []
@@ -193,14 +200,19 @@ struct AdminDLCsView: View {
             selectedIds.removeAll()
             isSelecting = false
         }
+        .sheet(isPresented: $showingGamePicker) {
+            GamePickerSheet(title: "Select Game") { game in
+                selectedGame = game
+            }
+        }
         .sheet(isPresented: $showingCreateSheet) {
-            if let gameId = selectedGameId {
-                AdminDLCFormSheet(viewModel: viewModel, gameId: gameId, dlc: nil)
+            if let game = selectedGame {
+                AdminDLCFormSheet(viewModel: viewModel, gameId: game.id, dlc: nil)
             }
         }
         .sheet(item: $dlcToEdit) { dlc in
-            if let gameId = selectedGameId {
-                AdminDLCFormSheet(viewModel: viewModel, gameId: gameId, dlc: dlc)
+            if let game = selectedGame {
+                AdminDLCFormSheet(viewModel: viewModel, gameId: game.id, dlc: dlc)
             }
         }
         .alert("Delete DLC", isPresented: $showingDeleteConfirmation) {
@@ -208,9 +220,9 @@ struct AdminDLCsView: View {
                 dlcToDelete = nil
             }
             Button("Delete", role: .destructive) {
-                if let dlc = dlcToDelete, let gameId = selectedGameId {
+                if let dlc = dlcToDelete, let game = selectedGame {
                     Task {
-                        await viewModel.deleteDLC(id: dlc.id, gameId: gameId)
+                        await viewModel.deleteDLC(id: dlc.id, gameId: game.id)
                         dlcToDelete = nil
                     }
                 }
@@ -223,9 +235,9 @@ struct AdminDLCsView: View {
         .alert("Delete DLCs", isPresented: $showingBulkDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
-                if let gameId = selectedGameId {
+                if let game = selectedGame {
                     Task {
-                        await viewModel.bulkDeleteDLCs(ids: Array(selectedIds), gameId: gameId)
+                        await viewModel.bulkDeleteDLCs(ids: Array(selectedIds), gameId: game.id)
                         selectedIds.removeAll()
                         isSelecting = false
                     }
@@ -233,39 +245,6 @@ struct AdminDLCsView: View {
             }
         } message: {
             Text("Are you sure you want to delete \(selectedIds.count) DLC(s)? This action cannot be undone.")
-        }
-    }
-
-    private func fetchGames() async {
-        isLoadingGames = true
-        let query = """
-        query GetGames {
-            games(first: 500) {
-                edges {
-                    node {
-                        id
-                        title
-                        platform {
-                            id
-                            name
-                            slug
-                        }
-                    }
-                }
-            }
-        }
-        """
-
-        do {
-            let response: AdminGamesResponse = try await NetworkService.shared.fetch(query: query)
-            DispatchQueue.main.async {
-                self.games = response.games.edges.map { $0.node }
-                self.isLoadingGames = false
-            }
-        } catch {
-            DispatchQueue.main.async {
-                self.isLoadingGames = false
-            }
         }
     }
 
@@ -277,8 +256,6 @@ struct AdminDLCsView: View {
         }
     }
 }
-
-// DLCTypeBadge is defined in Components/DLCCard.swift
 
 #Preview {
     NavigationStack {

@@ -5,8 +5,6 @@ struct AdminBundleContentsSheet: View {
     @ObservedObject var viewModel: AdminBundlesViewModel
     let bundle: AppBundle
 
-    @State private var isLoadingGames = false
-    @State private var isLoadingDLCs = false
     @State private var showGamePicker = false
     @State private var showDLCPicker = false
 
@@ -113,10 +111,16 @@ struct AdminBundleContentsSheet: View {
             }
             .sheet(isPresented: $showGamePicker) {
                 GamePickerSheet(
-                    viewModel: viewModel,
-                    bundleId: bundle.id,
+                    title: "Add Game to Bundle",
                     excludedGameIds: Set(bundle.games?.map(\.id) ?? [])
-                )
+                ) { selectedGame in
+                    Task {
+                        await viewModel.addGameToBundle(
+                            gameId: selectedGame.id,
+                            bundleId: bundle.id
+                        )
+                    }
+                }
             }
             .sheet(isPresented: $showDLCPicker) {
                 DLCPickerSheet(
@@ -126,97 +130,7 @@ struct AdminBundleContentsSheet: View {
                 )
             }
             .task {
-                // Games and DLCs are loaded on-demand in their respective picker sheets
                 await viewModel.fetchAvailableDLCs()
-            }
-        }
-    }
-}
-
-// MARK: - Game Picker Sheet
-
-private struct GamePickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: AdminBundlesViewModel
-    let bundleId: String
-    let excludedGameIds: Set<String>
-
-    @State private var searchText = ""
-    @State private var searchTask: Task<Void, Never>?
-
-    var filteredGames: [GamePickerItem] {
-        viewModel.availableGames.filter { !excludedGameIds.contains($0.id) }
-    }
-
-    var body: some View {
-        NavigationStack {
-            List {
-                if filteredGames.isEmpty && !searchText.isEmpty {
-                    Text("No games found for \"\(searchText)\"")
-                        .foregroundStyle(.secondary)
-                } else if filteredGames.isEmpty {
-                    Text("Type to search for games")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(filteredGames) { game in
-                        Button {
-                            Task {
-                                let success = await viewModel.addGameToBundle(
-                                    gameId: game.id,
-                                    bundleId: bundleId
-                                )
-                                if success {
-                                    dismiss()
-                                }
-                            }
-                        } label: {
-                            HStack {
-                                if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
-                                    AsyncImage(url: url) { image in
-                                        image.resizable().aspectRatio(contentMode: .fit)
-                                    } placeholder: {
-                                        Color.gray
-                                    }
-                                    .frame(width: 40, height: 40)
-                                    .cornerRadius(6)
-                                }
-
-                                VStack(alignment: .leading) {
-                                    Text(game.title)
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-                                    if let platform = game.platform {
-                                        Text(platform.name)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .searchable(text: $searchText, prompt: "Search games")
-            .navigationTitle("Add Game")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-            .task {
-                await viewModel.fetchAvailableGames()
-            }
-            .onChange(of: searchText) { _, newValue in
-                searchTask?.cancel()
-                searchTask = Task {
-                    try? await Task.sleep(nanoseconds: 300_000_000) // 300ms debounce
-                    if !Task.isCancelled {
-                        await viewModel.fetchAvailableGames(search: newValue)
-                    }
-                }
             }
         }
     }
@@ -246,43 +160,63 @@ private struct DLCPickerSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(filteredDLCs, id: \.id) { dlc in
-                    Button {
-                        Task {
-                            let success = await viewModel.addDLCToBundle(
-                                dlcId: dlc.id,
-                                bundleId: bundleId
-                            )
-                            if success {
-                                dismiss()
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            if let coverUrl = dlc.coverUrl, let url = URL(string: coverUrl) {
-                                AsyncImage(url: url) { image in
-                                    image.resizable().aspectRatio(contentMode: .fit)
-                                } placeholder: {
-                                    Color.gray
-                                }
-                                .frame(width: 40, height: 40)
-                                .cornerRadius(6)
-                            }
-
-                            VStack(alignment: .leading) {
-                                Text(dlc.name)
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-                                if let game = dlc.game {
-                                    Text(game.title)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                if filteredDLCs.isEmpty && !searchText.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                } else if filteredDLCs.isEmpty {
+                    ContentUnavailableView {
+                        Label("No DLCs", systemImage: "puzzlepiece.extension")
+                    } description: {
+                        Text("No DLCs available to add")
+                    }
+                } else {
+                    ForEach(filteredDLCs, id: \.id) { dlc in
+                        Button {
+                            Task {
+                                let success = await viewModel.addDLCToBundle(
+                                    dlcId: dlc.id,
+                                    bundleId: bundleId
+                                )
+                                if success {
+                                    dismiss()
                                 }
                             }
+                        } label: {
+                            HStack(spacing: 12) {
+                                if let coverUrl = dlc.coverUrl, let url = URL(string: coverUrl) {
+                                    AsyncImage(url: url) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        Color.gray.opacity(0.3)
+                                    }
+                                    .frame(width: 50, height: 50)
+                                    .cornerRadius(8)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 50, height: 50)
+                                        .overlay {
+                                            Image(systemName: "puzzlepiece.extension")
+                                                .foregroundStyle(.gray)
+                                        }
+                                }
 
-                            Spacer()
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(dlc.name)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    if let game = dlc.game {
+                                        Text(game.title)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
 
-                            DLCTypeBadge(type: dlc.type)
+                                Spacer()
+
+                                DLCTypeBadge(type: dlc.type)
+                            }
                         }
                     }
                 }
