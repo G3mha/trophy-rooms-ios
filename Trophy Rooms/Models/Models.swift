@@ -724,28 +724,13 @@ struct AllDLCsResponse: Decodable {
     let allDlcs: [DLCPickerItem]
 }
 
-// Simplified types for picker views
-struct GamePickerItem: Identifiable, Decodable {
-    let id: String
-    let title: String
-    let coverUrl: String?
-    let platform: Platform?
-}
-
+// Simplified type for DLC picker
 struct DLCPickerItem: Identifiable, Decodable {
     let id: String
     let name: String
     let type: DLCType
     let coverUrl: String?
     let game: DLCGame?
-}
-
-struct GamesPickerResponse: Decodable {
-    let gamesPage: GamesPickerPage
-}
-
-struct GamesPickerPage: Decodable {
-    let items: [GamePickerItem]
 }
 
 struct AddGameToBundleResponse: Decodable {

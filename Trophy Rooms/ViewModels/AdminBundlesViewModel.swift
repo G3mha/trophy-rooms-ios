@@ -3,7 +3,6 @@ import Combine
 
 class AdminBundlesViewModel: ObservableObject {
     @Published var bundles: [AppBundle] = []
-    @Published var availableGames: [GamePickerItem] = []
     @Published var availableDLCs: [DLCPickerItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -295,39 +294,7 @@ class AdminBundlesViewModel: ObservableObject {
 
     // MARK: - Bundle Contents Management
 
-    func fetchAvailableGames(search: String = "") async {
-        let query = """
-        query GetGamesForPicker($filter: GamesFilterInput) {
-            gamesPage(pageSize: 50, filter: $filter) {
-                items {
-                    id
-                    title
-                    coverUrl
-                    platform { id name slug }
-                }
-            }
-        }
-        """
-
-        var variables: [String: Any] = [:]
-        if !search.isEmpty {
-            variables["filter"] = ["search": search]
-        }
-
-        do {
-            let response: GamesPickerResponse = try await NetworkService.shared.fetch(
-                query: query,
-                variables: variables
-            )
-            DispatchQueue.main.async {
-                self.availableGames = response.gamesPage.items
-            }
-        } catch {
-            print("Error fetching games: \(error)")
-        }
-    }
-
-    func fetchAvailableDLCs(search: String = "") async {
+    func fetchAvailableDLCs() async {
         // For DLCs, we fetch all and filter client-side since there's no search on allDlcs
         // If the list grows large, we should add server-side search
         let query = """
