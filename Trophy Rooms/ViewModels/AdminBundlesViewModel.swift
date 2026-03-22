@@ -295,10 +295,10 @@ class AdminBundlesViewModel: ObservableObject {
 
     // MARK: - Bundle Contents Management
 
-    func fetchAvailableGames() async {
+    func fetchAvailableGames(search: String = "") async {
         let query = """
-        query GetAllGames {
-            gamesPage(pageSize: 100) {
+        query GetGamesForPicker($filter: GamesFilterInput) {
+            gamesPage(pageSize: 50, filter: $filter) {
                 items {
                     id
                     title
@@ -309,8 +309,16 @@ class AdminBundlesViewModel: ObservableObject {
         }
         """
 
+        var variables: [String: Any] = [:]
+        if !search.isEmpty {
+            variables["filter"] = ["search": search]
+        }
+
         do {
-            let response: GamesPickerResponse = try await NetworkService.shared.fetch(query: query)
+            let response: GamesPickerResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: variables
+            )
             DispatchQueue.main.async {
                 self.availableGames = response.gamesPage.items
             }
@@ -319,7 +327,9 @@ class AdminBundlesViewModel: ObservableObject {
         }
     }
 
-    func fetchAvailableDLCs() async {
+    func fetchAvailableDLCs(search: String = "") async {
+        // For DLCs, we fetch all and filter client-side since there's no search on allDlcs
+        // If the list grows large, we should add server-side search
         let query = """
         query GetAllDLCs {
             allDlcs {

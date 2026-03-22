@@ -126,7 +126,7 @@ struct AdminBundleContentsSheet: View {
                 )
             }
             .task {
-                await viewModel.fetchAvailableGames()
+                // Games and DLCs are loaded on-demand in their respective picker sheets
                 await viewModel.fetchAvailableDLCs()
             }
         }
@@ -142,49 +142,54 @@ private struct GamePickerSheet: View {
     let excludedGameIds: Set<String>
 
     @State private var searchText = ""
+    @State private var searchTask: Task<Void, Never>?
 
     var filteredGames: [GamePickerItem] {
-        let available = viewModel.availableGames.filter { !excludedGameIds.contains($0.id) }
-        if searchText.isEmpty {
-            return available
-        }
-        return available.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+        viewModel.availableGames.filter { !excludedGameIds.contains($0.id) }
     }
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(filteredGames) { game in
-                    Button {
-                        Task {
-                            let success = await viewModel.addGameToBundle(
-                                gameId: game.id,
-                                bundleId: bundleId
-                            )
-                            if success {
-                                dismiss()
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
-                                AsyncImage(url: url) { image in
-                                    image.resizable().aspectRatio(contentMode: .fit)
-                                } placeholder: {
-                                    Color.gray
+                if filteredGames.isEmpty && !searchText.isEmpty {
+                    Text("No games found for \"\(searchText)\"")
+                        .foregroundStyle(.secondary)
+                } else if filteredGames.isEmpty {
+                    Text("Type to search for games")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(filteredGames) { game in
+                        Button {
+                            Task {
+                                let success = await viewModel.addGameToBundle(
+                                    gameId: game.id,
+                                    bundleId: bundleId
+                                )
+                                if success {
+                                    dismiss()
                                 }
-                                .frame(width: 40, height: 40)
-                                .cornerRadius(6)
                             }
+                        } label: {
+                            HStack {
+                                if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
+                                    AsyncImage(url: url) { image in
+                                        image.resizable().aspectRatio(contentMode: .fit)
+                                    } placeholder: {
+                                        Color.gray
+                                    }
+                                    .frame(width: 40, height: 40)
+                                    .cornerRadius(6)
+                                }
 
-                            VStack(alignment: .leading) {
-                                Text(game.title)
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-                                if let platform = game.platform {
-                                    Text(platform.name)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                VStack(alignment: .leading) {
+                                    Text(game.title)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    if let platform = game.platform {
+                                        Text(platform.name)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
                             }
                         }
@@ -198,6 +203,18 @@ private struct GamePickerSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         dismiss()
+                    }
+                }
+            }
+            .task {
+                await viewModel.fetchAvailableGames()
+            }
+            .onChange(of: searchText) { _, newValue in
+                searchTask?.cancel()
+                searchTask = Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000) // 300ms debounce
+                    if !Task.isCancelled {
+                        await viewModel.fetchAvailableGames(search: newValue)
                     }
                 }
             }
