@@ -32,8 +32,8 @@ class AdminUsersViewModel: ObservableObject {
         }
 
         let graphqlQuery = """
-        query SearchUsers($filter: UserFilterInput, $first: Int) {
-            users(filter: $filter, first: $first) {
+        query SearchUsers($search: String, $first: Int) {
+            users(search: $search, first: $first) {
                 edges {
                     node {
                         id
@@ -47,7 +47,7 @@ class AdminUsersViewModel: ObservableObject {
         """
 
         let variables: [String: Any] = [
-            "filter": ["search": query],
+            "search": query,
             "first": 50
         ]
 
