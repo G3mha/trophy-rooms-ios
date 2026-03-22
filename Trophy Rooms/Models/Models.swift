@@ -18,7 +18,7 @@ struct Platform: Identifiable, Decodable {
 
 // MARK: - Game Models
 
-struct GameSummary: Identifiable, Decodable {
+struct GameSummary: Identifiable, Decodable, Equatable {
     let id: String
     let title: String
     let description: String?
@@ -27,6 +27,10 @@ struct GameSummary: Identifiable, Decodable {
     let achievementSetCount: Int
     let achievementCount: Int
     let trophyCount: Int
+
+    static func == (lhs: GameSummary, rhs: GameSummary) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 struct AchievementSet: Identifiable, Decodable {
