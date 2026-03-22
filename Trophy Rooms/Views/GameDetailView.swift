@@ -22,6 +22,16 @@ struct GameDetailView: View {
                         // Header with cover and title
                         GameHeader(game: game)
 
+                        // Base game link (for fangames/ROM hacks)
+                        if let baseGame = game.baseGame {
+                            BaseGameLinkView(baseGame: baseGame, gameType: game.type)
+                        }
+
+                        // Derivatives section (fangames/ROM hacks based on this game)
+                        if let derivatives = game.derivatives, !derivatives.isEmpty {
+                            DerivativesSectionView(derivatives: derivatives)
+                        }
+
                         // Library status and Collection buttons (authenticated only)
                         if clerk.user != nil {
                             VStack(spacing: 12) {
@@ -666,6 +676,180 @@ private struct BundleTypeBadgeSmall: View {
             return .orange
         case .SUBSCRIPTION:
             return .green
+        }
+    }
+}
+
+// MARK: - Base Game Link
+
+private struct BaseGameLinkView: View {
+    let baseGame: BaseGameRef
+    let gameType: GameType?
+
+    var body: some View {
+        NavigationLink(destination: GameDetailView(gameId: baseGame.id)) {
+            HStack(spacing: 12) {
+                if let coverUrl = baseGame.coverUrl, let url = URL(string: coverUrl) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color.gray.opacity(0.3)
+                    }
+                    .frame(width: 50, height: 70)
+                    .cornerRadius(6)
+                } else {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 50, height: 70)
+                        .overlay {
+                            Image(systemName: "gamecontroller")
+                                .foregroundStyle(.gray)
+                        }
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Based On")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(baseGame.title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    if let platform = baseGame.platform {
+                        HStack(spacing: 4) {
+                            PlatformIcon(slug: platform.slug, size: 10)
+                            Text(platform.name)
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding()
+            .background(badgeColor.opacity(0.1))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(badgeColor.opacity(0.3), lineWidth: 1)
+            )
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
+    }
+
+    var badgeColor: Color {
+        switch gameType {
+        case .FANGAME:
+            return .purple
+        case .ROM_HACK:
+            return .orange
+        default:
+            return .gray
+        }
+    }
+}
+
+// MARK: - Derivatives Section
+
+private struct DerivativesSectionView: View {
+    let derivatives: [DerivativeGame]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Fangames & ROM Hacks")
+                    .font(.headline)
+                Spacer()
+                Text("\(derivatives.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(4)
+            }
+
+            ForEach(derivatives) { derivative in
+                NavigationLink(destination: GameDetailView(gameId: derivative.id)) {
+                    HStack(spacing: 12) {
+                        if let coverUrl = derivative.coverUrl, let url = URL(string: coverUrl) {
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } placeholder: {
+                                Color.gray.opacity(0.3)
+                            }
+                            .frame(width: 40, height: 56)
+                            .cornerRadius(4)
+                        } else {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 40, height: 56)
+                                .overlay {
+                                    Image(systemName: "gamecontroller")
+                                        .font(.caption)
+                                        .foregroundStyle(.gray)
+                                }
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                Text(derivative.title)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .lineLimit(1)
+
+                                Text(derivative.type.shortName)
+                                    .font(.caption2)
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(derivativeBadgeColor(for: derivative.type).opacity(0.2))
+                                    .foregroundStyle(derivativeBadgeColor(for: derivative.type))
+                                    .clipShape(Capsule())
+                            }
+
+                            if let platform = derivative.platform {
+                                HStack(spacing: 4) {
+                                    PlatformIcon(slug: platform.slug, size: 10)
+                                    Text(platform.name)
+                                        .font(.caption2)
+                                }
+                                .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+
+    func derivativeBadgeColor(for type: GameType) -> Color {
+        switch type {
+        case .FANGAME:
+            return .purple
+        case .ROM_HACK:
+            return .orange
+        default:
+            return .gray
         }
     }
 }
