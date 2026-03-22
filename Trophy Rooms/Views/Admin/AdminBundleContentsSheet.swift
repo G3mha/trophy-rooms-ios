@@ -3,134 +3,159 @@ import SwiftUI
 struct AdminBundleContentsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: AdminBundlesViewModel
-    let bundle: AppBundle
+    let bundleId: String
 
     @State private var showGamePicker = false
     @State private var showDLCPicker = false
 
+    /// Computed property to always get the latest bundle from the ViewModel
+    private var bundle: AppBundle? {
+        viewModel.bundles.first { $0.id == bundleId }
+    }
+
     var body: some View {
         NavigationStack {
-            List {
-                // Games Section
-                Section {
-                    if let games = bundle.games, !games.isEmpty {
-                        ForEach(games, id: \.id) { game in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(game.title)
-                                        .font(.headline)
-                                }
-                                Spacer()
-                                Button {
-                                    Task {
-                                        await viewModel.removeGameFromBundle(
-                                            gameId: game.id,
-                                            bundleId: bundle.id
-                                        )
-                                    }
-                                } label: {
-                                    Image(systemName: "minus.circle.fill")
-                                        .foregroundStyle(.red)
-                                }
-                            }
+            if let bundle = bundle {
+                List {
+                    gamesSection(bundle: bundle)
+                    dlcsSection(bundle: bundle)
+                }
+                .navigationTitle("Bundle Contents")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            dismiss()
                         }
-                    } else {
-                        Text("No games in this bundle")
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Button {
-                        showGamePicker = true
-                    } label: {
-                        Label("Add Game", systemImage: "plus.circle")
-                    }
-                } header: {
-                    HStack {
-                        Text("Games")
-                        Spacer()
-                        Text("\(bundle.games?.count ?? 0)")
-                            .foregroundStyle(.secondary)
                     }
                 }
-
-                // DLCs Section
-                Section {
-                    if let dlcs = bundle.dlcs, !dlcs.isEmpty {
-                        ForEach(dlcs, id: \.id) { dlc in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(dlc.name)
-                                        .font(.headline)
-                                    if let game = dlc.game {
-                                        Text(game.title)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                Spacer()
-                                Button {
-                                    Task {
-                                        await viewModel.removeDLCFromBundle(
-                                            dlcId: dlc.id,
-                                            bundleId: bundle.id
-                                        )
-                                    }
-                                } label: {
-                                    Image(systemName: "minus.circle.fill")
-                                        .foregroundStyle(.red)
-                                }
-                            }
+                .sheet(isPresented: $showGamePicker) {
+                    GamePickerSheet(
+                        title: "Add Game to Bundle",
+                        excludedGameIds: Set(bundle.games?.map(\.id) ?? [])
+                    ) { selectedGame in
+                        Task {
+                            await viewModel.addGameToBundle(
+                                gameId: selectedGame.id,
+                                bundleId: bundleId
+                            )
                         }
-                    } else {
-                        Text("No DLCs in this bundle")
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Button {
-                        showDLCPicker = true
-                    } label: {
-                        Label("Add DLC", systemImage: "plus.circle")
-                    }
-                } header: {
-                    HStack {
-                        Text("DLCs")
-                        Spacer()
-                        Text("\(bundle.dlcs?.count ?? 0)")
-                            .foregroundStyle(.secondary)
                     }
                 }
-            }
-            .navigationTitle("Bundle Contents")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                .sheet(isPresented: $showDLCPicker) {
+                    DLCPickerSheet(
+                        viewModel: viewModel,
+                        bundleId: bundleId,
+                        excludedDLCIds: Set(bundle.dlcs?.map(\.id) ?? [])
+                    )
                 }
-            }
-            .sheet(isPresented: $showGamePicker) {
-                GamePickerSheet(
-                    title: "Add Game to Bundle",
-                    excludedGameIds: Set(bundle.games?.map(\.id) ?? [])
-                ) { selectedGame in
-                    Task {
-                        await viewModel.addGameToBundle(
-                            gameId: selectedGame.id,
-                            bundleId: bundle.id
-                        )
-                    }
-                }
-            }
-            .sheet(isPresented: $showDLCPicker) {
-                DLCPickerSheet(
-                    viewModel: viewModel,
-                    bundleId: bundle.id,
-                    excludedDLCIds: Set(bundle.dlcs?.map(\.id) ?? [])
+            } else {
+                ContentUnavailableView(
+                    "Bundle Not Found",
+                    systemImage: "exclamationmark.triangle"
                 )
             }
-            .task {
-                await viewModel.fetchAvailableDLCs()
+        }
+        .task {
+            await viewModel.fetchAvailableDLCs()
+        }
+    }
+
+    // MARK: - Games Section
+
+    @ViewBuilder
+    private func gamesSection(bundle: AppBundle) -> some View {
+        Section {
+            if let games = bundle.games, !games.isEmpty {
+                ForEach(games, id: \.id) { game in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(game.title)
+                                .font(.headline)
+                        }
+                        Spacer()
+                        Button {
+                            Task {
+                                await viewModel.removeGameFromBundle(
+                                    gameId: game.id,
+                                    bundleId: bundleId
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+            } else {
+                Text("No games in this bundle")
+                    .foregroundStyle(.secondary)
+            }
+
+            Button {
+                showGamePicker = true
+            } label: {
+                Label("Add Game", systemImage: "plus.circle")
+            }
+        } header: {
+            HStack {
+                Text("Games")
+                Spacer()
+                Text("\(bundle.games?.count ?? 0)")
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - DLCs Section
+
+    @ViewBuilder
+    private func dlcsSection(bundle: AppBundle) -> some View {
+        Section {
+            if let dlcs = bundle.dlcs, !dlcs.isEmpty {
+                ForEach(dlcs, id: \.id) { dlc in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(dlc.name)
+                                .font(.headline)
+                            if let game = dlc.game {
+                                Text(game.title)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                        Button {
+                            Task {
+                                await viewModel.removeDLCFromBundle(
+                                    dlcId: dlc.id,
+                                    bundleId: bundleId
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+            } else {
+                Text("No DLCs in this bundle")
+                    .foregroundStyle(.secondary)
+            }
+
+            Button {
+                showDLCPicker = true
+            } label: {
+                Label("Add DLC", systemImage: "plus.circle")
+            }
+        } header: {
+            HStack {
+                Text("DLCs")
+                Spacer()
+                Text("\(bundle.dlcs?.count ?? 0)")
+                    .foregroundStyle(.secondary)
             }
         }
     }

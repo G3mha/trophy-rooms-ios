@@ -32,7 +32,7 @@ struct GamePickerSheet: View {
             Group {
                 if viewModel.isLoading && viewModel.games.isEmpty {
                     ProgressView("Loading games...")
-                } else if let error = viewModel.errorMessage {
+                } else if !viewModel.isLoading, let error = viewModel.errorMessage, viewModel.games.isEmpty {
                     ContentUnavailableView {
                         Label("Error", systemImage: "exclamationmark.triangle")
                     } description: {
@@ -44,14 +44,16 @@ struct GamePickerSheet: View {
                             }
                         }
                     }
-                } else if filteredGames.isEmpty && !searchText.isEmpty {
+                } else if filteredGames.isEmpty && !searchText.isEmpty && !viewModel.isLoading {
                     ContentUnavailableView.search(text: searchText)
-                } else if filteredGames.isEmpty {
+                } else if filteredGames.isEmpty && !viewModel.isLoading {
                     ContentUnavailableView {
                         Label("No Games", systemImage: "gamecontroller")
                     } description: {
                         Text("Search for a game to add")
                     }
+                } else if filteredGames.isEmpty && viewModel.isLoading {
+                    ProgressView("Searching...")
                 } else {
                     List {
                         ForEach(filteredGames) { game in

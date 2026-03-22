@@ -203,7 +203,7 @@ struct AdminBundlesView: View {
             AdminBundleFormSheet(viewModel: viewModel, bundle: bundle)
         }
         .sheet(item: $bundleToManageContents) { bundle in
-            AdminBundleContentsSheet(viewModel: viewModel, bundle: bundle)
+            AdminBundleContentsSheet(viewModel: viewModel, bundleId: bundle.id)
         }
         .alert("Delete Bundle", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) {
