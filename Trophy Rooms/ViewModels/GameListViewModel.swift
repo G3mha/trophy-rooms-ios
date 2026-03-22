@@ -39,7 +39,7 @@ class GameListViewModel: ObservableObject {
         }
     }
 
-    func fetchGames(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, page: Int = 1) async {
+    func fetchGames(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil, page: Int = 1) async {
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
@@ -53,6 +53,8 @@ class GameListViewModel: ObservableObject {
                     title
                     description
                     coverUrl
+                    type
+                    baseGameId
                     achievementSetCount
                     achievementCount
                     trophyCount
@@ -84,6 +86,10 @@ class GameListViewModel: ObservableObject {
             filter["hasAchievements"] = hasAchievements
         }
 
+        if let type = type {
+            filter["type"] = type
+        }
+
         if !filter.isEmpty {
             variables["filter"] = filter
         }
@@ -110,18 +116,18 @@ class GameListViewModel: ObservableObject {
         }
     }
 
-    func goToNextPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?) async {
+    func goToNextPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
         guard hasNextPage else { return }
-        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, page: currentPage + 1)
+        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: currentPage + 1)
     }
 
-    func goToPreviousPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?) async {
+    func goToPreviousPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
         guard hasPreviousPage else { return }
-        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, page: currentPage - 1)
+        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: currentPage - 1)
     }
 
-    func goToPage(_ page: Int, search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?) async {
+    func goToPage(_ page: Int, search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
         let targetPage = max(1, min(page, totalPages))
-        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, page: targetPage)
+        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: targetPage)
     }
 }

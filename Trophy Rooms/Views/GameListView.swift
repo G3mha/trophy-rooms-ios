@@ -10,6 +10,7 @@ struct GameListView: View {
     @State private var achievementFilter: AchievementFilter = .all
     @State private var sortOption: SortOption = .titleAsc
     @State private var minAchievementCount = 0
+    @State private var gameTypeFilter: GameTypeFilter = .all
 
     var filteredGames: [GameSummary] {
         viewModel.games.filter { game in
@@ -55,6 +56,13 @@ struct GameListView: View {
                             }
                         }
                         .pickerStyle(.menu)
+
+                        Picker("Type", selection: $gameTypeFilter) {
+                            ForEach(GameTypeFilter.allCases) { filter in
+                                Text(filter.title).tag(filter)
+                            }
+                        }
+                        .pickerStyle(.menu)
                     }
 
                     Section {
@@ -77,8 +85,20 @@ struct GameListView: View {
                                     }
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(game.title)
-                                            .font(.headline)
+                                        HStack(spacing: 6) {
+                                            Text(game.title)
+                                                .font(.headline)
+                                            if let type = game.type, type != .BASE_GAME {
+                                                Text(type.shortName)
+                                                    .font(.caption2)
+                                                    .fontWeight(.medium)
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(type == .FANGAME ? Color.purple.opacity(0.2) : Color.orange.opacity(0.2))
+                                                    .foregroundColor(type == .FANGAME ? .purple : .orange)
+                                                    .clipShape(Capsule())
+                                            }
+                                        }
                                         if let platform = game.platform {
                                             HStack(spacing: 4) {
                                                 PlatformIcon(slug: platform.slug, size: 12)
@@ -117,7 +137,8 @@ struct GameListView: View {
                                         search: searchText,
                                         platformId: selectedPlatformId,
                                         hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue
+                                        orderBy: sortOption.graphqlValue,
+                                        type: gameTypeFilter.graphqlValue
                                     )
                                 }
                             },
@@ -127,7 +148,8 @@ struct GameListView: View {
                                         search: searchText,
                                         platformId: selectedPlatformId,
                                         hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue
+                                        orderBy: sortOption.graphqlValue,
+                                        type: gameTypeFilter.graphqlValue
                                     )
                                 }
                             },
@@ -138,7 +160,8 @@ struct GameListView: View {
                                         search: searchText,
                                         platformId: selectedPlatformId,
                                         hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue
+                                        orderBy: sortOption.graphqlValue,
+                                        type: gameTypeFilter.graphqlValue
                                     )
                                 }
                             }
@@ -159,6 +182,7 @@ struct GameListView: View {
                     platformId: selectedPlatformId,
                     hasAchievements: achievementFilter.boolValue,
                     orderBy: sortOption.graphqlValue,
+                    type: gameTypeFilter.graphqlValue,
                     page: 1
                 )
             }
@@ -170,6 +194,7 @@ struct GameListView: View {
                     platformId: selectedPlatformId,
                     hasAchievements: achievementFilter.boolValue,
                     orderBy: sortOption.graphqlValue,
+                    type: gameTypeFilter.graphqlValue,
                     page: 1
                 )
             }
@@ -181,6 +206,7 @@ struct GameListView: View {
                     platformId: selectedPlatformId,
                     hasAchievements: achievementFilter.boolValue,
                     orderBy: sortOption.graphqlValue,
+                    type: gameTypeFilter.graphqlValue,
                     page: 1
                 )
             }
@@ -192,6 +218,19 @@ struct GameListView: View {
                     platformId: selectedPlatformId,
                     hasAchievements: achievementFilter.boolValue,
                     orderBy: sortOption.graphqlValue,
+                    type: gameTypeFilter.graphqlValue,
+                    page: 1
+                )
+            }
+        }
+        .onChange(of: gameTypeFilter) {
+            Task {
+                await viewModel.fetchGames(
+                    search: searchText,
+                    platformId: selectedPlatformId,
+                    hasAchievements: achievementFilter.boolValue,
+                    orderBy: sortOption.graphqlValue,
+                    type: gameTypeFilter.graphqlValue,
                     page: 1
                 )
             }
@@ -203,6 +242,7 @@ struct GameListView: View {
                 platformId: selectedPlatformId,
                 hasAchievements: achievementFilter.boolValue,
                 orderBy: sortOption.graphqlValue,
+                type: gameTypeFilter.graphqlValue,
                 page: 1
             )
         }
@@ -432,6 +472,41 @@ enum MinAchievementOption: Int, CaseIterable, Identifiable {
             return "10+"
         case .twentyFive:
             return "25+"
+        }
+    }
+}
+
+enum GameTypeFilter: String, CaseIterable, Identifiable {
+    case all
+    case baseGames
+    case fangames
+    case romHacks
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .all:
+            return "All Types"
+        case .baseGames:
+            return "Base Games"
+        case .fangames:
+            return "Fangames"
+        case .romHacks:
+            return "ROM Hacks"
+        }
+    }
+
+    var graphqlValue: String? {
+        switch self {
+        case .all:
+            return nil
+        case .baseGames:
+            return "BASE_GAME"
+        case .fangames:
+            return "FANGAME"
+        case .romHacks:
+            return "ROM_HACK"
         }
     }
 }
