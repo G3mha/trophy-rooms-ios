@@ -290,11 +290,14 @@ struct AdminGameVersionsView: View {
                     node {
                         id
                         title
+                        type
+                        baseGameId
                         platform {
                             id
                             name
                             slug
                         }
+                        achievementSetCount
                     }
                 }
             }
