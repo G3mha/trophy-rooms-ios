@@ -23,6 +23,8 @@ struct GameSummary: Identifiable, Decodable, Equatable {
     let title: String
     let description: String?
     let coverUrl: String?
+    let type: GameType?
+    let baseGameId: String?
     let platform: Platform?
     let achievementSetCount: Int
     let achievementCount: Int
@@ -30,6 +32,10 @@ struct GameSummary: Identifiable, Decodable, Equatable {
 
     static func == (lhs: GameSummary, rhs: GameSummary) -> Bool {
         lhs.id == rhs.id
+    }
+
+    var isDerivative: Bool {
+        type == .FANGAME || type == .ROM_HACK
     }
 }
 
@@ -63,6 +69,11 @@ struct GameDetail: Identifiable, Decodable {
     let title: String
     let description: String?
     let coverUrl: String?
+    let type: GameType?
+    let baseGameId: String?
+    let baseGame: BaseGameRef?
+    let derivatives: [DerivativeGame]?
+    let derivativeCount: Int?
     let trophyCount: Int
     let releaseDate: String?
     let developer: String?
@@ -78,6 +89,27 @@ struct GameDetail: Identifiable, Decodable {
     let dlcs: [GameDLC]?
     let dlcCount: Int?
     let bundles: [GameBundle]?
+
+    var isDerivative: Bool {
+        type == .FANGAME || type == .ROM_HACK
+    }
+}
+
+// Reference to base game for derivatives
+struct BaseGameRef: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let coverUrl: String?
+    let platform: Platform?
+}
+
+// Derivative game (fangame/ROM hack) reference
+struct DerivativeGame: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let coverUrl: String?
+    let type: GameType
+    let platform: Platform?
 }
 
 // MARK: - User-Facing DLC
@@ -658,6 +690,30 @@ enum BundleType: String, Codable, CaseIterable {
     }
 }
 
+// MARK: - Game Type (Fangames/ROM Hacks)
+
+enum GameType: String, Codable, CaseIterable {
+    case BASE_GAME
+    case FANGAME
+    case ROM_HACK
+
+    var displayName: String {
+        switch self {
+        case .BASE_GAME: return "Base Game"
+        case .FANGAME: return "Fangame"
+        case .ROM_HACK: return "ROM Hack"
+        }
+    }
+
+    var shortName: String {
+        switch self {
+        case .BASE_GAME: return "Base"
+        case .FANGAME: return "Fangame"
+        case .ROM_HACK: return "ROM Hack"
+        }
+    }
+}
+
 struct AppBundle: Identifiable, Decodable {
     let id: String
     let name: String
@@ -824,6 +880,9 @@ struct AdminGame: Identifiable, Decodable {
     let title: String
     let description: String?
     let coverUrl: String?
+    let type: GameType?
+    let baseGameId: String?
+    let baseGame: BaseGameRef?
     let platform: Platform?
     let achievementSetCount: Int
 }
@@ -868,10 +927,16 @@ struct AdminGameItem: Identifiable, Decodable {
     let title: String
     let description: String?
     let coverUrl: String?
+    let type: GameType?
+    let baseGameId: String?
     let platformId: String?
     let platformName: String?
     let platformSlug: String?
     let achievementSetCount: Int
+
+    var isDerivative: Bool {
+        type == .FANGAME || type == .ROM_HACK
+    }
 }
 
 // Admin Achievement Set
