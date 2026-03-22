@@ -721,7 +721,31 @@ struct DeleteBundleResult: Decodable {
 }
 
 struct AllDLCsResponse: Decodable {
-    let allDlcs: [DLC]
+    let allDlcs: [DLCPickerItem]
+}
+
+// Simplified types for picker views
+struct GamePickerItem: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let coverUrl: String?
+    let platform: Platform?
+}
+
+struct DLCPickerItem: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let type: DLCType
+    let coverUrl: String?
+    let game: DLCGame?
+}
+
+struct GamesPickerResponse: Decodable {
+    let gamesPage: GamesPickerPage
+}
+
+struct GamesPickerPage: Decodable {
+    let items: [GamePickerItem]
 }
 
 struct AddGameToBundleResponse: Decodable {

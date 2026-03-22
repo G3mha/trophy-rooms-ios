@@ -143,7 +143,7 @@ private struct GamePickerSheet: View {
 
     @State private var searchText = ""
 
-    var filteredGames: [GameSummary] {
+    var filteredGames: [GamePickerItem] {
         let available = viewModel.availableGames.filter { !excludedGameIds.contains($0.id) }
         if searchText.isEmpty {
             return available
@@ -215,7 +215,7 @@ private struct DLCPickerSheet: View {
 
     @State private var searchText = ""
 
-    var filteredDLCs: [DLC] {
+    var filteredDLCs: [DLCPickerItem] {
         let available = viewModel.availableDLCs.filter { !excludedDLCIds.contains($0.id) }
         if searchText.isEmpty {
             return available

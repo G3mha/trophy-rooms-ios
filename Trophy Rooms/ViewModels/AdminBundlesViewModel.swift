@@ -3,8 +3,8 @@ import Combine
 
 class AdminBundlesViewModel: ObservableObject {
     @Published var bundles: [AppBundle] = []
-    @Published var availableGames: [GameSummary] = []
-    @Published var availableDLCs: [DLC] = []
+    @Published var availableGames: [GamePickerItem] = []
+    @Published var availableDLCs: [DLCPickerItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
@@ -310,7 +310,7 @@ class AdminBundlesViewModel: ObservableObject {
         """
 
         do {
-            let response: GamesPageResponse = try await NetworkService.shared.fetch(query: query)
+            let response: GamesPickerResponse = try await NetworkService.shared.fetch(query: query)
             DispatchQueue.main.async {
                 self.availableGames = response.gamesPage.items
             }
