@@ -19,6 +19,11 @@ class AdminGamesViewModel: ObservableObject {
         return games
     }
 
+    // Helper to find a game by ID for the base game picker
+    func baseGameForId(_ id: String) -> AdminGameItem? {
+        return games.first { $0.id == id }
+    }
+
     var canGoNext: Bool {
         currentPage < totalPages && !isLoading
     }
@@ -41,6 +46,8 @@ class AdminGamesViewModel: ObservableObject {
                     title
                     description
                     coverUrl
+                    type
+                    baseGameId
                     platformId
                     platformName
                     platformSlug
@@ -132,7 +139,7 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    func createGame(title: String, description: String?, coverUrl: String?, platformId: String) async -> Bool {
+    func createGame(title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameId: String? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -151,13 +158,17 @@ class AdminGamesViewModel: ObservableObject {
 
         var input: [String: Any] = [
             "title": title,
-            "platformId": platformId
+            "platformId": platformId,
+            "type": type.rawValue
         ]
         if let description = description, !description.isEmpty {
             input["description"] = description
         }
         if let coverUrl = coverUrl, !coverUrl.isEmpty {
             input["coverUrl"] = coverUrl
+        }
+        if let baseGameId = baseGameId {
+            input["baseGameId"] = baseGameId
         }
 
         let variables: [String: Any] = ["input": input]
@@ -187,7 +198,7 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    func updateGame(id: String, title: String, description: String?, coverUrl: String?, platformId: String) async -> Bool {
+    func updateGame(id: String, title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameId: String? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -206,13 +217,21 @@ class AdminGamesViewModel: ObservableObject {
 
         var input: [String: Any] = [
             "title": title,
-            "platformId": platformId
+            "platformId": platformId,
+            "type": type.rawValue
         ]
         if let description = description {
             input["description"] = description
         }
         if let coverUrl = coverUrl {
             input["coverUrl"] = coverUrl
+        }
+        // baseGameId can be explicitly set to null to clear it
+        if let baseGameId = baseGameId {
+            input["baseGameId"] = baseGameId
+        } else if type == .BASE_GAME {
+            // Clear baseGameId when switching to BASE_GAME
+            input["baseGameId"] = NSNull()
         }
 
         let variables: [String: Any] = [
