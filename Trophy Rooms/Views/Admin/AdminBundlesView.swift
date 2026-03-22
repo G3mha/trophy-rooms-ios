@@ -10,6 +10,7 @@ struct AdminBundlesView: View {
     @State private var selectedIds: Set<String> = []
     @State private var isSelecting = false
     @State private var showingBulkDeleteConfirmation = false
+    @State private var bundleToManageContents: AppBundle?
 
     var body: some View {
         List {
@@ -121,13 +122,23 @@ struct AdminBundlesView: View {
                                 .tint(.blue)
                             }
                         }
+                        .swipeActions(edge: .leading) {
+                            if !isSelecting {
+                                Button {
+                                    bundleToManageContents = bundle
+                                } label: {
+                                    Label("Contents", systemImage: "list.bullet")
+                                }
+                                .tint(.orange)
+                            }
+                        }
                     }
                 }
             } header: {
                 Text("Bundles")
             } footer: {
                 if !viewModel.bundles.isEmpty {
-                    Text("Swipe left to edit or delete.")
+                    Text("Swipe left to edit or delete. Swipe right to manage contents.")
                 }
             }
         }
@@ -190,6 +201,9 @@ struct AdminBundlesView: View {
         }
         .sheet(item: $bundleToEdit) { bundle in
             AdminBundleFormSheet(viewModel: viewModel, bundle: bundle)
+        }
+        .sheet(item: $bundleToManageContents) { bundle in
+            AdminBundleContentsSheet(viewModel: viewModel, bundle: bundle)
         }
         .alert("Delete Bundle", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) {
