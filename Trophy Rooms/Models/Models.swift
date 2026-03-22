@@ -720,6 +720,30 @@ struct DeleteBundleResult: Decodable {
     let deletedId: String?
 }
 
+struct AllDLCsResponse: Decodable {
+    let allDlcs: [DLC]
+}
+
+struct AddGameToBundleResponse: Decodable {
+    let addGameToBundle: SimpleMutationResult
+}
+
+struct RemoveGameFromBundleResponse: Decodable {
+    let removeGameFromBundle: SimpleMutationResult
+}
+
+struct AddDLCToBundleResponse: Decodable {
+    let addDLCToBundle: SimpleMutationResult
+}
+
+struct RemoveDLCFromBundleResponse: Decodable {
+    let removeDLCFromBundle: SimpleMutationResult
+}
+
+struct SimpleMutationResult: Decodable {
+    let success: Bool
+}
+
 // MARK: - Game Version Models
 
 struct GameVersion: Identifiable, Decodable {
