@@ -116,7 +116,7 @@ struct CollectionView: View {
             }
         }
         .task {
-            if clerk.user != nil {
+            if clerk.user != nil && !viewModel.hasLoadedOnce {
                 await viewModel.fetchCollection()
             }
         }
