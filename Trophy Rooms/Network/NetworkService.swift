@@ -20,9 +20,18 @@ class NetworkService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
+        // Set auth token with timeout to prevent hanging
         if let session = Clerk.shared.session {
-            if let token = try await session.getToken() {
-                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let token = try await withTimeout(seconds: 5) {
+                    try await session.getToken()
+                }
+                if let token = token {
+                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+            } catch {
+                // If token fetch fails or times out, continue without auth
+                print("NetworkService: Token fetch failed or timed out: \(error)")
             }
         }
 
@@ -32,6 +41,7 @@ class NetworkService {
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.timeoutInterval = 30 // 30 second timeout
 
         let (data, _) = try await URLSession.shared.data(for: request)
 
@@ -55,4 +65,22 @@ struct GraphQLResponse<T: Decodable>: Decodable {
 
 struct GraphQLError: Decodable {
     let message: String
+}
+
+// Helper to add timeout to async operations
+func withTimeout<T>(seconds: Double, operation: @escaping () async throws -> T) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask {
+            try await operation()
+        }
+
+        group.addTask {
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            throw NSError(domain: "Timeout", code: -1, userInfo: [NSLocalizedDescriptionKey: "Operation timed out"])
+        }
+
+        let result = try await group.next()!
+        group.cancelAll()
+        return result
+    }
 }
