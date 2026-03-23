@@ -49,9 +49,6 @@ class CollectionViewModel: ObservableObject {
     }
 
     func fetchCollection() async {
-        print("CollectionViewModel: fetchCollection() called")
-        print("CollectionViewModel: isLoading=\(isLoading), hasLoadedOnce=\(hasLoadedOnce)")
-
         isLoading = true
         errorMessage = nil
 
@@ -86,26 +83,19 @@ class CollectionViewModel: ObservableObject {
         }
         """
 
-        print("CollectionViewModel: Starting network request...")
-
         do {
             let response: CollectionWithStatsResponse = try await NetworkService.shared.fetch(query: query)
-            print("CollectionViewModel: Got response with \(response.myCollection.count) items")
             collectionItems = response.myCollection
             stats = response.collectionStats
             isLoading = false
             hasLoadedOnce = true
-            print("CollectionViewModel: Updated state, isLoading=\(isLoading), hasLoadedOnce=\(hasLoadedOnce)")
         } catch is CancellationError {
-            print("CollectionViewModel: Task was cancelled")
             isLoading = false
             hasLoadedOnce = true
         } catch let error as NSError where error.code == NSURLErrorCancelled {
-            print("CollectionViewModel: URL request cancelled")
             isLoading = false
             hasLoadedOnce = true
         } catch {
-            print("CollectionViewModel: Error - \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             isLoading = false
             hasLoadedOnce = true

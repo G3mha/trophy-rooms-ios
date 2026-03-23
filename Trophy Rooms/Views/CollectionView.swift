@@ -11,12 +11,9 @@ struct CollectionView: View {
     @State private var showEditSheet = false
 
     var body: some View {
-        let _ = print("CollectionView RENDER: user=\(clerk.user != nil), isLoading=\(viewModel.isLoading), hasLoadedOnce=\(viewModel.hasLoadedOnce), items=\(viewModel.collectionItems.count), error=\(viewModel.errorMessage ?? "nil")")
         let showLoading = viewModel.isLoading || !viewModel.hasLoadedOnce
-        let _ = print("CollectionView: showLoading=\(showLoading)")
         Group {
             if clerk.user == nil {
-                let _ = print("CollectionView: showing SIGN IN")
                 VStack(spacing: 16) {
                     Image(systemName: "archivebox")
                         .font(.system(size: 48))
@@ -29,10 +26,8 @@ struct CollectionView: View {
                     .buttonStyle(.borderedProminent)
                 }
             } else if showLoading {
-                let _ = print("CollectionView: showing LOADING")
                 ProgressView("Loading collection...")
             } else if let error = viewModel.errorMessage {
-                let _ = print("CollectionView: showing ERROR")
                 VStack(spacing: 16) {
                     Text("Error: \(error)")
                         .foregroundColor(.red)
@@ -43,7 +38,6 @@ struct CollectionView: View {
                     }
                 }
             } else if viewModel.collectionItems.isEmpty {
-                let _ = print("CollectionView: showing EMPTY")
                 VStack(spacing: 16) {
                     Image(systemName: "archivebox")
                         .font(.system(size: 48))
@@ -57,7 +51,6 @@ struct CollectionView: View {
                 }
                 .padding()
             } else {
-                let _ = print("CollectionView: showing CONTENT with \(viewModel.collectionItems.count) items")
                 VStack(spacing: 0) {
                     // Stats header
                     if let stats = viewModel.stats {
