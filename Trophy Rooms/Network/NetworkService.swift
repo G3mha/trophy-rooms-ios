@@ -43,18 +43,44 @@ class NetworkService {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 30 // 30 second timeout
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (responseData, _) = try await URLSession.shared.data(for: request)
 
-        let response = try JSONDecoder().decode(GraphQLResponse<T>.self, from: data)
-        if let errors = response.errors, let first = errors.first {
-            throw NSError(domain: "GraphQL", code: 0, userInfo: [NSLocalizedDescriptionKey: first.message])
+        // Debug: print raw response
+        #if DEBUG
+        if let jsonString = String(data: responseData, encoding: .utf8) {
+            print("NetworkService: Raw response (first 2000 chars): \(String(jsonString.prefix(2000)))")
         }
+        #endif
 
-        guard let data = response.data else {
-            throw NSError(domain: "GraphQL", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data returned"])
+        do {
+            let response = try JSONDecoder().decode(GraphQLResponse<T>.self, from: responseData)
+            if let errors = response.errors, let first = errors.first {
+                throw NSError(domain: "GraphQL", code: 0, userInfo: [NSLocalizedDescriptionKey: first.message])
+            }
+
+            guard let data = response.data else {
+                throw NSError(domain: "GraphQL", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data returned"])
+            }
+
+            return data
+        } catch let decodingError as DecodingError {
+            // Provide detailed decoding error information
+            let errorMessage: String
+            switch decodingError {
+            case .keyNotFound(let key, let context):
+                errorMessage = "Missing key '\(key.stringValue)' at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+            case .typeMismatch(let type, let context):
+                errorMessage = "Type mismatch for '\(type)' at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+            case .valueNotFound(let type, let context):
+                errorMessage = "Value not found for '\(type)' at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+            case .dataCorrupted(let context):
+                errorMessage = "Data corrupted at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))"
+            @unknown default:
+                errorMessage = decodingError.localizedDescription
+            }
+            print("NetworkService: Decoding error - \(errorMessage)")
+            throw NSError(domain: "Decoding", code: 0, userInfo: [NSLocalizedDescriptionKey: errorMessage])
         }
-
-        return data
     }
 }
 
