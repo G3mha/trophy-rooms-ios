@@ -186,25 +186,134 @@ struct ActivityEntry: Codable, Identifiable {
     let earnedAt: String
 }
 
-// MARK: - Wishlist Models
+// MARK: - Buylist Models
 
-struct WishlistItem: Codable, Identifiable {
+enum BuylistPriority: String, Codable, CaseIterable {
+    case HIGH
+    case MEDIUM
+    case LOW
+
+    var displayName: String {
+        switch self {
+        case .HIGH: return "High"
+        case .MEDIUM: return "Medium"
+        case .LOW: return "Low"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .HIGH: return "arrow.up"
+        case .MEDIUM: return "arrow.right"
+        case .LOW: return "arrow.down"
+        }
+    }
+
+    var color: String {
+        switch self {
+        case .HIGH: return "red"
+        case .MEDIUM: return "orange"
+        case .LOW: return "green"
+        }
+    }
+}
+
+enum BuylistItemType: String, Codable, CaseIterable {
+    case GAME
+    case DLC
+    case BUNDLE
+
+    var displayName: String {
+        switch self {
+        case .GAME: return "Game"
+        case .DLC: return "DLC"
+        case .BUNDLE: return "Bundle"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .GAME: return "gamecontroller"
+        case .DLC: return "plus.rectangle.on.rectangle"
+        case .BUNDLE: return "shippingbox"
+        }
+    }
+}
+
+struct BuylistItem: Codable, Identifiable {
     let id: String
-    let gameId: String
-    let gameTitle: String
-    let gameCoverUrl: String?
-    let gameDescription: String?
-    let achievementCount: Int
-    let platformId: String?
-    let platformName: String?
-    let platformSlug: String?
+    let userId: String
+    let gameId: String?
+    let gameVersionId: String?
+    let dlcId: String?
+    let bundleId: String?
+    let priority: BuylistPriority
+    let notes: String?
+    let estimatedPrice: Double?
+    let itemType: BuylistItemType
+    let displayTitle: String
+    let displayCoverUrl: String?
     let addedAt: String
+    let updatedAt: String
+}
+
+struct BuylistStats: Codable {
+    let totalItems: Int
+    let totalEstimatedCost: Double
+    let highPriorityCount: Int
+    let mediumPriorityCount: Int
+    let lowPriorityCount: Int
+    let gameCount: Int
+    let dlcCount: Int
+    let bundleCount: Int
+}
+
+// MARK: - Buylist Responses
+
+struct BuylistResponse: Decodable {
+    let myBuylist: [BuylistItem]
+}
+
+struct UserBuylistResponse: Decodable {
+    let userBuylist: [BuylistItem]
+}
+
+struct BuylistStatsResponse: Decodable {
+    let buylistStats: BuylistStats
+}
+
+struct IsInBuylistResponse: Decodable {
+    let isInBuylist: Bool
+}
+
+struct AddToBuylistResponse: Decodable {
+    let addToBuylist: BuylistMutationResult
+}
+
+struct RemoveFromBuylistResponse: Decodable {
+    let removeFromBuylist: BuylistMutationResult
+}
+
+struct UpdateBuylistItemResponse: Decodable {
+    let updateBuylistItem: BuylistMutationResult
+}
+
+struct MarkAsPurchasedResponse: Decodable {
+    let markAsPurchased: BuylistMutationResult
+}
+
+struct BuylistMutationResult: Decodable {
+    let success: Bool
+    let buylistItem: BuylistItemRef?
+}
+
+struct BuylistItemRef: Decodable {
+    let id: String
 }
 
 // MARK: - Library Models
 
 enum GameStatus: String, Codable, CaseIterable {
-    case WISHLIST
     case BACKLOG
     case PLAYING
     case PAUSED
@@ -213,7 +322,6 @@ enum GameStatus: String, Codable, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .WISHLIST: return "Wishlist"
         case .BACKLOG: return "Backlog"
         case .PLAYING: return "Playing"
         case .PAUSED: return "Paused"
@@ -224,7 +332,6 @@ enum GameStatus: String, Codable, CaseIterable {
 
     var iconName: String {
         switch self {
-        case .WISHLIST: return "heart"
         case .BACKLOG: return "tray"
         case .PLAYING: return "play.circle"
         case .PAUSED: return "pause.circle"
@@ -235,7 +342,6 @@ enum GameStatus: String, Codable, CaseIterable {
 
     var color: String {
         switch self {
-        case .WISHLIST: return "pink"
         case .BACKLOG: return "blue"
         case .PLAYING: return "green"
         case .PAUSED: return "orange"
@@ -408,31 +514,6 @@ struct FastestCompletionsResponse: Decodable {
 
 struct ActivityResponse: Decodable {
     let activityFeed: [ActivityEntry]
-}
-
-// MARK: - Wishlist Responses
-
-struct WishlistResponse: Decodable {
-    let myWishlist: [WishlistItem]
-}
-
-struct WishlistCheckResponse: Decodable {
-    let isGameInWishlist: Bool
-}
-
-struct WishlistMutationResponse: Decodable {
-    let addToWishlist: WishlistMutationResult?
-    let removeFromWishlist: WishlistMutationResult?
-    let toggleWishlist: WishlistToggleResult?
-}
-
-struct WishlistMutationResult: Decodable {
-    let success: Bool
-}
-
-struct WishlistToggleResult: Decodable {
-    let success: Bool
-    let isInWishlist: Bool
 }
 
 // MARK: - Game Progress Response
@@ -1099,7 +1180,8 @@ struct CreateGameResponse: Decodable {
 
 struct CreateGameResult: Decodable {
     let success: Bool
-    let game: AdminGame?
+    let error: MutationError?
+    let game: GameIdRef?
 }
 
 struct UpdateGameResponse: Decodable {
@@ -1108,7 +1190,19 @@ struct UpdateGameResponse: Decodable {
 
 struct UpdateGameResult: Decodable {
     let success: Bool
-    let game: AdminGame?
+    let error: MutationError?
+    let game: GameIdRef?
+}
+
+// Simple ref for mutation responses that only return id
+struct GameIdRef: Decodable {
+    let id: String
+}
+
+struct MutationError: Decodable {
+    let code: String
+    let message: String
+    let field: String?
 }
 
 struct DeleteGameResponse: Decodable {
