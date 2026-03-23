@@ -6,6 +6,7 @@ struct GameDetailView: View {
     @StateObject private var viewModel = GameDetailViewModel()
     @State private var showStatusPicker = false
     @State private var showAddToCollection = false
+    @State private var showAddToBuylist = false
 
     let gameId: String
 
@@ -49,6 +50,20 @@ struct GameDetailView: View {
                                     isLoading: viewModel.isCollectionLoading
                                 ) {
                                     showAddToCollection = true
+                                }
+
+                                // Buylist Button
+                                BuylistButton(
+                                    isInBuylist: viewModel.isInBuylist,
+                                    isLoading: viewModel.isBuylistLoading
+                                ) {
+                                    if viewModel.isInBuylist {
+                                        Task {
+                                            await viewModel.toggleBuylist()
+                                        }
+                                    } else {
+                                        showAddToBuylist = true
+                                    }
                                 }
                             }
                         }
@@ -174,11 +189,26 @@ struct GameDetailView: View {
                 )
             }
         }
+        .sheet(isPresented: $showAddToBuylist) {
+            if let game = viewModel.game {
+                AddToBuylistSheet(
+                    gameId: game.id,
+                    gameTitle: game.title,
+                    versions: game.versions ?? [],
+                    onSave: {
+                        Task {
+                            await viewModel.checkBuylist(gameId: gameId)
+                        }
+                    }
+                )
+            }
+        }
         .task {
             await viewModel.fetchGame(id: gameId)
             if clerk.user != nil {
                 await viewModel.checkGameStatus(gameId: gameId)
                 await viewModel.fetchCollectionForGame(gameId: gameId)
+                await viewModel.checkBuylist(gameId: gameId)
             }
         }
     }
@@ -270,6 +300,48 @@ private struct CollectionButton: View {
             .frame(maxWidth: .infinity)
             .background(itemCount > 0 ? Color.orange.opacity(0.15) : Color(.secondarySystemBackground))
             .foregroundColor(itemCount > 0 ? .orange : .primary)
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct BuylistButton: View {
+    let isInBuylist: Bool
+    let isLoading: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                } else {
+                    Image(systemName: isInBuylist ? "cart.fill" : "cart")
+                    if isInBuylist {
+                        Text("In Buylist")
+                            .fontWeight(.medium)
+                    } else {
+                        Text("Add to Buylist")
+                            .fontWeight(.medium)
+                    }
+                }
+                Spacer()
+                if isInBuylist {
+                    Image(systemName: "xmark")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(isInBuylist ? Color.purple.opacity(0.15) : Color(.secondarySystemBackground))
+            .foregroundColor(isInBuylist ? .purple : .primary)
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
