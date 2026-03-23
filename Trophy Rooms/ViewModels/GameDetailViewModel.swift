@@ -5,8 +5,9 @@ class GameDetailViewModel: ObservableObject {
     @Published var game: GameDetail?
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var isInWishlist = false
-    @Published var isWishlistLoading = false
+    @Published var isInBuylist = false
+    @Published var isBuylistLoading = false
+    @Published var buylistItemId: String?
     @Published var currentStatus: GameStatus?
     @Published var currentPlatformId: String?
     @Published var currentVersionId: String?
@@ -185,51 +186,105 @@ class GameDetailViewModel: ObservableObject {
         }
     }
 
-    func checkWishlist(gameId: String) async {
+    func checkBuylist(gameId: String) async {
         let query = """
-        query IsGameInWishlist($gameId: ID!) {
-            isGameInWishlist(gameId: $gameId)
+        query IsInBuylist($gameId: ID) {
+            isInBuylist(gameId: $gameId)
         }
         """
 
         do {
-            let response: WishlistCheckResponse = try await NetworkService.shared.fetch(query: query, variables: ["gameId": gameId])
+            let response: IsInBuylistResponse = try await NetworkService.shared.fetch(query: query, variables: ["gameId": gameId])
             DispatchQueue.main.async {
-                self.isInWishlist = response.isGameInWishlist
+                self.isInBuylist = response.isInBuylist
             }
         } catch {
             // Silently fail - user might not be logged in
         }
     }
 
-    func toggleWishlist() async {
+    func toggleBuylist() async {
         guard let gameId = game?.id else { return }
 
         DispatchQueue.main.async {
-            self.isWishlistLoading = true
+            self.isBuylistLoading = true
         }
 
-        let mutation = """
-        mutation ToggleWishlist($gameId: ID!) {
-            toggleWishlist(gameId: $gameId) {
-                success
-                isInWishlist
-            }
-        }
-        """
-
-        do {
-            let response: WishlistMutationResponse = try await NetworkService.shared.fetch(query: mutation, variables: ["gameId": gameId])
-            DispatchQueue.main.async {
-                if let result = response.toggleWishlist {
-                    self.isInWishlist = result.isInWishlist
+        if isInBuylist {
+            // Remove from buylist - we need to find the item ID first
+            let query = """
+            query GetMyBuylist {
+                myBuylist {
+                    id
+                    gameId
                 }
-                self.isWishlistLoading = false
             }
-        } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isWishlistLoading = false
+            """
+
+            do {
+                let response: BuylistResponse = try await NetworkService.shared.fetch(query: query)
+                if let item = response.myBuylist.first(where: { $0.gameId == gameId }) {
+                    let mutation = """
+                    mutation RemoveFromBuylist($id: ID!) {
+                        removeFromBuylist(id: $id) {
+                            success
+                        }
+                    }
+                    """
+                    let _: RemoveFromBuylistResponse = try await NetworkService.shared.fetch(
+                        query: mutation,
+                        variables: ["id": item.id]
+                    )
+                    DispatchQueue.main.async {
+                        self.isInBuylist = false
+                        self.isBuylistLoading = false
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.isBuylistLoading = false
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.errorMessage = error.localizedDescription
+                    self.isBuylistLoading = false
+                }
+            }
+        } else {
+            // Add to buylist
+            let mutation = """
+            mutation AddToBuylist($input: AddToBuylistInput!) {
+                addToBuylist(input: $input) {
+                    success
+                    buylistItem {
+                        id
+                    }
+                }
+            }
+            """
+
+            let input: [String: Any] = [
+                "gameId": gameId,
+                "priority": "MEDIUM"
+            ]
+
+            do {
+                let response: AddToBuylistResponse = try await NetworkService.shared.fetch(
+                    query: mutation,
+                    variables: ["input": input]
+                )
+                DispatchQueue.main.async {
+                    if response.addToBuylist.success {
+                        self.isInBuylist = true
+                        self.buylistItemId = response.addToBuylist.buylistItem?.id
+                    }
+                    self.isBuylistLoading = false
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.errorMessage = error.localizedDescription
+                    self.isBuylistLoading = false
+                }
             }
         }
     }
