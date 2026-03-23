@@ -11,6 +11,7 @@ struct CollectionView: View {
     @State private var showEditSheet = false
 
     var body: some View {
+        let _ = print("CollectionView RENDER: isLoading=\(viewModel.isLoading), hasLoadedOnce=\(viewModel.hasLoadedOnce), items=\(viewModel.collectionItems.count)")
         Group {
             if clerk.user == nil {
                 VStack(spacing: 16) {
