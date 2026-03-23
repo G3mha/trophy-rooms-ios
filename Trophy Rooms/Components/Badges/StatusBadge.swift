@@ -18,7 +18,6 @@ struct GameStatusBadge: View {
 extension GameStatus {
     var badgeColor: Color {
         switch self {
-        case .WISHLIST: return .pink  // Legacy
         case .BACKLOG: return .blue
         case .PLAYING: return .green
         case .PAUSED: return .orange
@@ -30,7 +29,7 @@ extension GameStatus {
 
 #Preview {
     VStack(spacing: 8) {
-        ForEach(GameStatus.activeStatuses, id: \.self) { status in
+        ForEach(GameStatus.allCases, id: \.self) { status in
             GameStatusBadge(status: status)
         }
     }
