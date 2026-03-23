@@ -3,7 +3,6 @@ import SwiftUI
 struct AdminDLCsView: View {
     @StateObject private var viewModel = AdminDLCsViewModel()
     @State private var selectedGame: GameSummary?
-    @State private var showingGamePicker = false
     @State private var showingCreateSheet = false
     @State private var dlcToEdit: DLC?
     @State private var dlcToDelete: DLC?
@@ -38,11 +37,6 @@ struct AdminDLCsView: View {
             }
             selectedIds.removeAll()
             isSelecting = false
-        }
-        .sheet(isPresented: $showingGamePicker) {
-            GamePickerSheet(title: "Select Game") { game in
-                selectedGame = game
-            }
         }
         .sheet(isPresented: $showingCreateSheet) {
             if let game = selectedGame {
@@ -91,11 +85,10 @@ struct AdminDLCsView: View {
 
     private var gameSelectionSection: some View {
         Section {
-            Button {
-                showingGamePicker = true
-            } label: {
-                GameSelectorRow(selectedGame: selectedGame)
-            }
+            GameSelectorField(
+                title: "Game",
+                selectedGame: $selectedGame
+            )
         } header: {
             Text("Select Game")
         }
@@ -202,36 +195,6 @@ struct AdminDLCsView: View {
             selectedIds.remove(id)
         } else {
             selectedIds.insert(id)
-        }
-    }
-}
-
-// MARK: - Game Selector Row
-
-private struct GameSelectorRow: View {
-    let selectedGame: GameSummary?
-
-    var body: some View {
-        HStack {
-            Text("Game")
-                .foregroundStyle(.primary)
-            Spacer()
-            if let game = selectedGame {
-                HStack(spacing: 8) {
-                    if let platform = game.platform {
-                        PlatformIcon(slug: platform.slug, size: 14)
-                    }
-                    Text(game.title)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            } else {
-                Text("Select a game")
-                    .foregroundStyle(.secondary)
-            }
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
         }
     }
 }

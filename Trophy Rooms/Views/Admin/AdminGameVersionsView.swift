@@ -2,9 +2,7 @@ import SwiftUI
 
 struct AdminGameVersionsView: View {
     @StateObject private var viewModel = AdminGameVersionsViewModel()
-    @State private var games: [AdminGame] = []
-    @State private var isLoadingGames = false
-    @State private var selectedGameId: String?
+    @State private var selectedGame: GameSummary?
     @State private var showingCreateSheet = false
     @State private var versionToEdit: GameVersion?
     @State private var versionToDelete: GameVersion?
@@ -18,25 +16,15 @@ struct AdminGameVersionsView: View {
     var body: some View {
         List {
             Section {
-                Picker("Game", selection: $selectedGameId) {
-                    Text("Select a game").tag(nil as String?)
-                    ForEach(games, id: \.id) { game in
-                        HStack {
-                            Text(game.title)
-                            if let platform = game.platform {
-                                Text("(\(platform.name))")
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .tag(game.id as String?)
-                    }
-                }
-                .pickerStyle(.navigationLink)
+                GameSelectorField(
+                    title: "Game",
+                    selectedGame: $selectedGame
+                )
             } header: {
                 Text("Select Game")
             }
 
-            if selectedGameId != nil {
+            if selectedGame != nil {
                 Section {
                     if viewModel.isLoading && viewModel.versions.isEmpty {
                         ProgressView()
@@ -49,94 +37,28 @@ struct AdminGameVersionsView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(viewModel.versions, id: \.id) { version in
-                            HStack(spacing: 12) {
-                                if isSelecting {
-                                    Image(systemName: selectedIds.contains(version.id) ? "checkmark.circle.fill" : "circle")
-                                        .foregroundStyle(selectedIds.contains(version.id) ? .blue : .gray)
-                                        .onTapGesture {
-                                            toggleSelection(version.id)
-                                        }
-                                }
-
-                                if let coverUrl = version.effectiveCoverUrl, let url = URL(string: coverUrl) {
-                                    AsyncImage(url: url) { image in
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                    } placeholder: {
-                                        Color.gray.opacity(0.3)
-                                    }
-                                    .frame(width: 50, height: 50)
-                                    .cornerRadius(8)
-                                } else {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 50, height: 50)
-                                }
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text(version.name)
-                                            .font(.headline)
-                                            .lineLimit(1)
-                                        if version.isDefault {
-                                            Image(systemName: "star.fill")
-                                                .foregroundStyle(.yellow)
-                                                .font(.caption)
-                                        }
-                                    }
-                                    Text(version.slug ?? "")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    if let dlcs = version.dlcs, !dlcs.isEmpty {
-                                        Text("\(dlcs.count) DLC included")
-                                            .font(.caption2)
-                                            .foregroundStyle(.tertiary)
-                                    }
-                                }
-                                Spacer()
-                                Text("\(version.achievementSetCount ?? 0) sets")
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                if isSelecting {
-                                    toggleSelection(version.id)
-                                } else {
-                                    versionToEdit = version
-                                }
-                            }
-                            .swipeActions(edge: .trailing) {
-                                if !isSelecting {
-                                    if !version.isDefault {
-                                        Button(role: .destructive) {
-                                            versionToDelete = version
-                                            showingDeleteConfirmation = true
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                    }
-
-                                    Button {
+                            VersionRow(
+                                version: version,
+                                isSelecting: isSelecting,
+                                isSelected: selectedIds.contains(version.id),
+                                onTap: {
+                                    if isSelecting {
+                                        toggleSelection(version.id)
+                                    } else {
                                         versionToEdit = version
-                                    } label: {
-                                        Label("Edit", systemImage: "pencil")
                                     }
-                                    .tint(.blue)
+                                },
+                                onToggleSelection: { toggleSelection(version.id) },
+                                onEdit: { versionToEdit = version },
+                                onDelete: {
+                                    versionToDelete = version
+                                    showingDeleteConfirmation = true
+                                },
+                                onSetDefault: {
+                                    versionToSetDefault = version
+                                    showingSetDefaultConfirmation = true
                                 }
-                            }
-                            .swipeActions(edge: .leading) {
-                                if !isSelecting && !version.isDefault {
-                                    Button {
-                                        versionToSetDefault = version
-                                        showingSetDefaultConfirmation = true
-                                    } label: {
-                                        Label("Set Default", systemImage: "star")
-                                    }
-                                    .tint(.yellow)
-                                }
-                            }
+                            )
                         }
                     }
                 } header: {
@@ -151,7 +73,7 @@ struct AdminGameVersionsView: View {
         .navigationTitle("Game Versions")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                if selectedGameId != nil {
+                if selectedGame != nil {
                     if isSelecting {
                         Button("Done") {
                             isSelecting = false
@@ -197,17 +119,14 @@ struct AdminGameVersionsView: View {
             }
         }
         .refreshable {
-            if let gameId = selectedGameId {
-                await viewModel.fetchVersions(gameId: gameId)
+            if let game = selectedGame {
+                await viewModel.fetchVersions(gameId: game.id)
             }
         }
-        .task {
-            await fetchGames()
-        }
-        .onChange(of: selectedGameId) { _, newValue in
-            if let gameId = newValue {
+        .onChange(of: selectedGame) { _, newValue in
+            if let game = newValue {
                 Task {
-                    await viewModel.fetchVersions(gameId: gameId)
+                    await viewModel.fetchVersions(gameId: game.id)
                 }
             } else {
                 viewModel.versions = []
@@ -216,13 +135,13 @@ struct AdminGameVersionsView: View {
             isSelecting = false
         }
         .sheet(isPresented: $showingCreateSheet) {
-            if let gameId = selectedGameId {
-                AdminGameVersionFormSheet(viewModel: viewModel, gameId: gameId, version: nil)
+            if let game = selectedGame {
+                AdminGameVersionFormSheet(viewModel: viewModel, gameId: game.id, version: nil)
             }
         }
         .sheet(item: $versionToEdit) { version in
-            if let gameId = selectedGameId {
-                AdminGameVersionFormSheet(viewModel: viewModel, gameId: gameId, version: version)
+            if let game = selectedGame {
+                AdminGameVersionFormSheet(viewModel: viewModel, gameId: game.id, version: version)
             }
         }
         .alert("Delete Version", isPresented: $showingDeleteConfirmation) {
@@ -230,9 +149,9 @@ struct AdminGameVersionsView: View {
                 versionToDelete = nil
             }
             Button("Delete", role: .destructive) {
-                if let version = versionToDelete, let gameId = selectedGameId {
+                if let version = versionToDelete, let game = selectedGame {
                     Task {
-                        await viewModel.deleteVersion(id: version.id, gameId: gameId)
+                        await viewModel.deleteVersion(id: version.id, gameId: game.id)
                         versionToDelete = nil
                     }
                 }
@@ -247,9 +166,9 @@ struct AdminGameVersionsView: View {
                 versionToSetDefault = nil
             }
             Button("Set Default") {
-                if let version = versionToSetDefault, let gameId = selectedGameId {
+                if let version = versionToSetDefault, let game = selectedGame {
                     Task {
-                        await viewModel.setDefaultVersion(id: version.id, gameId: gameId)
+                        await viewModel.setDefaultVersion(id: version.id, gameId: game.id)
                         versionToSetDefault = nil
                     }
                 }
@@ -262,12 +181,12 @@ struct AdminGameVersionsView: View {
         .alert("Delete Versions", isPresented: $showingBulkDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
-                if let gameId = selectedGameId {
+                if let game = selectedGame {
                     let nonDefaultIds = Array(selectedIds.filter { id in
                         !viewModel.versions.contains { $0.id == id && $0.isDefault }
                     })
                     Task {
-                        await viewModel.bulkDeleteVersions(ids: nonDefaultIds, gameId: gameId)
+                        await viewModel.bulkDeleteVersions(ids: nonDefaultIds, gameId: game.id)
                         selectedIds.removeAll()
                         isSelecting = false
                     }
@@ -281,47 +200,110 @@ struct AdminGameVersionsView: View {
         }
     }
 
-    private func fetchGames() async {
-        isLoadingGames = true
-        let query = """
-        query GetGames {
-            games(first: 500) {
-                edges {
-                    node {
-                        id
-                        title
-                        type
-                        baseGameId
-                        platform {
-                            id
-                            name
-                            slug
-                        }
-                        achievementSetCount
-                    }
-                }
-            }
-        }
-        """
-
-        do {
-            let response: AdminGamesResponse = try await NetworkService.shared.fetch(query: query)
-            DispatchQueue.main.async {
-                self.games = response.games.edges.map { $0.node }
-                self.isLoadingGames = false
-            }
-        } catch {
-            DispatchQueue.main.async {
-                self.isLoadingGames = false
-            }
-        }
-    }
-
     private func toggleSelection(_ id: String) {
         if selectedIds.contains(id) {
             selectedIds.remove(id)
         } else {
             selectedIds.insert(id)
+        }
+    }
+}
+
+// MARK: - Version Row
+
+private struct VersionRow: View {
+    let version: GameVersion
+    let isSelecting: Bool
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onToggleSelection: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    let onSetDefault: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if isSelecting {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? .blue : .gray)
+                    .onTapGesture { onToggleSelection() }
+            }
+
+            coverImage
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(version.name)
+                        .font(.headline)
+                        .lineLimit(1)
+                    if version.isDefault {
+                        Image(systemName: "star.fill")
+                            .foregroundStyle(.yellow)
+                            .font(.caption)
+                    }
+                }
+                Text(version.slug ?? "")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if let dlcs = version.dlcs, !dlcs.isEmpty {
+                    Text("\(dlcs.count) DLC included")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer()
+            Text("\(version.achievementSetCount ?? 0) sets")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
+        .swipeActions(edge: .trailing) {
+            if !isSelecting {
+                if !version.isDefault {
+                    Button(role: .destructive) {
+                        onDelete()
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+
+                Button {
+                    onEdit()
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .tint(.blue)
+            }
+        }
+        .swipeActions(edge: .leading) {
+            if !isSelecting && !version.isDefault {
+                Button {
+                    onSetDefault()
+                } label: {
+                    Label("Set Default", systemImage: "star")
+                }
+                .tint(.yellow)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var coverImage: some View {
+        if let coverUrl = version.effectiveCoverUrl, let url = URL(string: coverUrl) {
+            AsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Color.gray.opacity(0.3)
+            }
+            .frame(width: 50, height: 50)
+            .cornerRadius(8)
+        } else {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.gray.opacity(0.3))
+                .frame(width: 50, height: 50)
         }
     }
 }

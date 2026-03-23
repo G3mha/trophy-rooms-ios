@@ -8,10 +8,9 @@ struct AdminSetFormSheet: View {
     @State private var title: String = ""
     @State private var selectedType: AchievementSetType = .OFFICIAL
     @State private var selectedVisibility: AchievementSetVisibility = .PUBLIC
-    @State private var selectedGameId: String = ""
+    @State private var selectedGame: GameSummary?
     @State private var selectedVersionId: String = ""
     @State private var selectedDlcId: String = ""
-    @State private var gameSearchText: String = ""
     @State private var isSaving = false
 
     var isEditing: Bool {
@@ -20,16 +19,7 @@ struct AdminSetFormSheet: View {
 
     var isValid: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !selectedGameId.isEmpty
-    }
-
-    var filteredGames: [AdminGame] {
-        if gameSearchText.isEmpty {
-            return viewModel.games
-        }
-        return viewModel.games.filter { game in
-            game.title.localizedCaseInsensitiveContains(gameSearchText)
-        }
+        selectedGame != nil
     }
 
     var body: some View {
@@ -54,20 +44,17 @@ struct AdminSetFormSheet: View {
                 }
 
                 Section {
-                    Picker("Game", selection: $selectedGameId) {
-                        Text("Select Game").tag("")
-                        ForEach(filteredGames) { game in
-                            Text(game.title).tag(game.id)
-                        }
-                    }
-                    .pickerStyle(.navigationLink)
-                    .onChange(of: selectedGameId) { _, newValue in
+                    GameSelectorField(
+                        title: "Game",
+                        selectedGame: $selectedGame
+                    )
+                    .onChange(of: selectedGame) { _, newValue in
                         selectedVersionId = ""
                         selectedDlcId = ""
-                        if !newValue.isEmpty {
+                        if let game = newValue {
                             Task {
-                                await viewModel.fetchVersions(gameId: newValue)
-                                await viewModel.fetchDlcs(gameId: newValue)
+                                await viewModel.fetchVersions(gameId: game.id)
+                                await viewModel.fetchDlcs(gameId: game.id)
                             }
                         } else {
                             viewModel.versions = []
@@ -78,7 +65,7 @@ struct AdminSetFormSheet: View {
                     Text("Game")
                 }
 
-                if !selectedGameId.isEmpty && viewModel.versions.count > 1 {
+                if selectedGame != nil && viewModel.versions.count > 1 {
                     Section {
                         Picker("Version", selection: $selectedVersionId) {
                             Text("All Versions").tag("")
@@ -101,7 +88,7 @@ struct AdminSetFormSheet: View {
                     }
                 }
 
-                if !selectedGameId.isEmpty && !viewModel.dlcs.isEmpty {
+                if selectedGame != nil && !viewModel.dlcs.isEmpty {
                     Section {
                         Picker("DLC", selection: $selectedDlcId) {
                             Text("Base Game").tag("")
@@ -152,39 +139,49 @@ struct AdminSetFormSheet: View {
                 title = set.title
                 selectedType = set.typeEnum
                 selectedVisibility = set.visibilityEnum
-                selectedGameId = set.game?.id ?? ""
                 selectedVersionId = set.gameVersionId ?? ""
                 selectedDlcId = set.dlcId ?? ""
-                if !selectedGameId.isEmpty {
+
+                // Create a GameSummary from the set's game info
+                if let gameInfo = set.game {
+                    selectedGame = GameSummary(
+                        id: gameInfo.id,
+                        title: gameInfo.title,
+                        description: nil,
+                        coverUrl: nil,
+                        type: nil,
+                        baseGameId: nil,
+                        platform: nil,
+                        achievementSetCount: 0,
+                        achievementCount: 0,
+                        trophyCount: 0
+                    )
                     Task {
-                        await viewModel.fetchVersions(gameId: selectedGameId)
-                        await viewModel.fetchDlcs(gameId: selectedGameId)
+                        await viewModel.fetchVersions(gameId: gameInfo.id)
+                        await viewModel.fetchDlcs(gameId: gameInfo.id)
                     }
-                }
-            } else if selectedGameId.isEmpty, let firstGame = viewModel.games.first {
-                selectedGameId = firstGame.id
-                Task {
-                    await viewModel.fetchVersions(gameId: firstGame.id)
-                    await viewModel.fetchDlcs(gameId: firstGame.id)
                 }
             }
         }
     }
 
     private func save() {
+        guard let game = selectedGame else { return }
+
         isSaving = true
 
         Task {
             let success: Bool
             let versionId = selectedVersionId.isEmpty ? nil : selectedVersionId
             let dlcId = selectedDlcId.isEmpty ? nil : selectedDlcId
+
             if let set = achievementSet {
                 success = await viewModel.updateAchievementSet(
                     id: set.id,
                     title: title.trimmingCharacters(in: .whitespaces),
                     type: selectedType,
                     visibility: selectedVisibility,
-                    gameId: selectedGameId,
+                    gameId: game.id,
                     gameVersionId: versionId,
                     dlcId: dlcId
                 )
@@ -193,7 +190,7 @@ struct AdminSetFormSheet: View {
                     title: title.trimmingCharacters(in: .whitespaces),
                     type: selectedType,
                     visibility: selectedVisibility,
-                    gameId: selectedGameId,
+                    gameId: game.id,
                     gameVersionId: versionId,
                     dlcId: dlcId
                 )

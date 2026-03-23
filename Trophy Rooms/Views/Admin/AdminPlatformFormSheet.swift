@@ -19,43 +19,19 @@ struct AdminPlatformFormSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name", text: $name)
-                        .textInputAutocapitalization(.words)
-
-                    TextField("Slug", text: $slug)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                } header: {
-                    Text("Platform Details")
-                }
-
-                if let error = viewModel.errorMessage {
-                    Section {
-                        Text(error)
-                            .foregroundStyle(.red)
-                    }
-                }
+        AdminFormSheet(
+            entityName: "Platform",
+            isEditing: isEditing,
+            isSaving: isSaving,
+            isValid: isValid,
+            errorMessage: viewModel.errorMessage,
+            onCancel: { dismiss() },
+            onSave: { save() }
+        ) {
+            Section("Platform Details") {
+                NameTextField("Name", text: $name)
+                SlugTextField("Slug", text: $slug)
             }
-            .navigationTitle(isEditing ? "Edit Platform" : "New Platform")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditing ? "Save" : "Create") {
-                        save()
-                    }
-                    .disabled(!isValid || isSaving)
-                }
-            }
-            .interactiveDismissDisabled(isSaving)
         }
         .onAppear {
             if let platform = platform {
