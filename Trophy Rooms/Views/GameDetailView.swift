@@ -185,7 +185,6 @@ struct GameDetailView: View {
 
     func statusColor(for status: GameStatus) -> Color {
         switch status {
-        case .WISHLIST: return .pink
         case .BACKLOG: return .blue
         case .PLAYING: return .green
         case .PAUSED: return .orange
@@ -232,7 +231,6 @@ private struct GameStatusButton: View {
     var statusColor: Color {
         guard let status = currentStatus else { return .primary }
         switch status {
-        case .WISHLIST: return .pink
         case .BACKLOG: return .blue
         case .PLAYING: return .green
         case .PAUSED: return .orange

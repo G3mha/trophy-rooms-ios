@@ -192,7 +192,6 @@ private struct LibraryFilterView: View {
 
     func statusColor(for status: GameStatus) -> Color {
         switch status {
-        case .WISHLIST: return .pink
         case .BACKLOG: return .blue
         case .PLAYING: return .green
         case .PAUSED: return .orange
@@ -334,7 +333,6 @@ struct StatusBadge: View {
 
     var statusColor: Color {
         switch status {
-        case .WISHLIST: return .pink
         case .BACKLOG: return .blue
         case .PLAYING: return .green
         case .PAUSED: return .orange
