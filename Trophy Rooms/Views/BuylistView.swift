@@ -94,19 +94,14 @@ struct BuylistView: View {
                 }
             }
         }
-        .navigationTitle("Buylist")
+        .navigationBar(title: "Buylist")
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .navigationBarLeading) {
                 if clerk.user != nil {
-                    HStack(spacing: 12) {
-                        Button {
-                            shareLink()
-                        } label: {
-                            Image(systemName: copiedLink ? "checkmark" : "square.and.arrow.up")
-                        }
-                        UserButton()
-                            .frame(width: 30, height: 30)
-                            .clipShape(Circle())
+                    Button {
+                        shareLink()
+                    } label: {
+                        Image(systemName: copiedLink ? "checkmark" : "square.and.arrow.up")
                     }
                 }
             }
