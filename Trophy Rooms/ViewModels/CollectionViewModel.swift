@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class CollectionViewModel: ObservableObject {
     @Published var collectionItems: [CollectionItem] = []
     @Published var stats: CollectionStats?
@@ -51,10 +52,8 @@ class CollectionViewModel: ObservableObject {
         print("CollectionViewModel: fetchCollection() called")
         print("CollectionViewModel: isLoading=\(isLoading), hasLoadedOnce=\(hasLoadedOnce)")
 
-        DispatchQueue.main.async {
-            self.isLoading = true
-            self.errorMessage = nil
-        }
+        isLoading = true
+        errorMessage = nil
 
         let query = """
         query GetMyCollection {
@@ -92,32 +91,24 @@ class CollectionViewModel: ObservableObject {
         do {
             let response: CollectionWithStatsResponse = try await NetworkService.shared.fetch(query: query)
             print("CollectionViewModel: Got response with \(response.myCollection.count) items")
-            DispatchQueue.main.async {
-                self.collectionItems = response.myCollection
-                self.stats = response.collectionStats
-                self.isLoading = false
-                self.hasLoadedOnce = true
-                print("CollectionViewModel: Updated state, isLoading=\(self.isLoading)")
-            }
+            collectionItems = response.myCollection
+            stats = response.collectionStats
+            isLoading = false
+            hasLoadedOnce = true
+            print("CollectionViewModel: Updated state, isLoading=\(isLoading), hasLoadedOnce=\(hasLoadedOnce)")
         } catch is CancellationError {
             print("CollectionViewModel: Task was cancelled")
-            DispatchQueue.main.async {
-                self.isLoading = false
-                self.hasLoadedOnce = true
-            }
+            isLoading = false
+            hasLoadedOnce = true
         } catch let error as NSError where error.code == NSURLErrorCancelled {
             print("CollectionViewModel: URL request cancelled")
-            DispatchQueue.main.async {
-                self.isLoading = false
-                self.hasLoadedOnce = true
-            }
+            isLoading = false
+            hasLoadedOnce = true
         } catch {
             print("CollectionViewModel: Error - \(error.localizedDescription)")
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
-                self.hasLoadedOnce = true
-            }
+            errorMessage = error.localizedDescription
+            isLoading = false
+            hasLoadedOnce = true
         }
     }
 
@@ -136,25 +127,21 @@ class CollectionViewModel: ObservableObject {
                 variables: ["id": id]
             )
             if response.removeFromCollection.success {
-                DispatchQueue.main.async {
-                    self.collectionItems.removeAll { $0.id == id }
-                    // Update stats
-                    if var currentStats = self.stats {
-                        currentStats = CollectionStats(
-                            totalItems: currentStats.totalItems - 1,
-                            sealedCount: currentStats.sealedCount,
-                            completeCount: currentStats.completeCount,
-                            byRegion: currentStats.byRegion
-                        )
-                        self.stats = currentStats
-                    }
+                collectionItems.removeAll { $0.id == id }
+                // Update stats
+                if var currentStats = stats {
+                    currentStats = CollectionStats(
+                        totalItems: currentStats.totalItems - 1,
+                        sealedCount: currentStats.sealedCount,
+                        completeCount: currentStats.completeCount,
+                        byRegion: currentStats.byRegion
+                    )
+                    stats = currentStats
                 }
             }
             return response.removeFromCollection.success
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
             return false
         }
     }
