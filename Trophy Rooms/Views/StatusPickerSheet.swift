@@ -49,7 +49,7 @@ struct StatusPickerSheet: View {
 
                 // Status options
                 Section("Status") {
-                    ForEach(GameStatus.allCases, id: \.self) { status in
+                    ForEach(GameStatus.activeStatuses, id: \.self) { status in
                         Button {
                             onSelect(status, selectedPlatformId, selectedVersionId)
                             dismiss()
@@ -105,6 +105,7 @@ struct StatusPickerSheet: View {
 
     func statusColor(for status: GameStatus) -> Color {
         switch status {
+        case .WISHLIST: return .pink
         case .BACKLOG: return .blue
         case .PLAYING: return .green
         case .PAUSED: return .orange

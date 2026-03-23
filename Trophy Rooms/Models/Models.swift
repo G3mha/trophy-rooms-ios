@@ -314,6 +314,7 @@ struct BuylistItemRef: Decodable {
 // MARK: - Library Models
 
 enum GameStatus: String, Codable, CaseIterable {
+    case WISHLIST  // Deprecated - kept for backward compatibility with existing data
     case BACKLOG
     case PLAYING
     case PAUSED
@@ -322,6 +323,7 @@ enum GameStatus: String, Codable, CaseIterable {
 
     var displayName: String {
         switch self {
+        case .WISHLIST: return "Wishlist"  // Legacy
         case .BACKLOG: return "Backlog"
         case .PLAYING: return "Playing"
         case .PAUSED: return "Paused"
@@ -330,8 +332,14 @@ enum GameStatus: String, Codable, CaseIterable {
         }
     }
 
+    /// Statuses that should be shown in the UI (excludes deprecated WISHLIST)
+    static var activeStatuses: [GameStatus] {
+        [.BACKLOG, .PLAYING, .PAUSED, .COMPLETED, .DROPPED]
+    }
+
     var iconName: String {
         switch self {
+        case .WISHLIST: return "heart"  // Legacy
         case .BACKLOG: return "tray"
         case .PLAYING: return "play.circle"
         case .PAUSED: return "pause.circle"
@@ -342,6 +350,7 @@ enum GameStatus: String, Codable, CaseIterable {
 
     var color: String {
         switch self {
+        case .WISHLIST: return "pink"  // Legacy
         case .BACKLOG: return "blue"
         case .PLAYING: return "green"
         case .PAUSED: return "orange"

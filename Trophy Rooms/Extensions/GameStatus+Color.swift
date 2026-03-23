@@ -6,6 +6,7 @@ extension GameStatus {
     /// Returns the SwiftUI Color associated with this status
     var statusColor: Color {
         switch self {
+        case .WISHLIST: return .pink  // Legacy
         case .BACKLOG: return .blue
         case .PLAYING: return .green
         case .PAUSED: return .orange
