@@ -149,6 +149,11 @@ class AdminGamesViewModel: ObservableObject {
         mutation CreateGame($input: CreateGameInput!) {
             createGame(input: $input) {
                 success
+                error {
+                    code
+                    message
+                    field
+                }
                 game {
                     id
                 }
@@ -186,7 +191,7 @@ class AdminGamesViewModel: ObservableObject {
                 return true
             } else {
                 DispatchQueue.main.async {
-                    self.errorMessage = "Failed to create game"
+                    self.errorMessage = response.createGame.error?.message ?? "Failed to create game"
                 }
                 return false
             }
@@ -208,6 +213,11 @@ class AdminGamesViewModel: ObservableObject {
         mutation UpdateGame($id: ID!, $input: UpdateGameInput!) {
             updateGame(id: $id, input: $input) {
                 success
+                error {
+                    code
+                    message
+                    field
+                }
                 game {
                     id
                 }
@@ -252,7 +262,7 @@ class AdminGamesViewModel: ObservableObject {
                 return true
             } else {
                 DispatchQueue.main.async {
-                    self.errorMessage = "Failed to update game"
+                    self.errorMessage = response.updateGame.error?.message ?? "Failed to update game"
                 }
                 return false
             }
