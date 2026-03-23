@@ -48,6 +48,9 @@ class CollectionViewModel: ObservableObject {
     }
 
     func fetchCollection() async {
+        print("CollectionViewModel: fetchCollection() called")
+        print("CollectionViewModel: isLoading=\(isLoading), hasLoadedOnce=\(hasLoadedOnce)")
+
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
@@ -84,27 +87,32 @@ class CollectionViewModel: ObservableObject {
         }
         """
 
+        print("CollectionViewModel: Starting network request...")
+
         do {
             let response: CollectionWithStatsResponse = try await NetworkService.shared.fetch(query: query)
+            print("CollectionViewModel: Got response with \(response.myCollection.count) items")
             DispatchQueue.main.async {
                 self.collectionItems = response.myCollection
                 self.stats = response.collectionStats
                 self.isLoading = false
                 self.hasLoadedOnce = true
+                print("CollectionViewModel: Updated state, isLoading=\(self.isLoading)")
             }
         } catch is CancellationError {
-            // Task was cancelled (e.g., user switched tabs) - don't show error but mark as loaded
+            print("CollectionViewModel: Task was cancelled")
             DispatchQueue.main.async {
                 self.isLoading = false
                 self.hasLoadedOnce = true
             }
         } catch let error as NSError where error.code == NSURLErrorCancelled {
-            // URL request was cancelled - don't show error but mark as loaded
+            print("CollectionViewModel: URL request cancelled")
             DispatchQueue.main.async {
                 self.isLoading = false
                 self.hasLoadedOnce = true
             }
         } catch {
+            print("CollectionViewModel: Error - \(error.localizedDescription)")
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
