@@ -93,14 +93,16 @@ class CollectionViewModel: ObservableObject {
                 self.hasLoadedOnce = true
             }
         } catch is CancellationError {
-            // Task was cancelled (e.g., user switched tabs) - don't show error
+            // Task was cancelled (e.g., user switched tabs) - don't show error but mark as loaded
             DispatchQueue.main.async {
                 self.isLoading = false
+                self.hasLoadedOnce = true
             }
         } catch let error as NSError where error.code == NSURLErrorCancelled {
-            // URL request was cancelled - don't show error
+            // URL request was cancelled - don't show error but mark as loaded
             DispatchQueue.main.async {
                 self.isLoading = false
+                self.hasLoadedOnce = true
             }
         } catch {
             DispatchQueue.main.async {
