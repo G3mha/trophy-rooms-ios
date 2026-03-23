@@ -39,18 +39,26 @@ struct RootView: View {
             }
             .tag(3)
 
+            NavigationStack {
+                BuylistView()
+            }
+            .tabItem {
+                Label("Buylist", systemImage: "cart")
+            }
+            .tag(4)
+
             CollectionView()
             .tabItem {
                 Label("Collection", systemImage: "square.grid.2x2")
             }
-            .tag(4)
+            .tag(5)
 
             if adminViewModel.canAccessAdmin {
                 AdminDashboardView()
                 .tabItem {
                     Label("Admin", systemImage: "gearshape.2")
                 }
-                .tag(5)
+                .tag(6)
             }
         }
         .task {
