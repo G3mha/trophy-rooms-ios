@@ -9,6 +9,8 @@ struct AdminGamesView: View {
     @State private var selectedIds: Set<String> = []
     @State private var isSelecting = false
     @State private var showingBulkDeleteConfirmation = false
+    @State private var gameToClone: AdminGameItem?
+    @State private var showingCloneSheet = false
 
     var body: some View {
         List {
@@ -135,6 +137,14 @@ struct AdminGamesView: View {
                                 Label("Edit", systemImage: "pencil")
                             }
                             .tint(.blue)
+
+                            Button {
+                                gameToClone = game
+                                showingCloneSheet = true
+                            } label: {
+                                Label("Clone", systemImage: "doc.on.doc")
+                            }
+                            .tint(.orange)
                         }
                     }
                 }
@@ -236,6 +246,14 @@ struct AdminGamesView: View {
         } message: {
             Text("Are you sure you want to delete \(selectedIds.count) game(s)? This will also delete all related achievement sets and achievements. This action cannot be undone.")
         }
+        .sheet(isPresented: $showingCloneSheet) {
+            if let game = gameToClone {
+                CloneGameSheet(viewModel: viewModel, game: game) {
+                    showingCloneSheet = false
+                    gameToClone = nil
+                }
+            }
+        }
     }
 
     private func toggleSelection(_ id: String) {
@@ -244,6 +262,107 @@ struct AdminGamesView: View {
         } else {
             selectedIds.insert(id)
         }
+    }
+}
+
+// MARK: - Clone Game Sheet
+struct CloneGameSheet: View {
+    @ObservedObject var viewModel: AdminGamesViewModel
+    let game: AdminGameItem
+    let onDismiss: () -> Void
+
+    @State private var selectedPlatformId: String = ""
+    @State private var copyAchievementSets = false
+    @State private var isCloning = false
+
+    var availablePlatforms: [AdminPlatform] {
+        // Filter out the current platform
+        viewModel.platforms.filter { $0.id != game.platformId }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack(spacing: 12) {
+                        AsyncImage(url: game.coverUrl.flatMap { URL(string: $0) }) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Color.gray.opacity(0.3)
+                        }
+                        .frame(width: 60, height: 60)
+                        .cornerRadius(8)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(game.title)
+                                .font(.headline)
+                            if let platformName = game.platformName {
+                                Text("Current: \(platformName)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Source Game")
+                }
+
+                Section {
+                    Picker("Target Platform", selection: $selectedPlatformId) {
+                        Text("Select a platform").tag("")
+                        ForEach(availablePlatforms) { platform in
+                            Text(platform.name).tag(platform.id)
+                        }
+                    }
+                } header: {
+                    Text("Clone To")
+                }
+
+                Section {
+                    Toggle("Copy Achievement Sets", isOn: $copyAchievementSets)
+                } footer: {
+                    Text("If enabled, all achievement sets and their achievements will be copied to the new game.")
+                }
+
+                if let errorMessage = viewModel.errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Clone Game")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onDismiss()
+                    }
+                    .disabled(isCloning)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Clone") {
+                        Task {
+                            isCloning = true
+                            let success = await viewModel.cloneGameToPlatform(
+                                gameId: game.id,
+                                targetPlatformId: selectedPlatformId,
+                                copyAchievementSets: copyAchievementSets
+                            )
+                            isCloning = false
+                            if success {
+                                onDismiss()
+                            }
+                        }
+                    }
+                    .disabled(selectedPlatformId.isEmpty || isCloning)
+                }
+            }
+            .interactiveDismissDisabled(isCloning)
+        }
+        .presentationDetents([.medium])
     }
 }
 

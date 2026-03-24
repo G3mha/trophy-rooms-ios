@@ -354,4 +354,55 @@ class AdminGamesViewModel: ObservableObject {
             return 0
         }
     }
+
+    func cloneGameToPlatform(gameId: String, targetPlatformId: String, copyAchievementSets: Bool) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation CloneGameToPlatform($gameId: ID!, $targetPlatformId: ID!, $copyAchievementSets: Boolean) {
+            cloneGameToPlatform(gameId: $gameId, targetPlatformId: $targetPlatformId, copyAchievementSets: $copyAchievementSets) {
+                success
+                gameId
+                error {
+                    code
+                    message
+                    field
+                }
+            }
+        }
+        """
+
+        let variables: [String: Any] = [
+            "gameId": gameId,
+            "targetPlatformId": targetPlatformId,
+            "copyAchievementSets": copyAchievementSets
+        ]
+
+        do {
+            let response: CloneGameResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: variables
+            )
+            if response.cloneGameToPlatform.success {
+                await fetchGames(page: 1)
+                DispatchQueue.main.async {
+                    self.successMessage = "Game cloned successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = response.cloneGameToPlatform.error?.message ?? "Failed to clone game"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
 }
