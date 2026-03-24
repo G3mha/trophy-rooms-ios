@@ -53,7 +53,7 @@ struct GameDetailView: View {
                                 }
 
                                 // Buylist Button
-                                BuylistButton(
+                                GameDetailBuylistButton(
                                     isInBuylist: viewModel.isInBuylist,
                                     isLoading: viewModel.isBuylistLoading
                                 ) {
@@ -306,7 +306,7 @@ private struct CollectionButton: View {
     }
 }
 
-private struct BuylistButton: View {
+private struct GameDetailBuylistButton: View {
     let isInBuylist: Bool
     let isLoading: Bool
     let action: () -> Void
