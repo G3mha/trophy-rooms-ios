@@ -470,6 +470,28 @@ struct GamesPage: Decodable {
     let totalPages: Int
 }
 
+// MARK: - Games By Title Response
+
+struct GamesByTitleResponse: Decodable {
+    let gamesByTitle: [GameSummary]
+}
+
+// MARK: - Game Group (for consolidated display)
+
+struct GameGroup: Identifiable {
+    let title: String
+    let slug: String
+    let games: [GameSummary]
+    let platforms: [Platform]
+    let coverUrl: String?
+    let totalAchievementCount: Int
+    let totalTrophyCount: Int
+
+    var id: String { slug }
+
+    var isSingleGame: Bool { games.count == 1 }
+}
+
 struct PlatformsResponse: Decodable {
     let platforms: [Platform]
 }
@@ -1292,4 +1314,14 @@ struct BulkDeleteAchievementSetsResponse: Decodable {
 
 struct BulkDeleteAchievementsResponse: Decodable {
     let bulkDeleteAchievements: BulkDeleteResult
+}
+
+struct CloneGameResponse: Decodable {
+    let cloneGameToPlatform: CloneGameResult
+}
+
+struct CloneGameResult: Decodable {
+    let success: Bool
+    let gameId: String?
+    let error: MutationError?
 }
