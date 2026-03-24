@@ -16,6 +16,41 @@ class GameListViewModel: ObservableObject {
     var hasNextPage: Bool { currentPage < totalPages }
     var hasPreviousPage: Bool { currentPage > 1 }
 
+    // Group games by title for consolidated display
+    var gameGroups: [GameGroup] {
+        groupGamesByTitle(games)
+    }
+
+    private func groupGamesByTitle(_ games: [GameSummary]) -> [GameGroup] {
+        var groups: [String: [GameSummary]] = [:]
+
+        for game in games {
+            let key = game.title.trimmingCharacters(in: .whitespaces).lowercased()
+            if groups[key] == nil {
+                groups[key] = []
+            }
+            groups[key]?.append(game)
+        }
+
+        return groups.values.map { gameList in
+            let platforms = gameList.compactMap { $0.platform }
+            let slug = gameList[0].title
+                .lowercased()
+                .replacingOccurrences(of: " ", with: "-")
+                .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+
+            return GameGroup(
+                title: gameList[0].title,
+                slug: slug,
+                games: gameList,
+                platforms: platforms,
+                coverUrl: gameList.first(where: { $0.coverUrl != nil })?.coverUrl,
+                totalAchievementCount: gameList.reduce(0) { $0 + $1.achievementCount },
+                totalTrophyCount: gameList.reduce(0) { $0 + $1.trophyCount }
+            )
+        }.sorted { $0.title.lowercased() < $1.title.lowercased() }
+    }
+
     func fetchPlatforms() async {
         let query = """
         query GetPlatforms {

@@ -12,9 +12,9 @@ struct GameListView: View {
     @State private var minAchievementCount = 0
     @State private var gameTypeFilter: GameTypeFilter = .all
 
-    var filteredGames: [GameSummary] {
-        viewModel.games.filter { game in
-            game.achievementCount >= minAchievementCount
+    var filteredGameGroups: [GameGroup] {
+        viewModel.gameGroups.filter { group in
+            group.totalAchievementCount >= minAchievementCount
         }
     }
 
@@ -66,61 +66,22 @@ struct GameListView: View {
                     }
 
                     Section {
-                        ForEach(filteredGames) { game in
-                            NavigationLink(destination: GameDetailView(gameId: game.id)) {
-                                HStack {
-                                    if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
-                                        AsyncImage(url: url) { image in
-                                            image.resizable().aspectRatio(contentMode: .fit)
-                                        } placeholder: {
-                                            Color.gray
-                                        }
-                                        .frame(width: 50, height: 50)
-                                        .cornerRadius(8)
-                                    } else {
-                                        Rectangle()
-                                            .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 50, height: 50)
-                                            .cornerRadius(8)
-                                    }
-
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        HStack(spacing: 6) {
-                                            Text(game.title)
-                                                .font(.headline)
-                                            if let type = game.type, type != .BASE_GAME {
-                                                Text(type.shortName)
-                                                    .font(.caption2)
-                                                    .fontWeight(.medium)
-                                                    .padding(.horizontal, 6)
-                                                    .padding(.vertical, 2)
-                                                    .background(type == .FANGAME ? Color.purple.opacity(0.2) : Color.orange.opacity(0.2))
-                                                    .foregroundColor(type == .FANGAME ? .purple : .orange)
-                                                    .clipShape(Capsule())
-                                            }
-                                        }
-                                        if let platform = game.platform {
-                                            HStack(spacing: 4) {
-                                                PlatformIcon(slug: platform.slug, size: 12)
-                                                Text(platform.name)
-                                            }
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                        } else {
-                                            Text("Unknown Platform")
-                                                .font(.subheadline)
-                                                .foregroundColor(.secondary)
-                                        }
-                                        Text("\(game.achievementCount) achievements")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
+                        ForEach(filteredGameGroups) { group in
+                            if group.isSingleGame, let game = group.games.first {
+                                // Single game - navigate directly to game detail
+                                NavigationLink(destination: GameDetailView(gameId: game.id)) {
+                                    GameRowView(game: game)
+                                }
+                            } else {
+                                // Multiple platforms - navigate to game family view
+                                NavigationLink(destination: GameFamilyView(title: group.title)) {
+                                    GroupedGameRowView(group: group)
                                 }
                             }
                         }
                     } header: {
                         if viewModel.totalCount > 0 {
-                            Text("\(viewModel.totalCount) games")
+                            Text("\(filteredGameGroups.count) titles (\(viewModel.totalCount) versions)")
                         }
                     }
                 }
@@ -507,6 +468,111 @@ enum GameTypeFilter: String, CaseIterable, Identifiable {
             return "FANGAME"
         case .romHacks:
             return "ROM_HACK"
+        }
+    }
+}
+
+// MARK: - Game Row View (Single Platform)
+
+private struct GameRowView: View {
+    let game: GameSummary
+
+    var body: some View {
+        HStack {
+            if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
+                AsyncImage(url: url) { image in
+                    image.resizable().aspectRatio(contentMode: .fit)
+                } placeholder: {
+                    Color.gray
+                }
+                .frame(width: 50, height: 50)
+                .cornerRadius(8)
+            } else {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 50, height: 50)
+                    .cornerRadius(8)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(game.title)
+                        .font(.headline)
+                    if let type = game.type, type != .BASE_GAME {
+                        Text(type.shortName)
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(type == .FANGAME ? Color.purple.opacity(0.2) : Color.orange.opacity(0.2))
+                            .foregroundColor(type == .FANGAME ? .purple : .orange)
+                            .clipShape(Capsule())
+                    }
+                }
+                if let platform = game.platform {
+                    HStack(spacing: 4) {
+                        PlatformIcon(slug: platform.slug, size: 12)
+                        Text(platform.name)
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                } else {
+                    Text("Unknown Platform")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                Text("\(game.achievementCount) achievements")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+}
+
+// MARK: - Grouped Game Row View (Multiple Platforms)
+
+private struct GroupedGameRowView: View {
+    let group: GameGroup
+
+    private let maxPlatformIcons = 4
+
+    var body: some View {
+        HStack {
+            if let coverUrl = group.coverUrl, let url = URL(string: coverUrl) {
+                AsyncImage(url: url) { image in
+                    image.resizable().aspectRatio(contentMode: .fit)
+                } placeholder: {
+                    Color.gray
+                }
+                .frame(width: 50, height: 50)
+                .cornerRadius(8)
+            } else {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 50, height: 50)
+                    .cornerRadius(8)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(group.title)
+                    .font(.headline)
+
+                // Platform icons row
+                HStack(spacing: 4) {
+                    ForEach(group.platforms.prefix(maxPlatformIcons), id: \.id) { platform in
+                        PlatformIcon(slug: platform.slug, size: 14)
+                    }
+                    if group.platforms.count > maxPlatformIcons {
+                        Text("+\(group.platforms.count - maxPlatformIcons)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Text("\(group.totalAchievementCount) achievements")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
     }
 }
