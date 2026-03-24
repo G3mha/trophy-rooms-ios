@@ -1,12 +1,10 @@
 import SwiftUI
 import ClerkKit
-import ClerkKitUI
 
 struct BuylistView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = BuylistViewModel()
     @State private var showAuth = false
-    @State private var copiedLink = false
 
     var body: some View {
         Group {
@@ -94,18 +92,10 @@ struct BuylistView: View {
                 }
             }
         }
-        .navigationBar(title: "Buylist")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                if clerk.user != nil {
-                    Button {
-                        shareLink()
-                    } label: {
-                        Image(systemName: copiedLink ? "checkmark" : "square.and.arrow.up")
-                    }
-                }
-            }
-        }
+        .navigationBar(
+            title: "Buylist",
+            shareURL: clerk.user.map { URL(string: "https://trophyrooms.app/users/\($0.id)/buylist")! }
+        )
         .sheet(isPresented: $showAuth) {
             AuthView()
         }
@@ -146,17 +136,6 @@ struct BuylistView: View {
         }
     }
 
-    private func shareLink() {
-        guard let userId = clerk.user?.id else { return }
-        let shareUrl = "https://trophyrooms.app/users/\(userId)/buylist"
-
-        UIPasteboard.general.string = shareUrl
-        copiedLink = true
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            copiedLink = false
-        }
-    }
 }
 
 // MARK: - Stats Bar
