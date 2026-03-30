@@ -832,6 +832,8 @@ struct AppBundle: Identifiable, Decodable {
     let coverUrl: String?
     let releaseDate: String?
     let price: Double?
+    let platform: Platform?
+    let platformId: String?
     let gameCount: Int
     let dlcCount: Int
     let games: [BundleGame]?
@@ -1142,6 +1144,8 @@ struct BundleListItem: Identifiable, Decodable {
     let type: BundleType
     let description: String?
     let coverUrl: String?
+    let platform: Platform?
+    let platformId: String?
     let gameCount: Int
     let dlcCount: Int
 }
