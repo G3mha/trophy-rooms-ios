@@ -799,12 +799,16 @@ enum GameType: String, Codable, CaseIterable {
     case BASE_GAME
     case FANGAME
     case ROM_HACK
+    case DLC
+    case EXPANSION
 
     var displayName: String {
         switch self {
         case .BASE_GAME: return "Base Game"
         case .FANGAME: return "Fangame"
         case .ROM_HACK: return "ROM Hack"
+        case .DLC: return "DLC"
+        case .EXPANSION: return "Expansion"
         }
     }
 
@@ -813,6 +817,8 @@ enum GameType: String, Codable, CaseIterable {
         case .BASE_GAME: return "Base"
         case .FANGAME: return "Fangame"
         case .ROM_HACK: return "ROM Hack"
+        case .DLC: return "DLC"
+        case .EXPANSION: return "Expansion"
         }
     }
 }
