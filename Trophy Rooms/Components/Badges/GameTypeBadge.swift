@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Badge for displaying game type (Base Game, Fangame, ROM Hack)
+/// Badge for displaying game type (Base Game, Fangame, ROM Hack, DLC, Expansion)
 struct GameTypeBadge: View {
     let type: GameType
 
@@ -21,6 +21,8 @@ extension GameType {
         case .BASE_GAME: return .blue
         case .FANGAME: return .orange
         case .ROM_HACK: return .purple
+        case .DLC: return .green
+        case .EXPANSION: return .teal
         }
     }
 
@@ -29,6 +31,8 @@ extension GameType {
         case .BASE_GAME: return nil
         case .FANGAME: return "heart.fill"
         case .ROM_HACK: return "wrench.and.screwdriver"
+        case .DLC: return "plus.square.fill"
+        case .EXPANSION: return "rectangle.stack.fill"
         }
     }
 }
