@@ -3,11 +3,13 @@ import SwiftUI
 struct AdminBundleFormSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: AdminBundlesViewModel
+    @StateObject private var platformsViewModel = AdminPlatformsViewModel()
     let bundle: AppBundle?
 
     @State private var name = ""
     @State private var slug = ""
     @State private var type: BundleType = .BUNDLE
+    @State private var selectedPlatformId: String = ""
     @State private var bundleDescription = ""
     @State private var coverUrl = ""
     @State private var priceString = ""
@@ -27,6 +29,13 @@ struct AdminBundleFormSheet: View {
                     Picker("Type", selection: $type) {
                         ForEach(BundleType.allCases, id: \.self) { bundleType in
                             Text(bundleType.displayName).tag(bundleType)
+                        }
+                    }
+
+                    Picker("Platform", selection: $selectedPlatformId) {
+                        Text("Select Platform").tag("")
+                        ForEach(platformsViewModel.platforms, id: \.id) { platform in
+                            Text(platform.name).tag(platform.id)
                         }
                     }
                 } header: {
@@ -76,12 +85,16 @@ struct AdminBundleFormSheet: View {
                     name = bundle.name
                     slug = bundle.slug
                     type = bundle.type
+                    selectedPlatformId = bundle.platformId ?? ""
                     bundleDescription = bundle.description ?? ""
                     coverUrl = bundle.coverUrl ?? ""
                     if let price = bundle.price {
                         priceString = String(format: "%.2f", price)
                     }
                 }
+            }
+            .task {
+                await platformsViewModel.fetchPlatforms()
             }
         }
     }
@@ -98,7 +111,8 @@ struct AdminBundleFormSheet: View {
                 type: type,
                 description: bundleDescription.isEmpty ? nil : bundleDescription.trimmingCharacters(in: .whitespacesAndNewlines),
                 coverUrl: coverUrl.isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespacesAndNewlines),
-                price: price
+                price: price,
+                platformId: selectedPlatformId.isEmpty ? nil : selectedPlatformId
             )
             if success {
                 dismiss()
@@ -110,7 +124,8 @@ struct AdminBundleFormSheet: View {
                 type: type,
                 description: bundleDescription.isEmpty ? nil : bundleDescription.trimmingCharacters(in: .whitespacesAndNewlines),
                 coverUrl: coverUrl.isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespacesAndNewlines),
-                price: price
+                price: price,
+                platformId: selectedPlatformId.isEmpty ? nil : selectedPlatformId
             )
             if success {
                 dismiss()

@@ -72,6 +72,14 @@ struct AdminBundlesView: View {
                                     .font(.headline)
                                     .lineLimit(1)
                                 HStack(spacing: 8) {
+                                    if let platform = bundle.platform {
+                                        Text(platform.name)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Text("•")
+                                            .font(.caption)
+                                            .foregroundStyle(.tertiary)
+                                    }
                                     Text(bundle.slug)
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
