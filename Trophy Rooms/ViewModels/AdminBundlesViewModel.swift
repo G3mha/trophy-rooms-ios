@@ -25,6 +25,11 @@ class AdminBundlesViewModel: ObservableObject {
                 coverUrl
                 releaseDate
                 price
+                platform {
+                    id
+                    name
+                }
+                platformId
                 gameCount
                 dlcCount
                 games {
@@ -71,7 +76,8 @@ class AdminBundlesViewModel: ObservableObject {
         type: BundleType,
         description: String?,
         coverUrl: String?,
-        price: Double?
+        price: Double?,
+        platformId: String?
     ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
@@ -90,6 +96,8 @@ class AdminBundlesViewModel: ObservableObject {
                     description
                     coverUrl
                     price
+                    platform { id name }
+                    platformId
                     gameCount
                     dlcCount
                 }
@@ -111,6 +119,9 @@ class AdminBundlesViewModel: ObservableObject {
         }
         if let price = price {
             input["price"] = price
+        }
+        if let platformId = platformId, !platformId.isEmpty {
+            input["platformId"] = platformId
         }
 
         do {
@@ -145,7 +156,8 @@ class AdminBundlesViewModel: ObservableObject {
         type: BundleType,
         description: String?,
         coverUrl: String?,
-        price: Double?
+        price: Double?,
+        platformId: String?
     ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
@@ -164,6 +176,8 @@ class AdminBundlesViewModel: ObservableObject {
                     description
                     coverUrl
                     price
+                    platform { id name }
+                    platformId
                     gameCount
                     dlcCount
                 }
@@ -185,6 +199,9 @@ class AdminBundlesViewModel: ObservableObject {
         }
         if let price = price {
             input["price"] = price
+        }
+        if let platformId = platformId {
+            input["platformId"] = platformId
         }
 
         do {
