@@ -62,7 +62,7 @@ struct AdminGameFormSheet: View {
                     } header: {
                         Text("Base Game")
                     } footer: {
-                        Text("Link this \(selectedType == .FANGAME ? "fangame" : "ROM hack") to its original game")
+                        Text("Link this \(selectedType.displayName.lowercased()) to its original game")
                     }
                 }
 
