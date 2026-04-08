@@ -100,6 +100,11 @@ struct GameDetailView: View {
                             )
                         }
 
+                        // Game Versions Section
+                        if let versions = game.versions, !versions.isEmpty {
+                            GameVersionsSectionView(versions: versions)
+                        }
+
                         // Bundles Section
                         if let bundles = game.bundles, !bundles.isEmpty {
                             BundlesSectionView(bundles: bundles)
@@ -918,8 +923,98 @@ private struct DerivativesSectionView: View {
             return .purple
         case .ROM_HACK:
             return .orange
+        case .MOD:
+            return .pink
         default:
             return .gray
         }
+    }
+}
+
+// MARK: - Game Versions Section
+
+private struct GameVersionsSectionView: View {
+    let versions: [GameVersion]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Game Versions")
+                    .font(.headline)
+                Spacer()
+                Text("\(versions.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(4)
+            }
+
+            ForEach(versions) { version in
+                HStack(spacing: 12) {
+                    if let coverUrl = version.effectiveCoverUrl ?? version.coverUrl,
+                       let url = URL(string: coverUrl) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Color.gray.opacity(0.3)
+                        }
+                        .frame(width: 40, height: 56)
+                        .cornerRadius(4)
+                    } else {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 40, height: 56)
+                            .overlay {
+                                Image(systemName: "square.stack.3d.up")
+                                    .font(.caption)
+                                    .foregroundStyle(.gray)
+                            }
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Text(version.name)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .lineLimit(1)
+
+                            if version.isDefault {
+                                Text("Default")
+                                    .font(.caption2)
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.blue.opacity(0.2))
+                                    .foregroundStyle(.blue)
+                                    .clipShape(Capsule())
+                            }
+                        }
+
+                        if let dlcCount = version.dlcCount, dlcCount > 0 {
+                            Text("\(dlcCount) DLC\(dlcCount == 1 ? "" : "s") included")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if let description = version.description, !description.isEmpty {
+                            Text(description)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
     }
 }
