@@ -165,4 +165,25 @@ class GameListViewModel: ObservableObject {
         let targetPage = max(1, min(page, totalPages))
         await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: targetPage)
     }
+
+    func setPageSize(_ newSize: Int, search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
+        pageSize = newSize
+        // Reset to page 1 when changing page size
+        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: 1)
+    }
+}
+
+// MARK: - Page Size Options
+
+enum PageSizeOption: Int, CaseIterable, Identifiable {
+    case ten = 10
+    case twentyFive = 25
+    case fifty = 50
+    case hundred = 100
+
+    var id: Int { rawValue }
+
+    var title: String {
+        "\(rawValue) per page"
+    }
 }

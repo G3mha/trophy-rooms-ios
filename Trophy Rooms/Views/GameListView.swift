@@ -11,6 +11,7 @@ struct GameListView: View {
     @State private var sortOption: SortOption = .titleAsc
     @State private var minAchievementCount = 0
     @State private var gameTypeFilter: GameTypeFilter = .all
+    @State private var selectedPageSize = 25
 
     var filteredGameGroups: [GameGroup] {
         viewModel.gameGroups.filter { group in
@@ -60,6 +61,13 @@ struct GameListView: View {
                         Picker("Type", selection: $gameTypeFilter) {
                             ForEach(GameTypeFilter.allCases) { filter in
                                 Text(filter.title).tag(filter)
+                            }
+                        }
+                        .pickerStyle(.menu)
+
+                        Picker("Results", selection: $selectedPageSize) {
+                            ForEach(PageSizeOption.allCases) { option in
+                                Text(option.title).tag(option.rawValue)
                             }
                         }
                         .pickerStyle(.menu)
@@ -193,6 +201,18 @@ struct GameListView: View {
                     orderBy: sortOption.graphqlValue,
                     type: gameTypeFilter.graphqlValue,
                     page: 1
+                )
+            }
+        }
+        .onChange(of: selectedPageSize) {
+            Task {
+                await viewModel.setPageSize(
+                    selectedPageSize,
+                    search: searchText,
+                    platformId: selectedPlatformId,
+                    hasAchievements: achievementFilter.boolValue,
+                    orderBy: sortOption.graphqlValue,
+                    type: gameTypeFilter.graphqlValue
                 )
             }
         }

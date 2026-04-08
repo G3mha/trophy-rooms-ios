@@ -11,6 +11,7 @@ struct AdminGamesView: View {
     @State private var showingBulkDeleteConfirmation = false
     @State private var gameToClone: AdminGameItem?
     @State private var showingCloneSheet = false
+    @State private var selectedPageSize = 50
 
     var body: some View {
         List {
@@ -66,10 +67,21 @@ struct AdminGamesView: View {
                     }
                     .buttonStyle(.borderless)
 
-                    Text("\(viewModel.totalCount) games total")
+                    HStack {
+                        Text("\(viewModel.totalCount) games total")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+
+                        Spacer()
+
+                        Picker("Per page", selection: $selectedPageSize) {
+                            ForEach(PageSizeOption.allCases) { option in
+                                Text(option.title).tag(option.rawValue)
+                            }
+                        }
+                        .pickerStyle(.menu)
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                    }
                 }
             }
 
@@ -161,6 +173,11 @@ struct AdminGamesView: View {
                 Task {
                     await viewModel.fetchGames(page: 1)
                 }
+            }
+        }
+        .onChange(of: selectedPageSize) {
+            Task {
+                await viewModel.setPageSize(selectedPageSize)
             }
         }
         .navigationTitle("Games")
