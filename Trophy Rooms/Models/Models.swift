@@ -35,7 +35,7 @@ struct GameSummary: Identifiable, Decodable, Equatable {
     }
 
     var isDerivative: Bool {
-        type == .FANGAME || type == .ROM_HACK
+        type == .FANGAME || type == .ROM_HACK || type == .MOD
     }
 }
 
@@ -91,7 +91,7 @@ struct GameDetail: Identifiable, Decodable {
     let bundles: [GameBundle]?
 
     var isDerivative: Bool {
-        type == .FANGAME || type == .ROM_HACK
+        type == .FANGAME || type == .ROM_HACK || type == .MOD
     }
 }
 
@@ -793,12 +793,13 @@ enum BundleType: String, Codable, CaseIterable {
     }
 }
 
-// MARK: - Game Type (Fangames/ROM Hacks)
+// MARK: - Game Type (Fangames/ROM Hacks/Mods)
 
 enum GameType: String, Codable, CaseIterable {
     case BASE_GAME
     case FANGAME
     case ROM_HACK
+    case MOD
     case DLC
     case EXPANSION
 
@@ -807,6 +808,7 @@ enum GameType: String, Codable, CaseIterable {
         case .BASE_GAME: return "Base Game"
         case .FANGAME: return "Fangame"
         case .ROM_HACK: return "ROM Hack"
+        case .MOD: return "Mod"
         case .DLC: return "DLC"
         case .EXPANSION: return "Expansion"
         }
@@ -817,6 +819,7 @@ enum GameType: String, Codable, CaseIterable {
         case .BASE_GAME: return "Base"
         case .FANGAME: return "Fangame"
         case .ROM_HACK: return "ROM Hack"
+        case .MOD: return "Mod"
         case .DLC: return "DLC"
         case .EXPANSION: return "Expansion"
         }
@@ -1046,7 +1049,7 @@ struct AdminGameItem: Identifiable, Decodable {
     let achievementSetCount: Int
 
     var isDerivative: Bool {
-        type == .FANGAME || type == .ROM_HACK
+        type == .FANGAME || type == .ROM_HACK || type == .MOD
     }
 }
 
