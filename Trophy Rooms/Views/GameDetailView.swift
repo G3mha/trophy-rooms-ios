@@ -3,6 +3,7 @@ import ClerkKit
 
 struct GameDetailView: View {
     @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var inlineAdminContext: InlineAdminContext
     @StateObject private var viewModel = GameDetailViewModel()
     @State private var showStatusPicker = false
     @State private var showAddToCollection = false
@@ -215,6 +216,27 @@ struct GameDetailView: View {
                 await viewModel.fetchCollectionForGame(gameId: gameId)
                 await viewModel.checkBuylist(gameId: gameId)
             }
+            // Register entity with inline admin context when game loads
+            if let game = viewModel.game {
+                inlineAdminContext.setCurrentEntity(.from(game: game))
+            }
+        }
+        .onDisappear {
+            // Clear entity when navigating away
+            inlineAdminContext.clearEntityIfMatches(id: gameId)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .adminGameDidUpdate)) { _ in
+            // Refresh game data when admin updates it
+            Task {
+                await viewModel.fetchGame(id: gameId)
+                // Update the inline admin context with refreshed game data
+                if let game = viewModel.game {
+                    inlineAdminContext.setCurrentEntity(.from(game: game))
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .adminGameDidDelete)) { _ in
+            // Navigate back when game is deleted (handled by parent view)
         }
     }
 
