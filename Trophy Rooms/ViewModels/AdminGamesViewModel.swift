@@ -12,7 +12,10 @@ class AdminGamesViewModel: ObservableObject {
     @Published var currentPage: Int = 1
     @Published var totalCount: Int = 0
     @Published var totalPages: Int = 1
-    let pageSize = 50
+    @Published var pageSize: Int = 50
+
+    /// Single game for editing (used by inline admin toolbar)
+    @Published var gameToEdit: AdminGameItem?
 
     var filteredGames: [AdminGameItem] {
         // Search is now handled server-side
@@ -113,6 +116,11 @@ class AdminGamesViewModel: ObservableObject {
     }
 
     func search() async {
+        await fetchGames(page: 1, search: searchText.isEmpty ? nil : searchText)
+    }
+
+    func setPageSize(_ newSize: Int) async {
+        pageSize = newSize
         await fetchGames(page: 1, search: searchText.isEmpty ? nil : searchText)
     }
 
@@ -403,6 +411,61 @@ class AdminGamesViewModel: ObservableObject {
                 self.errorMessage = error.localizedDescription
             }
             return false
+        }
+    }
+
+    /// Fetch a single game by ID for editing
+    func fetchGame(id: String) async {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.gameToEdit = nil
+        }
+
+        // Use the standard game query and map to AdminGameItem
+        let query = """
+        query GetGame($id: ID!) {
+            game(id: $id) {
+                id
+                title
+                description
+                coverUrl
+                type
+                baseGameId
+                platform {
+                    id
+                    name
+                    slug
+                }
+            }
+        }
+        """
+
+        do {
+            let response: GameForEditResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: ["id": id]
+            )
+            DispatchQueue.main.async {
+                if let game = response.game {
+                    // Map to AdminGameItem format
+                    self.gameToEdit = AdminGameItem(
+                        id: game.id,
+                        title: game.title,
+                        description: game.description,
+                        coverUrl: game.coverUrl,
+                        type: game.type,
+                        baseGameId: game.baseGameId,
+                        platformId: game.platform?.id,
+                        platformName: game.platform?.name,
+                        platformSlug: game.platform?.slug,
+                        achievementSetCount: 0
+                    )
+                }
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
 }

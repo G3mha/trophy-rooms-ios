@@ -3,6 +3,7 @@ import SwiftUI
 struct AdminGameFormSheet: View {
     @ObservedObject var viewModel: AdminGamesViewModel
     let game: AdminGameItem?
+    var onSave: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
 
     @State private var title: String = ""
@@ -187,6 +188,7 @@ struct AdminGameFormSheet: View {
             DispatchQueue.main.async {
                 isSaving = false
                 if success {
+                    onSave?()
                     dismiss()
                 }
             }

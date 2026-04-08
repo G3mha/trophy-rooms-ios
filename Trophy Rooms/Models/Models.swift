@@ -1036,6 +1036,25 @@ struct AdminGamesPage: Decodable {
     let totalPages: Int
 }
 
+struct AdminGameResponse: Decodable {
+    let adminGame: AdminGameItem?
+}
+
+// Response type for fetching a single game for editing
+struct GameForEditResponse: Decodable {
+    let game: GameForEdit?
+}
+
+struct GameForEdit: Decodable {
+    let id: String
+    let title: String
+    let description: String?
+    let coverUrl: String?
+    let type: GameType?
+    let baseGameId: String?
+    let platform: Platform?
+}
+
 struct AdminGameItem: Identifiable, Decodable {
     let id: String
     let title: String
@@ -1050,6 +1069,31 @@ struct AdminGameItem: Identifiable, Decodable {
 
     var isDerivative: Bool {
         type == .FANGAME || type == .ROM_HACK || type == .MOD
+    }
+
+    // Memberwise initializer for creating instances programmatically
+    init(
+        id: String,
+        title: String,
+        description: String?,
+        coverUrl: String?,
+        type: GameType?,
+        baseGameId: String?,
+        platformId: String?,
+        platformName: String?,
+        platformSlug: String?,
+        achievementSetCount: Int
+    ) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.coverUrl = coverUrl
+        self.type = type
+        self.baseGameId = baseGameId
+        self.platformId = platformId
+        self.platformName = platformName
+        self.platformSlug = platformSlug
+        self.achievementSetCount = achievementSetCount
     }
 }
 
