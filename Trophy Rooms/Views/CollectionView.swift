@@ -143,7 +143,6 @@ struct CollectionView: View {
                 releaseDate
                 includedDlc
                 isDefault
-                gameId
                 achievementSetCount
             }
         }

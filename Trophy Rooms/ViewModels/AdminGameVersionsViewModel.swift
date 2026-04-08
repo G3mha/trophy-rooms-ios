@@ -24,8 +24,7 @@ class AdminGameVersionsViewModel: ObservableObject {
                 effectiveCoverUrl
                 releaseDate
                 isDefault
-                gameId
-                game {
+                games {
                     id
                     title
                 }
@@ -84,7 +83,6 @@ class AdminGameVersionsViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
-                    gameId
                     dlcs {
                         id
                         name
@@ -95,7 +93,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         """
 
         var input: [String: Any] = [
-            "gameId": gameId,
+            "gameIds": [gameId],
             "name": name,
             "slug": slug
         ]
@@ -164,7 +162,6 @@ class AdminGameVersionsViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
-                    gameId
                     dlcs {
                         id
                         name

@@ -62,7 +62,6 @@ class GameDetailViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
-                    gameId
                     dlcs {
                         id
                         name
@@ -80,7 +79,6 @@ class GameDetailViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
-                    gameId
                     dlcs {
                         id
                         name

@@ -113,8 +113,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
                 effectiveCoverUrl
                 releaseDate
                 isDefault
-                gameId
-                game {
+                games {
                     id
                     title
                 }
