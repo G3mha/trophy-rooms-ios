@@ -27,6 +27,20 @@ struct GamePickerSheet: View {
         viewModel.games.filter { !excludedGameIds.contains($0.id) }
     }
 
+    /// Groups games by title, combining platforms for the same game
+    var groupedGames: [GamePickerGroup] {
+        let grouped = Dictionary(grouping: filteredGames) { $0.title }
+        return grouped.map { title, games in
+            GamePickerGroup(
+                title: title,
+                coverUrl: games.first?.coverUrl,
+                games: games.sorted { ($0.platform?.name ?? "") < ($1.platform?.name ?? "") },
+                totalAchievements: games.reduce(0) { $0 + $1.achievementCount }
+            )
+        }
+        .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -56,13 +70,11 @@ struct GamePickerSheet: View {
                     ProgressView("Searching...")
                 } else {
                     List {
-                        ForEach(filteredGames) { game in
-                            Button {
+                        ForEach(groupedGames) { group in
+                            GroupedGameRow(group: group, onSelect: { game in
                                 onSelect(game)
                                 dismiss()
-                            } label: {
-                                GameRow(game: game)
-                            }
+                            })
                         }
 
                         // Pagination
@@ -186,6 +198,140 @@ struct GameRow: View {
             Spacer()
         }
         .contentShape(Rectangle())
+    }
+}
+
+// MARK: - Game Picker Group
+
+struct GamePickerGroup: Identifiable {
+    let title: String
+    let coverUrl: String?
+    let games: [GameSummary]
+    let totalAchievements: Int
+
+    var id: String { title }
+    var isSingleGame: Bool { games.count == 1 }
+    var platforms: [Platform] {
+        games.compactMap { $0.platform }
+    }
+}
+
+// MARK: - Grouped Game Row
+
+struct GroupedGameRow: View {
+    let group: GamePickerGroup
+    let onSelect: (GameSummary) -> Void
+
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Main row
+            Button {
+                if group.isSingleGame {
+                    onSelect(group.games[0])
+                } else {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isExpanded.toggle()
+                    }
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    // Cover image
+                    if let coverUrl = group.coverUrl, let url = URL(string: coverUrl) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Color.gray.opacity(0.3)
+                        }
+                        .frame(width: 50, height: 50)
+                        .cornerRadius(8)
+                    } else {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 50, height: 50)
+                            .overlay {
+                                Image(systemName: "gamecontroller")
+                                    .foregroundStyle(.gray)
+                            }
+                    }
+
+                    // Game info
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(group.title)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+
+                        // Platform icons row
+                        HStack(spacing: 4) {
+                            ForEach(group.platforms.prefix(6), id: \.id) { platform in
+                                PlatformIcon(slug: platform.slug, size: 14)
+                            }
+                            if group.platforms.count > 6 {
+                                Text("+\(group.platforms.count - 6)")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        Text("\(group.totalAchievements) achievements")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+
+                    Spacer()
+
+                    if !group.isSingleGame {
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // Expanded platform list
+            if isExpanded && !group.isSingleGame {
+                VStack(spacing: 0) {
+                    ForEach(group.games, id: \.id) { game in
+                        Button {
+                            onSelect(game)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Spacer()
+                                    .frame(width: 50)
+
+                                if let platform = game.platform {
+                                    PlatformIcon(slug: platform.slug, size: 16)
+                                    Text(platform.name)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.primary)
+                                }
+
+                                Spacer()
+
+                                Text("\(game.achievementCount) sets")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+
+                        if game.id != group.games.last?.id {
+                            Divider()
+                                .padding(.leading, 62)
+                        }
+                    }
+                }
+                .padding(.top, 8)
+            }
+        }
     }
 }
 
