@@ -833,7 +833,7 @@ private struct DerivativesSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Fangames & ROM Hacks")
+                Text("Fangames, ROM Hacks & Mods")
                     .font(.headline)
                 Spacer()
                 Text("\(derivatives.count)")
