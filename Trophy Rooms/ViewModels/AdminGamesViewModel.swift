@@ -373,7 +373,9 @@ class AdminGamesViewModel: ObservableObject {
         mutation CloneGameToPlatform($gameId: ID!, $targetPlatformId: ID!, $copyAchievementSets: Boolean) {
             cloneGameToPlatform(gameId: $gameId, targetPlatformId: $targetPlatformId, copyAchievementSets: $copyAchievementSets) {
                 success
-                gameId
+                game {
+                    id
+                }
                 error {
                     code
                     message

@@ -1379,6 +1379,10 @@ struct CloneGameResponse: Decodable {
 
 struct CloneGameResult: Decodable {
     let success: Bool
-    let gameId: String?
+    let game: ClonedGameRef?
     let error: MutationError?
+}
+
+struct ClonedGameRef: Decodable {
+    let id: String
 }
