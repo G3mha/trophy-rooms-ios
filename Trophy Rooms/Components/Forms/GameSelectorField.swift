@@ -20,8 +20,8 @@ struct GameSelectorField: View {
                 Spacer()
                 if let game = selectedGame {
                     HStack(spacing: 8) {
-                        if let platform = game.platform {
-                            PlatformIcon(slug: platform.slug, size: 14)
+                        if let platform = game.platform, let slug = platform.slug {
+                            PlatformIcon(slug: slug, size: 14)
                         }
                         Text(game.title)
                             .foregroundStyle(.secondary)

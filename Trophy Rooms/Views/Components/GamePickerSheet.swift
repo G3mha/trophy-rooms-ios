@@ -181,9 +181,9 @@ struct GameRow: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                if let platform = game.platform {
+                if let platform = game.platform, let slug = platform.slug {
                     HStack(spacing: 4) {
-                        PlatformIcon(slug: platform.slug, size: 12)
+                        PlatformIcon(slug: slug, size: 12)
                         Text(platform.name)
                     }
                     .font(.subheadline)
@@ -268,7 +268,9 @@ struct GroupedGameRow: View {
                         // Platform icons row
                         HStack(spacing: 4) {
                             ForEach(group.platforms.prefix(6), id: \.id) { platform in
-                                PlatformIcon(slug: platform.slug, size: 14)
+                                if let slug = platform.slug {
+                                    PlatformIcon(slug: slug, size: 14)
+                                }
                             }
                             if group.platforms.count > 6 {
                                 Text("+\(group.platforms.count - 6)")
@@ -305,8 +307,8 @@ struct GroupedGameRow: View {
                                 Spacer()
                                     .frame(width: 50)
 
-                                if let platform = game.platform {
-                                    PlatformIcon(slug: platform.slug, size: 16)
+                                if let platform = game.platform, let slug = platform.slug {
+                                    PlatformIcon(slug: slug, size: 16)
                                     Text(platform.name)
                                         .font(.subheadline)
                                         .foregroundStyle(.primary)

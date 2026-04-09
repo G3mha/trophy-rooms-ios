@@ -529,9 +529,9 @@ private struct GameRowView: View {
                             .clipShape(Capsule())
                     }
                 }
-                if let platform = game.platform {
+                if let platform = game.platform, let slug = platform.slug {
                     HStack(spacing: 4) {
-                        PlatformIcon(slug: platform.slug, size: 12)
+                        PlatformIcon(slug: slug, size: 12)
                         Text(platform.name)
                     }
                     .font(.subheadline)
@@ -580,7 +580,9 @@ private struct GroupedGameRowView: View {
                 // Platform icons row
                 HStack(spacing: 4) {
                     ForEach(group.platforms.prefix(maxPlatformIcons), id: \.id) { platform in
-                        PlatformIcon(slug: platform.slug, size: 14)
+                        if let slug = platform.slug {
+                            PlatformIcon(slug: slug, size: 14)
+                        }
                     }
                     if group.platforms.count > maxPlatformIcons {
                         Text("+\(group.platforms.count - maxPlatformIcons)")

@@ -395,9 +395,9 @@ private struct GameHeader: View {
                     .font(.title2)
                     .bold()
 
-                if let platform = game.platform {
+                if let platform = game.platform, let slug = platform.slug {
                     HStack(spacing: 4) {
-                        PlatformIcon(slug: platform.slug, size: 14)
+                        PlatformIcon(slug: slug, size: 14)
                         Text(platform.name)
                             .font(.subheadline)
                     }
@@ -813,9 +813,9 @@ private struct BaseGameLinkView: View {
                     Text(baseGame.title)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    if let platform = baseGame.platform {
+                    if let platform = baseGame.platform, let slug = platform.slug {
                         HStack(spacing: 4) {
-                            PlatformIcon(slug: platform.slug, size: 10)
+                            PlatformIcon(slug: slug, size: 10)
                             Text(platform.name)
                                 .font(.caption2)
                         }
@@ -913,9 +913,9 @@ private struct DerivativesSectionView: View {
                                     .clipShape(Capsule())
                             }
 
-                            if let platform = derivative.platform {
+                            if let platform = derivative.platform, let slug = platform.slug {
                                 HStack(spacing: 4) {
-                                    PlatformIcon(slug: platform.slug, size: 10)
+                                    PlatformIcon(slug: slug, size: 10)
                                     Text(platform.name)
                                         .font(.caption2)
                                 }

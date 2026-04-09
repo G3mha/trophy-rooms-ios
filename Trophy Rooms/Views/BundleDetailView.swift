@@ -225,9 +225,9 @@ private struct BundleGameRow: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
 
-                if let platform = game.platform {
+                if let platform = game.platform, let slug = platform.slug {
                     HStack(spacing: 4) {
-                        PlatformIcon(slug: platform.slug, size: 12)
+                        PlatformIcon(slug: slug, size: 12)
                         Text(platform.name)
                             .font(.caption)
                             .foregroundStyle(.secondary)

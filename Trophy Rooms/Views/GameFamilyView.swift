@@ -101,8 +101,13 @@ struct GameFamilyView: View {
                         ForEach(viewModel.games) { game in
                             NavigationLink(destination: GameDetailView(gameId: game.id)) {
                                 HStack(spacing: 12) {
-                                    if let platform = game.platform {
-                                        PlatformIcon(slug: platform.slug, size: 24)
+                                    if let platform = game.platform, let slug = platform.slug {
+                                        PlatformIcon(slug: slug, size: 24)
+                                        Text(platform.name)
+                                            .font(.headline)
+                                    } else if let platform = game.platform {
+                                        Image(systemName: "gamecontroller")
+                                            .font(.system(size: 24))
                                         Text(platform.name)
                                             .font(.headline)
                                     } else {
