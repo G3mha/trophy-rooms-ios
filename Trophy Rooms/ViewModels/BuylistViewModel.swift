@@ -225,10 +225,15 @@ class BuylistViewModel: ObservableObject {
         }
     }
 
-    func markAsPurchased(id: String, platformId: String? = nil) async -> Bool {
+    func markAsPurchased(
+        id: String,
+        platformId: String? = nil,
+        purchasePrice: Double? = nil,
+        purchasedAt: Date? = nil
+    ) async -> Bool {
         let mutation = """
-        mutation MarkAsPurchased($id: ID!, $platformId: ID) {
-            markAsPurchased(id: $id, platformId: $platformId) {
+        mutation MarkAsPurchased($id: ID!, $platformId: ID, $purchasePrice: Float, $purchasedAt: DateTime) {
+            markAsPurchased(id: $id, platformId: $platformId, purchasePrice: $purchasePrice, purchasedAt: $purchasedAt) {
                 success
             }
         }
@@ -237,6 +242,14 @@ class BuylistViewModel: ObservableObject {
         var variables: [String: Any] = ["id": id]
         if let platformId = platformId {
             variables["platformId"] = platformId
+        }
+        if let purchasePrice = purchasePrice {
+            variables["purchasePrice"] = purchasePrice
+        }
+        if let purchasedAt = purchasedAt {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime]
+            variables["purchasedAt"] = formatter.string(from: purchasedAt)
         }
 
         do {
