@@ -15,7 +15,7 @@ struct GameCloneSheet: View {
     @State private var cloneResults: [CloneResult] = []
     @State private var showingResults: Bool = false
 
-    private struct CloneResult: Identifiable {
+    struct CloneResult: Identifiable {
         let id = UUID()
         let platformId: String
         let platformSlug: String
