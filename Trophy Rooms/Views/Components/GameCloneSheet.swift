@@ -180,7 +180,13 @@ struct GameCloneSheet: View {
         }
         if !failed.isEmpty {
             if !message.isEmpty { message += "\n\n" }
-            message += "Failed to clone to: \(failed.map { $0.platformName }.joined(separator: ", "))"
+            let failedDetails = failed.map { result in
+                if let error = result.error {
+                    return "\(result.platformName): \(error)"
+                }
+                return result.platformName
+            }
+            message += "Failed:\n\(failedDetails.joined(separator: "\n"))"
         }
         return message
     }
