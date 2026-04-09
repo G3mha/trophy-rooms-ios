@@ -251,7 +251,9 @@ struct BundleRow: View {
             BundleRow(bundle: GameBundle(
                 id: "1",
                 name: "Elden Ring + DLC Bundle",
+                slug: "elden-ring-dlc-bundle",
                 type: .BUNDLE,
+                description: nil,
                 coverUrl: nil,
                 gameCount: 1,
                 dlcCount: 1
