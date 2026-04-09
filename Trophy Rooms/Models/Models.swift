@@ -13,7 +13,7 @@ enum AchievementTier: String, Codable, CaseIterable {
 struct Platform: Identifiable, Decodable {
     let id: String
     let name: String
-    let slug: String
+    let slug: String?
 }
 
 // MARK: - Game Models
