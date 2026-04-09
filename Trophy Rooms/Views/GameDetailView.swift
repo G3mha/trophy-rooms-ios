@@ -29,11 +29,6 @@ struct GameDetailView: View {
                             BaseGameLinkView(baseGame: baseGame, gameType: game.type)
                         }
 
-                        // Derivatives section (fangames/ROM hacks based on this game)
-                        if let derivatives = game.derivatives, !derivatives.isEmpty {
-                            DerivativesSectionView(derivatives: derivatives)
-                        }
-
                         // Library status and Collection buttons (authenticated only)
                         if clerk.user != nil {
                             VStack(spacing: 12) {
@@ -87,28 +82,9 @@ struct GameDetailView: View {
                             }
                         }
 
-                        // DLCs Section
-                        if let dlcs = game.dlcs, !dlcs.isEmpty {
-                            DLCsSectionView(
-                                dlcs: dlcs,
-                                isAuthenticated: clerk.user != nil,
-                                isDlcOwnershipLoading: viewModel.isDlcOwnershipLoading,
-                                onToggleOwnership: { dlcId in
-                                    Task {
-                                        await viewModel.toggleDlcOwnership(dlcId: dlcId)
-                                    }
-                                }
-                            )
-                        }
-
                         // Game Versions Section
                         if let versions = game.versions, !versions.isEmpty {
                             GameVersionsSectionView(versions: versions)
-                        }
-
-                        // Bundles Section
-                        if let bundles = game.bundles, !bundles.isEmpty {
-                            BundlesSectionView(bundles: bundles)
                         }
 
                         // Achievement Sets
@@ -122,6 +98,72 @@ struct GameDetailView: View {
                                     }
                                 }
                             )
+                        }
+
+                        // MARK: - Related Content Sections (Bottom)
+
+                        // Derivatives section (fangames/ROM hacks based on this game)
+                        if let derivatives = game.derivatives, !derivatives.isEmpty {
+                            RelatedContentSection(
+                                title: "Fangames, ROM Hacks & Mods",
+                                systemImage: "puzzlepiece.extension",
+                                count: derivatives.count
+                            ) {
+                                ForEach(derivatives) { derivative in
+                                    DerivativeRow(derivative: derivative)
+                                    if derivative.id != derivatives.last?.id {
+                                        Divider()
+                                    }
+                                }
+                            }
+                        }
+
+                        // DLCs Section
+                        if let dlcs = game.dlcs, !dlcs.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Label("DLCs & Expansions", systemImage: "puzzlepiece.extension.fill")
+                                        .font(.headline)
+                                    Spacer()
+                                    Text("\(dlcs.count)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color(.systemGray5))
+                                        .cornerRadius(4)
+                                }
+
+                                ForEach(dlcs) { dlc in
+                                    DLCCard(
+                                        dlc: dlc,
+                                        isOwnershipLoading: viewModel.isDlcOwnershipLoading.contains(dlc.id),
+                                        isAuthenticated: clerk.user != nil,
+                                        onToggleOwnership: {
+                                            Task {
+                                                await viewModel.toggleDlcOwnership(dlcId: dlc.id)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Bundles Section
+                        if let bundles = game.bundles, !bundles.isEmpty {
+                            RelatedContentSection(
+                                title: "Available In",
+                                systemImage: "shippingbox",
+                                count: bundles.count,
+                                countLabel: "\(bundles.count) bundle\(bundles.count == 1 ? "" : "s")"
+                            ) {
+                                ForEach(bundles) { bundle in
+                                    BundleRow(bundle: bundle)
+                                    if bundle.id != bundles.last?.id {
+                                        Divider()
+                                    }
+                                }
+                            }
                         }
                     }
                     .padding()
@@ -630,153 +672,6 @@ private struct AchievementRow: View {
     }
 }
 
-// MARK: - DLCs Section
-
-private struct DLCsSectionView: View {
-    let dlcs: [GameDLC]
-    let isAuthenticated: Bool
-    let isDlcOwnershipLoading: Set<String>
-    let onToggleOwnership: (String) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("DLCs & Expansions")
-                    .font(.headline)
-                Spacer()
-                Text("\(dlcs.count)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(4)
-            }
-
-            ForEach(dlcs) { dlc in
-                DLCCard(
-                    dlc: dlc,
-                    isOwnershipLoading: isDlcOwnershipLoading.contains(dlc.id),
-                    isAuthenticated: isAuthenticated,
-                    onToggleOwnership: { onToggleOwnership(dlc.id) }
-                )
-            }
-        }
-    }
-}
-
-// MARK: - Bundles Section
-
-private struct BundlesSectionView: View {
-    let bundles: [GameBundle]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Available In")
-                    .font(.headline)
-                Spacer()
-                Text("\(bundles.count) bundle\(bundles.count == 1 ? "" : "s")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            ForEach(bundles) { bundle in
-                BundleCard(bundle: bundle)
-            }
-        }
-    }
-}
-
-private struct BundleCard: View {
-    let bundle: GameBundle
-
-    var body: some View {
-        HStack(spacing: 12) {
-            if let coverUrl = bundle.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                .frame(width: 50, height: 50)
-                .cornerRadius(8)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 50)
-                    .overlay {
-                        Image(systemName: "shippingbox")
-                            .foregroundStyle(.gray)
-                    }
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(bundle.name)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .lineLimit(1)
-
-                    BundleTypeBadgeSmall(type: bundle.type)
-                }
-
-                HStack(spacing: 8) {
-                    if bundle.gameCount > 0 {
-                        Text("\(bundle.gameCount) games")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                    if bundle.dlcCount > 0 {
-                        Text("\(bundle.dlcCount) DLCs")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-        }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-    }
-}
-
-private struct BundleTypeBadgeSmall: View {
-    let type: BundleType
-
-    var body: some View {
-        Text(type.displayName)
-            .font(.caption2)
-            .fontWeight(.medium)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(badgeColor.opacity(0.2))
-            .foregroundStyle(badgeColor)
-            .cornerRadius(4)
-    }
-
-    var badgeColor: Color {
-        switch type {
-        case .BUNDLE:
-            return .blue
-        case .SEASON_PASS:
-            return .purple
-        case .COLLECTION:
-            return .orange
-        case .SUBSCRIPTION:
-            return .green
-        }
-    }
-}
-
 // MARK: - Base Game Link
 
 private struct BaseGameLinkView: View {
@@ -846,107 +741,6 @@ private struct BaseGameLinkView: View {
             return .purple
         case .ROM_HACK:
             return .orange
-        default:
-            return .gray
-        }
-    }
-}
-
-// MARK: - Derivatives Section
-
-private struct DerivativesSectionView: View {
-    let derivatives: [DerivativeGame]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Fangames, ROM Hacks & Mods")
-                    .font(.headline)
-                Spacer()
-                Text("\(derivatives.count)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(4)
-            }
-
-            ForEach(derivatives) { derivative in
-                NavigationLink(destination: GameDetailView(gameId: derivative.id)) {
-                    HStack(spacing: 12) {
-                        if let coverUrl = derivative.coverUrl, let url = URL(string: coverUrl) {
-                            AsyncImage(url: url) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            } placeholder: {
-                                Color.gray.opacity(0.3)
-                            }
-                            .frame(width: 40, height: 56)
-                            .cornerRadius(4)
-                        } else {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 40, height: 56)
-                                .overlay {
-                                    Image(systemName: "gamecontroller")
-                                        .font(.caption)
-                                        .foregroundStyle(.gray)
-                                }
-                        }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 6) {
-                                Text(derivative.title)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .lineLimit(1)
-
-                                Text(derivative.type.shortName)
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(derivativeBadgeColor(for: derivative.type).opacity(0.2))
-                                    .foregroundStyle(derivativeBadgeColor(for: derivative.type))
-                                    .clipShape(Capsule())
-                            }
-
-                            if let platform = derivative.platform, let slug = platform.slug {
-                                HStack(spacing: 4) {
-                                    PlatformIcon(slug: slug, size: 10)
-                                    Text(platform.name)
-                                        .font(.caption2)
-                                }
-                                .foregroundStyle(.secondary)
-                            }
-                        }
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .padding(.vertical, 8)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-    }
-
-    func derivativeBadgeColor(for type: GameType) -> Color {
-        switch type {
-        case .FANGAME:
-            return .purple
-        case .ROM_HACK:
-            return .orange
-        case .MOD:
-            return .pink
         default:
             return .gray
         }
