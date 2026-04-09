@@ -5,6 +5,8 @@ struct BuylistView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = BuylistViewModel()
     @State private var showAuth = false
+    @State private var showPurchasedSheet = false
+    @State private var selectedItemForPurchase: BuylistItem?
 
     var body: some View {
         Group {
@@ -69,9 +71,8 @@ struct BuylistView: View {
                             }
                             .swipeActions(edge: .leading) {
                                 Button {
-                                    Task {
-                                        await viewModel.markAsPurchased(id: item.id)
-                                    }
+                                    selectedItemForPurchase = item
+                                    showPurchasedSheet = true
                                 } label: {
                                     Label("Purchased", systemImage: "checkmark")
                                 }
@@ -98,6 +99,16 @@ struct BuylistView: View {
         )
         .sheet(isPresented: $showAuth) {
             AuthView()
+        }
+        .sheet(isPresented: $showPurchasedSheet) {
+            if let item = selectedItemForPurchase {
+                MarkAsPurchasedSheet(item: item) {
+                    Task {
+                        await viewModel.fetchBuylist()
+                        await viewModel.fetchStats()
+                    }
+                }
+            }
         }
         .task {
             if clerk.user != nil {
