@@ -17,6 +17,8 @@ struct GameCloneSheet: View {
 
     private struct CloneResult: Identifiable {
         let id = UUID()
+        let platformId: String
+        let platformSlug: String
         let platformName: String
         let success: Bool
         let error: String?
@@ -115,12 +117,10 @@ struct GameCloneSheet: View {
                     .ignoresSafeArea()
                 }
             }
-            .alert("Clone Results", isPresented: $showingResults) {
-                Button("Done") {
+            .sheet(isPresented: $showingResults) {
+                CloneResultsSheet(results: cloneResults) {
                     dismiss()
                 }
-            } message: {
-                Text(resultsMessage)
             }
         }
     }
@@ -141,13 +141,17 @@ struct GameCloneSheet: View {
             var results: [CloneResult] = []
 
             for platformId in selectedPlatformIds {
-                let platformName = viewModel.platforms.first { $0.id == platformId }?.name ?? "Unknown"
+                let platform = viewModel.platforms.first { $0.id == platformId }
+                let platformName = platform?.name ?? "Unknown"
+                let platformSlug = platform?.slug ?? ""
                 let success = await viewModel.cloneGameToPlatform(
                     gameId: gameId,
                     targetPlatformId: platformId,
                     copyAchievementSets: copyAchievementSets
                 )
                 results.append(CloneResult(
+                    platformId: platformId,
+                    platformSlug: platformSlug,
                     platformName: platformName,
                     success: success,
                     error: success ? nil : viewModel.errorMessage
@@ -170,25 +174,84 @@ struct GameCloneSheet: View {
         }
     }
 
-    private var resultsMessage: String {
-        let succeeded = cloneResults.filter { $0.success }
-        let failed = cloneResults.filter { !$0.success }
+}
 
-        var message = ""
-        if !succeeded.isEmpty {
-            message += "Successfully cloned to: \(succeeded.map { $0.platformName }.joined(separator: ", "))"
-        }
-        if !failed.isEmpty {
-            if !message.isEmpty { message += "\n\n" }
-            let failedDetails = failed.map { result in
-                if let error = result.error {
-                    return "\(result.platformName): \(error)"
+// MARK: - Clone Results Sheet
+
+private struct CloneResultsSheet: View {
+    let results: [GameCloneSheet.CloneResult]
+    let onDismiss: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var succeeded: [GameCloneSheet.CloneResult] {
+        results.filter { $0.success }
+    }
+
+    private var failed: [GameCloneSheet.CloneResult] {
+        results.filter { !$0.success }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if !succeeded.isEmpty {
+                    Section {
+                        ForEach(succeeded) { result in
+                            HStack(spacing: 12) {
+                                PlatformIcon(slug: result.platformSlug, size: 24)
+                                Text(result.platformName)
+                                Spacer()
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                                    .font(.title3)
+                            }
+                        }
+                    } header: {
+                        Label("Succeeded", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    }
                 }
-                return result.platformName
+
+                if !failed.isEmpty {
+                    Section {
+                        ForEach(failed) { result in
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(spacing: 12) {
+                                    PlatformIcon(slug: result.platformSlug, size: 24)
+                                    Text(result.platformName)
+                                        .fontWeight(.medium)
+                                    Spacer()
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.red)
+                                        .font(.title3)
+                                }
+                                if let error = result.error {
+                                    Text(error)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    } header: {
+                        Label("Failed", systemImage: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                }
             }
-            message += "Failed:\n\(failedDetails.joined(separator: "\n"))"
+            .navigationTitle("Clone Results")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                        onDismiss()
+                    }
+                }
+            }
         }
-        return message
+        .presentationDetents([.medium])
     }
 }
 
