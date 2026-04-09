@@ -3,10 +3,9 @@ import SwiftUI
 import Combine
 
 /// Observable context for managing inline admin actions
-/// Tracks the current entity being viewed and controls toolbar visibility
+/// Tracks the current entity being viewed for contextual admin actions
 class InlineAdminContext: ObservableObject {
     @Published var currentEntity: AdminContextEntity?
-    @Published var isToolbarExpanded: Bool = false
 
     /// Reference to the AdminViewModel for checking admin access
     weak var adminViewModel: AdminViewModel?
@@ -29,7 +28,6 @@ class InlineAdminContext: ObservableObject {
     @MainActor
     func clearEntity() {
         currentEntity = nil
-        isToolbarExpanded = false
     }
 
     /// Clear entity only if it matches the given ID
@@ -38,22 +36,6 @@ class InlineAdminContext: ObservableObject {
     func clearEntityIfMatches(id: String) {
         if currentEntity?.id == id {
             clearEntity()
-        }
-    }
-
-    /// Toggle toolbar expanded/collapsed state
-    @MainActor
-    func toggleToolbar() {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            isToolbarExpanded.toggle()
-        }
-    }
-
-    /// Collapse the toolbar
-    @MainActor
-    func collapseToolbar() {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            isToolbarExpanded = false
         }
     }
 }
