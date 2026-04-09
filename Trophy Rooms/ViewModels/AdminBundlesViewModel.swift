@@ -28,6 +28,7 @@ class AdminBundlesViewModel: ObservableObject {
                 platform {
                     id
                     name
+                    slug
                 }
                 platformId
                 gameCount
@@ -96,7 +97,7 @@ class AdminBundlesViewModel: ObservableObject {
                     description
                     coverUrl
                     price
-                    platform { id name }
+                    platform { id name slug }
                     platformId
                     gameCount
                     dlcCount
@@ -176,7 +177,7 @@ class AdminBundlesViewModel: ObservableObject {
                     description
                     coverUrl
                     price
-                    platform { id name }
+                    platform { id name slug }
                     platformId
                     gameCount
                     dlcCount
