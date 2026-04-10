@@ -18,20 +18,12 @@ struct RootView: View {
                 .tag(0)
 
                 NavigationStack {
-                    GameListView()
-                }
-                .tabItem {
-                    Label("Games", systemImage: "gamecontroller")
-                }
-                .tag(1)
-
-                NavigationStack {
                     TrophyRoomView()
                 }
                 .tabItem {
                     Label("Trophy Room", systemImage: "trophy")
                 }
-                .tag(2)
+                .tag(1)
 
                 NavigationStack {
                     LibraryView()
@@ -39,7 +31,7 @@ struct RootView: View {
                 .tabItem {
                     Label("Library", systemImage: "books.vertical")
                 }
-                .tag(3)
+                .tag(2)
 
                 NavigationStack {
                     BuylistView()
@@ -47,21 +39,13 @@ struct RootView: View {
                 .tabItem {
                     Label("Buylist", systemImage: "cart")
                 }
-                .tag(4)
+                .tag(3)
 
                 CollectionView()
                 .tabItem {
                     Label("Collection", systemImage: "square.grid.2x2")
                 }
-                .tag(5)
-
-                if adminViewModel.canAccessAdmin {
-                    AdminDashboardView()
-                    .tabItem {
-                        Label("Admin", systemImage: "gearshape.2")
-                    }
-                    .tag(6)
-                }
+                .tag(4)
             }
 
             // Floating admin toolbar overlay
