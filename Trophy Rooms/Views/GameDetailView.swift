@@ -24,9 +24,9 @@ struct GameDetailView: View {
                         // Header with cover and title
                         GameHeader(game: game)
 
-                        // Base game link (for fangames/ROM hacks)
-                        if let baseGame = game.baseGame {
-                            BaseGameLinkView(baseGame: baseGame, gameType: game.type)
+                        // Base games section (for fangames/ROM hacks/DLCs/expansions)
+                        if let baseGames = game.baseGames, !baseGames.isEmpty {
+                            BaseGamesSectionView(baseGames: baseGames, gameType: game.type)
                         }
 
                         // Library status and Collection buttons (authenticated only)
@@ -102,16 +102,16 @@ struct GameDetailView: View {
 
                         // MARK: - Related Content Sections (Bottom)
 
-                        // Derivatives section (fangames/ROM hacks based on this game)
-                        if let derivatives = game.derivatives, !derivatives.isEmpty {
+                        // Derived games section (fangames/ROM hacks/DLCs/expansions based on this game)
+                        if let derivedGames = game.derivedGames, !derivedGames.isEmpty {
                             RelatedContentSection(
                                 title: "Fangames, ROM Hacks & Mods",
                                 systemImage: "puzzlepiece.extension",
-                                count: derivatives.count
+                                count: derivedGames.count
                             ) {
-                                ForEach(derivatives) { derivative in
+                                ForEach(derivedGames) { derivative in
                                     DerivativeRow(derivative: derivative)
-                                    if derivative.id != derivatives.last?.id {
+                                    if derivative.id != derivedGames.last?.id {
                                         Divider()
                                     }
                                 }
@@ -672,9 +672,60 @@ private struct AchievementRow: View {
     }
 }
 
-// MARK: - Base Game Link
+// MARK: - Base Games Section (Multiple Base Games)
 
-private struct BaseGameLinkView: View {
+private struct BaseGamesSectionView: View {
+    let baseGames: [BaseGameRef]
+    let gameType: GameType?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Based On", systemImage: "link")
+                    .font(.headline)
+                Spacer()
+                Text("\(baseGames.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(4)
+            }
+
+            ForEach(baseGames) { baseGame in
+                BaseGameRow(baseGame: baseGame, gameType: gameType)
+                if baseGame.id != baseGames.last?.id {
+                    Divider()
+                }
+            }
+        }
+        .padding()
+        .background(badgeColor.opacity(0.1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(badgeColor.opacity(0.3), lineWidth: 1)
+        )
+        .cornerRadius(12)
+    }
+
+    var badgeColor: Color {
+        switch gameType {
+        case .FANGAME:
+            return .purple
+        case .ROM_HACK:
+            return .orange
+        case .DLC, .EXPANSION:
+            return .blue
+        case .MOD:
+            return .green
+        default:
+            return .gray
+        }
+    }
+}
+
+private struct BaseGameRow: View {
     let baseGame: BaseGameRef
     let gameType: GameType?
 
@@ -689,22 +740,20 @@ private struct BaseGameLinkView: View {
                     } placeholder: {
                         Color.gray.opacity(0.3)
                     }
-                    .frame(width: 50, height: 70)
-                    .cornerRadius(6)
+                    .frame(width: 40, height: 56)
+                    .cornerRadius(4)
                 } else {
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(Color.gray.opacity(0.3))
-                        .frame(width: 50, height: 70)
+                        .frame(width: 40, height: 56)
                         .overlay {
                             Image(systemName: "gamecontroller")
+                                .font(.caption)
                                 .foregroundStyle(.gray)
                         }
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Based On")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     Text(baseGame.title)
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -724,26 +773,8 @@ private struct BaseGameLinkView: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
-            .padding()
-            .background(badgeColor.opacity(0.1))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(badgeColor.opacity(0.3), lineWidth: 1)
-            )
-            .cornerRadius(12)
         }
         .buttonStyle(.plain)
-    }
-
-    var badgeColor: Color {
-        switch gameType {
-        case .FANGAME:
-            return .purple
-        case .ROM_HACK:
-            return .orange
-        default:
-            return .gray
-        }
     }
 }
 
