@@ -51,10 +51,10 @@ struct AdminSetFormSheet: View {
                     .onChange(of: selectedGame) { _, newValue in
                         selectedVersionId = ""
                         selectedDlcId = ""
-                        if let game = newValue {
+                        if let game = newValue, let gameFamilyId = game.gameFamilyId {
                             Task {
-                                await viewModel.fetchVersions(gameId: game.id)
-                                await viewModel.fetchDlcs(gameId: game.id)
+                                await viewModel.fetchVersions(gameFamilyId: gameFamilyId)
+                                await viewModel.fetchDlcs(gameFamilyId: gameFamilyId)
                             }
                         } else {
                             viewModel.versions = []
@@ -142,24 +142,25 @@ struct AdminSetFormSheet: View {
                 selectedVersionId = set.gameVersionId ?? ""
                 selectedDlcId = set.dlcId ?? ""
 
-                // Create a GameSummary from the set's game info
-                if let gameInfo = set.game {
+                // Create a GameSummary from the set's game family info
+                if let gameFamily = set.gameFamily, let gameFamilyId = set.gameFamilyId {
                     selectedGame = GameSummary(
-                        id: gameInfo.id,
-                        title: gameInfo.title,
+                        id: gameFamily.id,
+                        title: gameFamily.title,
                         description: nil,
                         coverUrl: nil,
                         type: nil,
-                        baseGameId: nil,
-                        baseGameIds: nil,
+                        gameFamilyId: gameFamilyId,
+                        baseGameFamilyId: nil,
+                        baseGameFamilyIds: nil,
                         platform: nil,
                         achievementSetCount: 0,
                         achievementCount: 0,
                         trophyCount: 0
                     )
                     Task {
-                        await viewModel.fetchVersions(gameId: gameInfo.id)
-                        await viewModel.fetchDlcs(gameId: gameInfo.id)
+                        await viewModel.fetchVersions(gameFamilyId: gameFamilyId)
+                        await viewModel.fetchDlcs(gameFamilyId: gameFamilyId)
                     }
                 }
             }
@@ -167,7 +168,7 @@ struct AdminSetFormSheet: View {
     }
 
     private func save() {
-        guard let game = selectedGame else { return }
+        guard let game = selectedGame, let gameFamilyId = game.gameFamilyId else { return }
 
         isSaving = true
 
@@ -182,7 +183,7 @@ struct AdminSetFormSheet: View {
                     title: title.trimmingCharacters(in: .whitespaces),
                     type: selectedType,
                     visibility: selectedVisibility,
-                    gameId: game.id,
+                    gameFamilyId: gameFamilyId,
                     gameVersionId: versionId,
                     dlcId: dlcId
                 )
@@ -191,7 +192,7 @@ struct AdminSetFormSheet: View {
                     title: title.trimmingCharacters(in: .whitespaces),
                     type: selectedType,
                     visibility: selectedVisibility,
-                    gameId: game.id,
+                    gameFamilyId: gameFamilyId,
                     gameVersionId: versionId,
                     dlcId: dlcId
                 )

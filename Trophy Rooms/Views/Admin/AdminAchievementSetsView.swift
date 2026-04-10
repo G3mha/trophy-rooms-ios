@@ -20,71 +20,24 @@ struct AdminAchievementSetsView: View {
                     .foregroundStyle(.red)
             } else {
                 ForEach(viewModel.filteredSets) { set in
-                    HStack {
-                        if isSelecting {
-                            Image(systemName: selectedIds.contains(set.id) ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(selectedIds.contains(set.id) ? .blue : .gray)
-                                .onTapGesture {
-                                    toggleSelection(set.id)
-                                }
-                        }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(set.title)
-                                .font(.headline)
-                            if let game = set.game {
-                                Text(game.title)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            HStack(spacing: 8) {
-                                Text(set.typeEnum.displayName)
-                                    .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 2)
-                                    .background(Color.blue.opacity(0.2))
-                                    .cornerRadius(4)
-
-                                Text(set.visibilityEnum.displayName)
-                                    .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 2)
-                                    .background(Color.green.opacity(0.2))
-                                    .cornerRadius(4)
-
-                                if let count = set.achievementCount {
-                                    Text("\(count) achievements")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
-                                }
-                            }
-                        }
-                        Spacer()
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        if isSelecting {
-                            toggleSelection(set.id)
-                        } else {
-                            setToEdit = set
-                        }
-                    }
-                    .swipeActions(edge: .trailing) {
-                        if !isSelecting {
-                            Button(role: .destructive) {
-                                setToDelete = set
-                                showingDeleteConfirmation = true
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-
-                            Button {
+                    AchievementSetRow(
+                        set: set,
+                        isSelecting: isSelecting,
+                        isSelected: selectedIds.contains(set.id),
+                        onToggleSelection: { toggleSelection(set.id) },
+                        onTap: {
+                            if isSelecting {
+                                toggleSelection(set.id)
+                            } else {
                                 setToEdit = set
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
                             }
-                            .tint(.blue)
+                        },
+                        onEdit: { setToEdit = set },
+                        onDelete: {
+                            setToDelete = set
+                            showingDeleteConfirmation = true
                         }
-                    }
+                    )
                 }
             }
         }
@@ -179,6 +132,89 @@ struct AdminAchievementSetsView: View {
             selectedIds.remove(id)
         } else {
             selectedIds.insert(id)
+        }
+    }
+}
+
+// MARK: - Achievement Set Row
+
+private struct AchievementSetRow: View {
+    let set: AdminAchievementSet
+    let isSelecting: Bool
+    let isSelected: Bool
+    let onToggleSelection: () -> Void
+    let onTap: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack {
+            if isSelecting {
+                selectionIndicator
+            }
+            setContent
+            Spacer()
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
+        .swipeActions(edge: .trailing) {
+            if !isSelecting {
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+
+                Button {
+                    onEdit()
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .tint(.blue)
+            }
+        }
+    }
+
+    private var selectionIndicator: some View {
+        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+            .foregroundStyle(isSelected ? .blue : .gray)
+            .onTapGesture { onToggleSelection() }
+    }
+
+    private var setContent: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(set.title)
+                .font(.headline)
+            if let gameFamily = set.gameFamily {
+                Text(gameFamily.title)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            badgesRow
+        }
+    }
+
+    private var badgesRow: some View {
+        HStack(spacing: 8) {
+            Text(set.typeEnum.displayName)
+                .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(Color.blue.opacity(0.2))
+                .cornerRadius(4)
+
+            Text(set.visibilityEnum.displayName)
+                .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(Color.green.opacity(0.2))
+                .cornerRadius(4)
+
+            if let count = set.achievementCount {
+                Text("\(count) achievements")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 }

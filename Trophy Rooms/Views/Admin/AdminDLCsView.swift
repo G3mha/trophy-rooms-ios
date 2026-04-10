@@ -23,14 +23,14 @@ struct AdminDLCsView: View {
         .toolbar { toolbarContent }
         .safeAreaInset(edge: .bottom) { bulkDeleteButton }
         .refreshable {
-            if let game = selectedGame {
-                await viewModel.fetchDLCs(gameId: game.id)
+            if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+                await viewModel.fetchDLCs(gameFamilyId: gameFamilyId)
             }
         }
         .onChange(of: selectedGame) { _, newValue in
-            if let game = newValue {
+            if let game = newValue, let gameFamilyId = game.gameFamilyId {
                 Task {
-                    await viewModel.fetchDLCs(gameId: game.id)
+                    await viewModel.fetchDLCs(gameFamilyId: gameFamilyId)
                 }
             } else {
                 viewModel.dlcs = []
@@ -39,13 +39,13 @@ struct AdminDLCsView: View {
             isSelecting = false
         }
         .sheet(isPresented: $showingCreateSheet) {
-            if let game = selectedGame {
-                AdminDLCFormSheet(viewModel: viewModel, gameId: game.id, dlc: nil)
+            if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+                AdminDLCFormSheet(viewModel: viewModel, gameFamilyId: gameFamilyId, dlc: nil)
             }
         }
         .sheet(item: $dlcToEdit) { dlc in
-            if let game = selectedGame {
-                AdminDLCFormSheet(viewModel: viewModel, gameId: game.id, dlc: dlc)
+            if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+                AdminDLCFormSheet(viewModel: viewModel, gameFamilyId: gameFamilyId, dlc: dlc)
             }
         }
         .alert("Delete DLC", isPresented: $showingDeleteConfirmation) {
@@ -53,9 +53,9 @@ struct AdminDLCsView: View {
                 dlcToDelete = nil
             }
             Button("Delete", role: .destructive) {
-                if let dlc = dlcToDelete, let game = selectedGame {
+                if let dlc = dlcToDelete, let game = selectedGame, let gameFamilyId = game.gameFamilyId {
                     Task {
-                        _ = await viewModel.deleteDLC(id: dlc.id, gameId: game.id)
+                        _ = await viewModel.deleteDLC(id: dlc.id, gameFamilyId: gameFamilyId)
                         dlcToDelete = nil
                     }
                 }
@@ -68,9 +68,9 @@ struct AdminDLCsView: View {
         .alert("Delete DLCs", isPresented: $showingBulkDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
-                if let game = selectedGame {
+                if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
                     Task {
-                        _ = await viewModel.bulkDeleteDLCs(ids: Array(selectedIds), gameId: game.id)
+                        _ = await viewModel.bulkDeleteDLCs(ids: Array(selectedIds), gameFamilyId: gameFamilyId)
                         selectedIds.removeAll()
                         isSelecting = false
                     }

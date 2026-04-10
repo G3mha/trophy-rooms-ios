@@ -258,7 +258,7 @@ struct SetPickerSheet: View {
         }
         return viewModel.achievementSets.filter { set in
             set.title.localizedCaseInsensitiveContains(searchText) ||
-            (set.game?.title.localizedCaseInsensitiveContains(searchText) ?? false)
+            (set.gameFamily?.title.localizedCaseInsensitiveContains(searchText) ?? false)
         }
     }
 
@@ -275,8 +275,8 @@ struct SetPickerSheet: View {
                         Text(set.title)
                             .font(.headline)
                             .foregroundStyle(.primary)
-                        if let game = set.game {
-                            Text(game.title)
+                        if let gameFamily = set.gameFamily {
+                            Text(gameFamily.title)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }

@@ -3,7 +3,7 @@ import SwiftUI
 struct AdminDLCFormSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: AdminDLCsViewModel
-    let gameId: String
+    let gameFamilyId: String
     let dlc: DLC?
 
     @State private var name = ""
@@ -94,7 +94,7 @@ struct AdminDLCFormSheet: View {
         if let dlc = dlc {
             let success = await viewModel.updateDLC(
                 id: dlc.id,
-                gameId: gameId,
+                gameFamilyId: gameFamilyId,
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 slug: slug.trimmingCharacters(in: .whitespacesAndNewlines),
                 type: type,
@@ -107,7 +107,7 @@ struct AdminDLCFormSheet: View {
             }
         } else {
             let success = await viewModel.createDLC(
-                gameId: gameId,
+                gameFamilyId: gameFamilyId,
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 slug: slug.trimmingCharacters(in: .whitespacesAndNewlines),
                 type: type,

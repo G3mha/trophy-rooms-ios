@@ -125,11 +125,11 @@ struct AdminGameFormSheet: View {
                 selectedPlatformId = game.platformId ?? ""
                 selectedType = game.type ?? .BASE_GAME
 
-                // Restore base games if editing a derivative
-                if let baseGameIds = game.baseGameIds {
-                    selectedBaseGameIds = Set(baseGameIds)
-                } else if let baseGameId = game.baseGameId {
-                    selectedBaseGameIds = Set([baseGameId])
+                // Restore base game families if editing a derivative
+                if let baseGameFamilyIds = game.baseGameFamilyIds {
+                    selectedBaseGameIds = Set(baseGameFamilyIds)
+                } else if let baseGameFamilyId = game.baseGameFamilyId {
+                    selectedBaseGameIds = Set([baseGameFamilyId])
                 }
             } else if selectedPlatformId.isEmpty, let firstPlatform = viewModel.platforms.first {
                 selectedPlatformId = firstPlatform.id
@@ -151,7 +151,7 @@ struct AdminGameFormSheet: View {
             let success: Bool
             let desc = description.trimmingCharacters(in: .whitespaces).isEmpty ? nil : description.trimmingCharacters(in: .whitespaces)
             let cover = coverUrl.trimmingCharacters(in: .whitespaces).isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespaces)
-            let baseGameIds = selectedBaseGameIds.isEmpty ? nil : Array(selectedBaseGameIds)
+            let baseGameFamilyIds = selectedBaseGameIds.isEmpty ? nil : Array(selectedBaseGameIds)
 
             if let game = game {
                 success = await viewModel.updateGame(
@@ -161,7 +161,7 @@ struct AdminGameFormSheet: View {
                     coverUrl: cover,
                     platformId: selectedPlatformId,
                     type: selectedType,
-                    baseGameIds: baseGameIds
+                    baseGameFamilyIds: baseGameFamilyIds
                 )
             } else {
                 success = await viewModel.createGame(
@@ -170,7 +170,7 @@ struct AdminGameFormSheet: View {
                     coverUrl: cover,
                     platformId: selectedPlatformId,
                     type: selectedType,
-                    baseGameIds: baseGameIds
+                    baseGameFamilyIds: baseGameFamilyIds
                 )
             }
 
