@@ -50,7 +50,7 @@ struct BundleDetailView: View {
 
                                 ForEach(games) { game in
                                     NavigationLink {
-                                        GameFamilyDetailView(gameFamilyId: game.id)
+                                        GameFamilyView(gameFamilyId: game.id)
                                     } label: {
                                         BundleGameFamilyRow(gameFamily: game)
                                     }
