@@ -1039,12 +1039,12 @@ struct DLCPickerItem: Identifiable, Decodable {
     let game: DLCGame?
 }
 
-struct AddGameToBundleResponse: Decodable {
-    let addGameToBundle: SimpleMutationResult
+struct AddGameFamilyToBundleResponse: Decodable {
+    let addGameFamilyToBundle: SimpleMutationResult
 }
 
-struct RemoveGameFromBundleResponse: Decodable {
-    let removeGameFromBundle: SimpleMutationResult
+struct RemoveGameFamilyFromBundleResponse: Decodable {
+    let removeGameFamilyFromBundle: SimpleMutationResult
 }
 
 struct AddDLCToBundleResponse: Decodable {

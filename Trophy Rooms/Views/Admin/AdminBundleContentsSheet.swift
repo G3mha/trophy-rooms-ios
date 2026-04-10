@@ -35,10 +35,13 @@ struct AdminBundleContentsSheet: View {
                         excludedGameIds: Set(bundle.gameFamilies?.map(\.id) ?? [])
                     ) { selectedGame in
                         Task {
-                            await viewModel.addGameToBundle(
-                                gameId: selectedGame.id,
-                                bundleId: bundleId
-                            )
+                            // Use the gameFamilyId from the selected game
+                            if let gameFamilyId = selectedGame.gameFamilyId {
+                                await viewModel.addGameFamilyToBundle(
+                                    gameFamilyId: gameFamilyId,
+                                    bundleId: bundleId
+                                )
+                            }
                         }
                     }
                 }
@@ -76,8 +79,8 @@ struct AdminBundleContentsSheet: View {
                         Spacer()
                         Button {
                             Task {
-                                await viewModel.removeGameFromBundle(
-                                    gameId: game.id,
+                                await viewModel.removeGameFamilyFromBundle(
+                                    gameFamilyId: game.id,
                                     bundleId: bundleId
                                 )
                             }

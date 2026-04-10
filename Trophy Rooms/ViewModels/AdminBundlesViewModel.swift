@@ -337,21 +337,21 @@ class AdminBundlesViewModel: ObservableObject {
         }
     }
 
-    func addGameToBundle(gameId: String, bundleId: String) async -> Bool {
+    func addGameFamilyToBundle(gameFamilyId: String, bundleId: String) async -> Bool {
         let mutation = """
-        mutation AddGameToBundle($gameId: ID!, $bundleId: ID!) {
-            addGameToBundle(gameId: $gameId, bundleId: $bundleId) {
+        mutation AddGameFamilyToBundle($gameFamilyId: ID!, $bundleId: ID!) {
+            addGameFamilyToBundle(gameFamilyId: $gameFamilyId, bundleId: $bundleId) {
                 success
             }
         }
         """
 
         do {
-            let response: AddGameToBundleResponse = try await NetworkService.shared.fetch(
+            let response: AddGameFamilyToBundleResponse = try await NetworkService.shared.fetch(
                 query: mutation,
-                variables: ["gameId": gameId, "bundleId": bundleId]
+                variables: ["gameFamilyId": gameFamilyId, "bundleId": bundleId]
             )
-            if response.addGameToBundle.success {
+            if response.addGameFamilyToBundle.success {
                 await fetchBundles()
                 return true
             }
@@ -364,21 +364,21 @@ class AdminBundlesViewModel: ObservableObject {
         }
     }
 
-    func removeGameFromBundle(gameId: String, bundleId: String) async -> Bool {
+    func removeGameFamilyFromBundle(gameFamilyId: String, bundleId: String) async -> Bool {
         let mutation = """
-        mutation RemoveGameFromBundle($gameId: ID!, $bundleId: ID!) {
-            removeGameFromBundle(gameId: $gameId, bundleId: $bundleId) {
+        mutation RemoveGameFamilyFromBundle($gameFamilyId: ID!, $bundleId: ID!) {
+            removeGameFamilyFromBundle(gameFamilyId: $gameFamilyId, bundleId: $bundleId) {
                 success
             }
         }
         """
 
         do {
-            let response: RemoveGameFromBundleResponse = try await NetworkService.shared.fetch(
+            let response: RemoveGameFamilyFromBundleResponse = try await NetworkService.shared.fetch(
                 query: mutation,
-                variables: ["gameId": gameId, "bundleId": bundleId]
+                variables: ["gameFamilyId": gameFamilyId, "bundleId": bundleId]
             )
-            if response.removeGameFromBundle.success {
+            if response.removeGameFamilyFromBundle.success {
                 await fetchBundles()
                 return true
             }
