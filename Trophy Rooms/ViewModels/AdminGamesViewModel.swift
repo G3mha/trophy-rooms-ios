@@ -51,6 +51,7 @@ class AdminGamesViewModel: ObservableObject {
                     coverUrl
                     type
                     baseGameId
+                    baseGameIds
                     platformId
                     platformName
                     platformSlug
