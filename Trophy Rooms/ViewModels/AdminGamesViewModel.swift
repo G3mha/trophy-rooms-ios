@@ -51,7 +51,6 @@ class AdminGamesViewModel: ObservableObject {
                     description
                     coverUrl
                     type
-                    baseGameFamilyId
                     baseGameFamilyIds
                     platformId
                     platformName

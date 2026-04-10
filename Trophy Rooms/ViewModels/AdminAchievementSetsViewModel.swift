@@ -79,7 +79,6 @@ class AdminAchievementSetsViewModel: ObservableObject {
                         description
                         coverUrl
                         type
-                        baseGameFamilyId
                         platform {
                             id
                             name

@@ -37,7 +37,7 @@ class GameFamilyViewModel: ObservableObject {
                 description
                 coverUrl
                 type
-                baseGameFamilyId
+                baseGameFamilyIds
                 achievementSetCount
                 achievementCount
                 trophyCount
