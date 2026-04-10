@@ -231,11 +231,16 @@ struct AdminGameFormSheet: View {
                     title
                     coverUrl
                     type
+                    baseGameId
+                    baseGameIds
                     platform {
                         id
                         name
                         slug
                     }
+                    achievementSetCount
+                    achievementCount
+                    trophyCount
                 }
             }
         }
