@@ -793,10 +793,42 @@ struct AdminPlatform: Identifiable, Decodable {
     let id: String
     let name: String
     let slug: String
+    let description: String?
+    let consolePictureUrl: String?
+    let promotionalPictures: [String]?
+    let releases: [PlatformRelease]?
+}
+
+struct PlatformRelease: Identifiable, Decodable {
+    let id: String
+    let region: String
+    let releaseDate: String
 }
 
 struct AdminPlatformsResponse: Decodable {
     let platforms: [AdminPlatform]
+}
+
+// Platform Release Mutation Responses
+struct CreatePlatformReleaseResponse: Decodable {
+    let createPlatformRelease: PlatformReleaseMutationResult
+}
+
+struct UpdatePlatformReleaseResponse: Decodable {
+    let updatePlatformRelease: PlatformReleaseMutationResult
+}
+
+struct DeletePlatformReleaseResponse: Decodable {
+    let deletePlatformRelease: PlatformReleaseMutationResult
+}
+
+struct PlatformReleaseMutationResult: Decodable {
+    let success: Bool
+    let release: PlatformReleaseRef?
+}
+
+struct PlatformReleaseRef: Decodable {
+    let id: String
 }
 
 // MARK: - DLC Models
