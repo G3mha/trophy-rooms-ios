@@ -16,6 +16,67 @@ struct Platform: Identifiable, Decodable {
     let slug: String?
 }
 
+// MARK: - GameFamily Models
+
+/// Canonical representation of a game across all platforms
+struct GameFamily: Identifiable, Decodable, Equatable {
+    let id: String
+    let title: String
+    let slug: String
+    let description: String?
+    let coverUrl: String?
+    let type: GameType?
+    let developer: String?
+    let publisher: String?
+    let genre: String?
+    let esrbRating: String?
+    let screenshots: [String]?
+    let releaseDate: String?
+    let games: [GamePlatformInstance]?
+    let gameCount: Int?
+    let platforms: [Platform]?
+    let achievementSets: [AchievementSet]?
+    let totalAchievementCount: Int?
+    let totalTrophyCount: Int?
+    let dlcs: [GameDLC]?
+    let dlcCount: Int?
+    let baseGameFamilies: [GameFamilyRef]?
+    let derivedGameFamilies: [GameFamilyRef]?
+
+    static func == (lhs: GameFamily, rhs: GameFamily) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    var isDerivative: Bool {
+        type == .FANGAME || type == .ROM_HACK || type == .MOD || type == .DLC || type == .EXPANSION
+    }
+
+    var hasBaseGameFamilies: Bool {
+        guard let baseGameFamilies = baseGameFamilies else { return false }
+        return !baseGameFamilies.isEmpty
+    }
+}
+
+/// Reference to a GameFamily (for self-referencing relations)
+struct GameFamilyRef: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let slug: String
+    let coverUrl: String?
+    let type: GameType?
+}
+
+/// A platform-specific instance of a game
+struct GamePlatformInstance: Identifiable, Decodable {
+    let id: String
+    let gameFamilyId: String
+    let platform: Platform?
+    let platformId: String?
+    let releaseDate: String?
+    let coverUrl: String?  // Platform-specific override
+    let trophyCount: Int?
+}
+
 // MARK: - Game Models
 
 struct GameSummary: Identifiable, Decodable, Equatable {
@@ -24,8 +85,9 @@ struct GameSummary: Identifiable, Decodable, Equatable {
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?       // Backwards compatibility - first base game
-    let baseGameIds: [String]?    // All base game IDs
+    let gameFamilyId: String?
+    let baseGameFamilyId: String?       // First base game family
+    let baseGameFamilyIds: [String]?    // All base game family IDs
     let platform: Platform?
     let achievementSetCount: Int
     let achievementCount: Int
@@ -39,11 +101,11 @@ struct GameSummary: Identifiable, Decodable, Equatable {
         type == .FANGAME || type == .ROM_HACK || type == .MOD || type == .DLC || type == .EXPANSION
     }
 
-    var hasBaseGames: Bool {
-        if let baseGameIds = baseGameIds, !baseGameIds.isEmpty {
+    var hasBaseGameFamilies: Bool {
+        if let baseGameFamilyIds = baseGameFamilyIds, !baseGameFamilyIds.isEmpty {
             return true
         }
-        return baseGameId != nil
+        return baseGameFamilyId != nil
     }
 }
 
@@ -52,6 +114,7 @@ struct AchievementSet: Identifiable, Decodable {
     let title: String
     let type: String
     let visibility: String
+    let gameFamilyId: String?
     let createdByUserId: String?
     let gameVersionId: String?
     let gameVersion: GameVersionRef?
@@ -74,13 +137,15 @@ struct Achievement: Identifiable, Decodable {
 
 struct GameDetail: Identifiable, Decodable {
     let id: String
+    let gameFamilyId: String?
+    let gameFamily: GameFamilyRef?
     let title: String
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGames: [BaseGameRef]?
-    let derivedGames: [DerivativeGame]?
-    let derivedGameCount: Int?
+    let baseGameFamilies: [GameFamilyRef]?
+    let derivedGameFamilies: [GameFamilyRef]?
+    let derivedGameFamilyCount: Int?
     let trophyCount: Int
     let releaseDate: String?
     let developer: String?
@@ -101,13 +166,13 @@ struct GameDetail: Identifiable, Decodable {
         type == .FANGAME || type == .ROM_HACK || type == .MOD || type == .DLC || type == .EXPANSION
     }
 
-    var hasBaseGames: Bool {
-        guard let baseGames = baseGames else { return false }
-        return !baseGames.isEmpty
+    var hasBaseGameFamilies: Bool {
+        guard let baseGameFamilies = baseGameFamilies else { return false }
+        return !baseGameFamilies.isEmpty
     }
 }
 
-// Reference to base game for derivatives
+// Reference to base game for derivatives (deprecated, use GameFamilyRef)
 struct BaseGameRef: Identifiable, Decodable {
     let id: String
     let title: String
@@ -115,7 +180,7 @@ struct BaseGameRef: Identifiable, Decodable {
     let platform: Platform?
 }
 
-// Derivative game (fangame/ROM hack) reference
+// Derivative game (fangame/ROM hack) reference (deprecated, use GameFamilyRef)
 struct DerivativeGame: Identifiable, Decodable {
     let id: String
     let title: String
@@ -191,7 +256,7 @@ struct ActivityEntry: Codable, Identifiable {
     let achievementTitle: String?
     let achievementTier: AchievementTier?
     let achievementPoints: Int?
-    let gameId: String
+    let gameFamilyId: String
     let gameTitle: String
     let platformName: String?
     let platformSlug: String?
@@ -255,6 +320,7 @@ enum BuylistItemType: String, Codable, CaseIterable {
 struct BuylistItem: Codable, Identifiable {
     let id: String
     let userId: String
+    let gameFamilyId: String?
     let gameId: String?
     let gameVersionId: String?
     let dlcId: String?
@@ -441,7 +507,7 @@ struct RegionCount: Codable {
 // MARK: - Game Progress Models
 
 struct GameProgress: Codable, Identifiable {
-    let gameId: String
+    let gameFamilyId: String
     let gameTitle: String
     let gameCoverUrl: String?
     let earnedCount: Int
@@ -453,7 +519,7 @@ struct GameProgress: Codable, Identifiable {
     let trophyEarnedAt: String?
     let lastActivityAt: String?
 
-    var id: String { gameId }
+    var id: String { gameFamilyId }
 }
 
 struct GameListResponse: Decodable {
@@ -488,9 +554,10 @@ struct GamesByTitleResponse: Decodable {
     let gamesByTitle: [GameSummary]
 }
 
-// MARK: - Game Group (for consolidated display)
+// MARK: - Game Group (for consolidated display - maps to GameFamily concept)
 
 struct GameGroup: Identifiable {
+    let gameFamilyId: String?
     let title: String
     let slug: String
     let games: [GameSummary]
@@ -499,7 +566,7 @@ struct GameGroup: Identifiable {
     let totalAchievementCount: Int
     let totalTrophyCount: Int
 
-    var id: String { slug }
+    var id: String { gameFamilyId ?? slug }
 
     var isSingleGame: Bool { games.count == 1 }
 }
@@ -510,6 +577,28 @@ struct PlatformsResponse: Decodable {
 
 struct GameDetailResponse: Decodable {
     let game: GameDetail?
+}
+
+// MARK: - GameFamily Responses
+
+struct GameFamilyResponse: Decodable {
+    let gameFamily: GameFamily?
+}
+
+struct GameFamilyBySlugResponse: Decodable {
+    let gameFamilyBySlug: GameFamily?
+}
+
+struct GameFamiliesPageResponse: Decodable {
+    let gameFamiliesPage: GameFamiliesPage
+}
+
+struct GameFamiliesPage: Decodable {
+    let items: [GameFamily]
+    let totalCount: Int
+    let page: Int
+    let pageSize: Int
+    let totalPages: Int
 }
 
 struct UserStats: Decodable {
@@ -736,8 +825,8 @@ struct DLC: Identifiable, Decodable {
     let effectiveCoverUrl: String?
     let releaseDate: String?
     let price: Double?
-    let gameId: String
-    let game: DLCGame?
+    let gameFamilyId: String
+    let gameFamily: GameFamilyRef?
     let achievementSetCount: Int?
 }
 
@@ -1003,13 +1092,14 @@ struct DeleteGameVersionResult: Decodable {
 // Admin Game
 struct AdminGame: Identifiable, Decodable {
     let id: String
+    let gameFamilyId: String?
     let title: String
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?       // Backwards compatibility - first base game
-    let baseGameIds: [String]?    // All base game IDs
-    let baseGames: [BaseGameRef]? // Full base game references
+    let baseGameFamilyId: String?           // First base game family
+    let baseGameFamilyIds: [String]?        // All base game family IDs
+    let baseGameFamilies: [GameFamilyRef]?  // Full base game family references
     let platform: Platform?
     let achievementSetCount: Int
 }
@@ -1060,24 +1150,26 @@ struct GameForEditResponse: Decodable {
 
 struct GameForEdit: Decodable {
     let id: String
+    let gameFamilyId: String?
     let title: String
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?       // Backwards compatibility - first base game
-    let baseGameIds: [String]?    // All base game IDs
-    let baseGames: [BaseGameRef]? // Full base game references
+    let baseGameFamilyId: String?           // First base game family
+    let baseGameFamilyIds: [String]?        // All base game family IDs
+    let baseGameFamilies: [GameFamilyRef]?  // Full base game family references
     let platform: Platform?
 }
 
 struct AdminGameItem: Identifiable, Decodable {
     let id: String
+    let gameFamilyId: String?
     let title: String
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?       // Backwards compatibility - first base game
-    let baseGameIds: [String]?    // All base game IDs
+    let baseGameFamilyId: String?       // First base game family
+    let baseGameFamilyIds: [String]?    // All base game family IDs
     let platformId: String?
     let platformName: String?
     let platformSlug: String?
@@ -1087,34 +1179,36 @@ struct AdminGameItem: Identifiable, Decodable {
         type == .FANGAME || type == .ROM_HACK || type == .MOD || type == .DLC || type == .EXPANSION
     }
 
-    var hasBaseGames: Bool {
-        if let baseGameIds = baseGameIds, !baseGameIds.isEmpty {
+    var hasBaseGameFamilies: Bool {
+        if let baseGameFamilyIds = baseGameFamilyIds, !baseGameFamilyIds.isEmpty {
             return true
         }
-        return baseGameId != nil
+        return baseGameFamilyId != nil
     }
 
     // Memberwise initializer for creating instances programmatically
     init(
         id: String,
+        gameFamilyId: String?,
         title: String,
         description: String?,
         coverUrl: String?,
         type: GameType?,
-        baseGameId: String?,
-        baseGameIds: [String]?,
+        baseGameFamilyId: String?,
+        baseGameFamilyIds: [String]?,
         platformId: String?,
         platformName: String?,
         platformSlug: String?,
         achievementSetCount: Int
     ) {
         self.id = id
+        self.gameFamilyId = gameFamilyId
         self.title = title
         self.description = description
         self.coverUrl = coverUrl
         self.type = type
-        self.baseGameId = baseGameId
-        self.baseGameIds = baseGameIds
+        self.baseGameFamilyId = baseGameFamilyId
+        self.baseGameFamilyIds = baseGameFamilyIds
         self.platformId = platformId
         self.platformName = platformName
         self.platformSlug = platformSlug
@@ -1156,7 +1250,8 @@ struct AdminAchievementSet: Identifiable, Decodable {
     let title: String
     let type: String
     let visibility: String
-    let game: AdminSetGame?
+    let gameFamilyId: String?
+    let gameFamily: AdminSetGameFamily?
     let gameVersionId: String?
     let gameVersion: GameVersionRef?
     let dlcId: String?
@@ -1180,6 +1275,12 @@ struct GameVersionRef: Decodable {
 struct AdminSetGame: Decodable {
     let id: String
     let title: String
+}
+
+struct AdminSetGameFamily: Decodable {
+    let id: String
+    let title: String
+    let slug: String?
 }
 
 struct AdminAchievementSetsResponse: Decodable {
