@@ -148,6 +148,68 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
+    func createGameFamily(title: String, description: String?, coverUrl: String?, platformIds: [String], type: GameType = .BASE_GAME, baseGameFamilyIds: [String]? = nil) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation CreateGameFamily($input: CreateGameFamilyInput!) {
+            createGameFamily(input: $input) {
+                success
+                error {
+                    code
+                    message
+                    field
+                }
+                gameFamilyId
+            }
+        }
+        """
+
+        var input: [String: Any] = [
+            "title": title,
+            "platformIds": platformIds,
+            "type": type.rawValue
+        ]
+        if let description = description, !description.isEmpty {
+            input["description"] = description
+        }
+        if let coverUrl = coverUrl, !coverUrl.isEmpty {
+            input["coverUrl"] = coverUrl
+        }
+        if let baseGameFamilyIds = baseGameFamilyIds, !baseGameFamilyIds.isEmpty {
+            input["baseGameFamilyIds"] = baseGameFamilyIds
+        }
+
+        let variables: [String: Any] = ["input": input]
+
+        do {
+            let response: CreateGameFamilyResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: variables
+            )
+            if response.createGameFamily.success {
+                await fetchGames(page: 1)
+                DispatchQueue.main.async {
+                    self.successMessage = "Game created successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = response.createGameFamily.error?.message ?? "Failed to create game"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
     func createGame(title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameFamilyIds: [String]? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil

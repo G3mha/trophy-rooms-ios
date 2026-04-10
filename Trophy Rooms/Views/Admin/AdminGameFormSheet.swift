@@ -9,7 +9,7 @@ struct AdminGameFormSheet: View {
     @State private var title: String = ""
     @State private var description: String = ""
     @State private var coverUrl: String = ""
-    @State private var selectedPlatformId: String = ""
+    @State private var selectedPlatformIds: Set<String> = []
     @State private var selectedType: GameType = .BASE_GAME
     @State private var selectedBaseGameIds: Set<String> = []
     @State private var selectedBaseGames: [GameSummary] = []
@@ -21,7 +21,7 @@ struct AdminGameFormSheet: View {
 
     var isValid: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !selectedPlatformId.isEmpty
+        !selectedPlatformIds.isEmpty
     }
 
     var excludedGameIds: Set<String> {
@@ -34,13 +34,6 @@ struct AdminGameFormSheet: View {
                 Section {
                     TextField("Title", text: $title)
 
-                    Picker("Platform", selection: $selectedPlatformId) {
-                        Text("Select Platform").tag("")
-                        ForEach(viewModel.platforms) { platform in
-                            Text(platform.name).tag(platform.id)
-                        }
-                    }
-
                     Picker("Type", selection: $selectedType) {
                         ForEach(GameType.allCases, id: \.self) { type in
                             Text(type.displayName).tag(type)
@@ -48,6 +41,36 @@ struct AdminGameFormSheet: View {
                     }
                 } header: {
                     Text("Game Details")
+                }
+
+                Section {
+                    ForEach(viewModel.platforms) { platform in
+                        Button {
+                            if selectedPlatformIds.contains(platform.id) {
+                                selectedPlatformIds.remove(platform.id)
+                            } else {
+                                selectedPlatformIds.insert(platform.id)
+                            }
+                        } label: {
+                            HStack {
+                                Text(platform.name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if selectedPlatformIds.contains(platform.id) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Platforms")
+                } footer: {
+                    if isEditing {
+                        Text("Platform cannot be changed when editing. Use clone to add to other platforms.")
+                    } else {
+                        Text("Select one or more platforms for this game.")
+                    }
                 }
 
                 // Base Games picker (only for non-base game types)
@@ -122,7 +145,9 @@ struct AdminGameFormSheet: View {
                 title = game.title
                 description = game.description ?? ""
                 coverUrl = game.coverUrl ?? ""
-                selectedPlatformId = game.platformId ?? ""
+                if let platformId = game.platformId {
+                    selectedPlatformIds = Set([platformId])
+                }
                 selectedType = game.type ?? .BASE_GAME
 
                 // Restore base game families if editing a derivative
@@ -131,8 +156,6 @@ struct AdminGameFormSheet: View {
                 } else if let baseGameFamilyId = game.baseGameFamilyId {
                     selectedBaseGameIds = Set([baseGameFamilyId])
                 }
-            } else if selectedPlatformId.isEmpty, let firstPlatform = viewModel.platforms.first {
-                selectedPlatformId = firstPlatform.id
             }
         }
         .onChange(of: selectedType) { _, newValue in
@@ -154,21 +177,23 @@ struct AdminGameFormSheet: View {
             let baseGameFamilyIds = selectedBaseGameIds.isEmpty ? nil : Array(selectedBaseGameIds)
 
             if let game = game {
+                // When editing, use updateGame with single platformId
                 success = await viewModel.updateGame(
                     id: game.id,
                     title: title.trimmingCharacters(in: .whitespaces),
                     description: desc,
                     coverUrl: cover,
-                    platformId: selectedPlatformId,
+                    platformId: selectedPlatformIds.first ?? "",
                     type: selectedType,
                     baseGameFamilyIds: baseGameFamilyIds
                 )
             } else {
-                success = await viewModel.createGame(
+                // When creating, use createGameFamily with multiple platformIds
+                success = await viewModel.createGameFamily(
                     title: title.trimmingCharacters(in: .whitespaces),
                     description: desc,
                     coverUrl: cover,
-                    platformId: selectedPlatformId,
+                    platformIds: Array(selectedPlatformIds),
                     type: selectedType,
                     baseGameFamilyIds: baseGameFamilyIds
                 )

@@ -1421,6 +1421,16 @@ struct CreateGameResult: Decodable {
     let game: GameIdRef?
 }
 
+struct CreateGameFamilyResponse: Decodable {
+    let createGameFamily: CreateGameFamilyResult
+}
+
+struct CreateGameFamilyResult: Decodable {
+    let success: Bool
+    let gameFamilyId: String?
+    let error: MutationError?
+}
+
 struct UpdateGameResponse: Decodable {
     let updateGame: UpdateGameResult
 }
