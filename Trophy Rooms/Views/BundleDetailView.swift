@@ -33,12 +33,11 @@ struct BundleDetailView: View {
                         }
 
                         // Description
-                        if let description = bundle.description {
+                        if let description = bundle.description, !description.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("About")
                                     .font(.headline)
-                                Text(description)
-                                    .foregroundStyle(.secondary)
+                                ExpandableText(content: description, lineLimit: 4)
                             }
                         }
 
