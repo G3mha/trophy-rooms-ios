@@ -151,6 +151,7 @@ struct AdminSetFormSheet: View {
                         coverUrl: nil,
                         type: nil,
                         baseGameId: nil,
+                        baseGameIds: nil,
                         platform: nil,
                         achievementSetCount: 0,
                         achievementCount: 0,
