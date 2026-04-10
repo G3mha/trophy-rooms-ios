@@ -46,12 +46,13 @@ class AdminGamesViewModel: ObservableObject {
             adminGames(page: $page, pageSize: $pageSize, search: $search) {
                 items {
                     id
+                    gameFamilyId
                     title
                     description
                     coverUrl
                     type
-                    baseGameId
-                    baseGameIds
+                    baseGameFamilyId
+                    baseGameFamilyIds
                     platformId
                     platformName
                     platformSlug
@@ -148,7 +149,7 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    func createGame(title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameIds: [String]? = nil) async -> Bool {
+    func createGame(title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameFamilyIds: [String]? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -181,8 +182,8 @@ class AdminGamesViewModel: ObservableObject {
         if let coverUrl = coverUrl, !coverUrl.isEmpty {
             input["coverUrl"] = coverUrl
         }
-        if let baseGameIds = baseGameIds, !baseGameIds.isEmpty {
-            input["baseGameIds"] = baseGameIds
+        if let baseGameFamilyIds = baseGameFamilyIds, !baseGameFamilyIds.isEmpty {
+            input["baseGameFamilyIds"] = baseGameFamilyIds
         }
 
         let variables: [String: Any] = ["input": input]
@@ -212,7 +213,7 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    func updateGame(id: String, title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameIds: [String]? = nil) async -> Bool {
+    func updateGame(id: String, title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameFamilyIds: [String]? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -245,12 +246,12 @@ class AdminGamesViewModel: ObservableObject {
         if let coverUrl = coverUrl {
             input["coverUrl"] = coverUrl
         }
-        // baseGameIds - pass the array (empty array clears all base games)
-        if let baseGameIds = baseGameIds {
-            input["baseGameIds"] = baseGameIds
+        // baseGameFamilyIds - pass the array (empty array clears all base game families)
+        if let baseGameFamilyIds = baseGameFamilyIds {
+            input["baseGameFamilyIds"] = baseGameFamilyIds
         } else if type == .BASE_GAME {
-            // Clear base games when switching to BASE_GAME
-            input["baseGameIds"] = [String]()
+            // Clear base game families when switching to BASE_GAME
+            input["baseGameFamilyIds"] = [String]()
         }
 
         let variables: [String: Any] = [
@@ -429,19 +430,17 @@ class AdminGamesViewModel: ObservableObject {
         query GetGame($id: ID!) {
             game(id: $id) {
                 id
+                gameFamilyId
                 title
                 description
                 coverUrl
                 type
-                baseGames {
+                baseGameFamilies {
                     id
                     title
+                    slug
                     coverUrl
-                    platform {
-                        id
-                        name
-                        slug
-                    }
+                    type
                 }
                 platform {
                     id
@@ -460,15 +459,16 @@ class AdminGamesViewModel: ObservableObject {
             DispatchQueue.main.async {
                 if let game = response.game {
                     // Map to AdminGameItem format
-                    let baseGameIds = game.baseGames?.map { $0.id } ?? []
+                    let baseGameFamilyIds = game.baseGameFamilies?.map { $0.id } ?? []
                     self.gameToEdit = AdminGameItem(
                         id: game.id,
+                        gameFamilyId: game.gameFamilyId,
                         title: game.title,
                         description: game.description,
                         coverUrl: game.coverUrl,
                         type: game.type,
-                        baseGameId: baseGameIds.first,
-                        baseGameIds: baseGameIds,
+                        baseGameFamilyId: baseGameFamilyIds.first,
+                        baseGameFamilyIds: baseGameFamilyIds,
                         platformId: game.platform?.id,
                         platformName: game.platform?.name,
                         platformSlug: game.platform?.slug,

@@ -32,11 +32,12 @@ class GameFamilyViewModel: ObservableObject {
         query GetGamesByTitle($title: String!) {
             gamesByTitle(title: $title) {
                 id
+                gameFamilyId
                 title
                 description
                 coverUrl
                 type
-                baseGameId
+                baseGameFamilyId
                 achievementSetCount
                 achievementCount
                 trophyCount

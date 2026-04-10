@@ -17,7 +17,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
         return achievementSets.filter { set in
             set.title.localizedCaseInsensitiveContains(searchText) ||
-            (set.game?.title.localizedCaseInsensitiveContains(searchText) ?? false)
+            (set.gameFamily?.title.localizedCaseInsensitiveContains(searchText) ?? false)
         }
     }
 
@@ -34,9 +34,11 @@ class AdminAchievementSetsViewModel: ObservableObject {
                 title
                 type
                 visibility
-                game {
+                gameFamilyId
+                gameFamily {
                     id
                     title
+                    slug
                 }
                 gameVersionId
                 dlcId
@@ -72,11 +74,12 @@ class AdminAchievementSetsViewModel: ObservableObject {
                 edges {
                     node {
                         id
+                        gameFamilyId
                         title
                         description
                         coverUrl
                         type
-                        baseGameId
+                        baseGameFamilyId
                         platform {
                             id
                             name
@@ -101,10 +104,10 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
     }
 
-    func fetchVersions(gameId: String) async {
+    func fetchVersions(gameFamilyId: String) async {
         let query = """
-        query GetGameVersions($gameId: ID!) {
-            gameVersions(gameId: $gameId) {
+        query GetGameVersions($gameFamilyId: ID!) {
+            gameVersions(gameFamilyId: $gameFamilyId) {
                 id
                 name
                 slug
@@ -132,7 +135,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
         do {
             let response: GameVersionsResponse = try await NetworkService.shared.fetch(
                 query: query,
-                variables: ["gameId": gameId]
+                variables: ["gameFamilyId": gameFamilyId]
             )
             DispatchQueue.main.async {
                 self.versions = response.gameVersions
@@ -144,10 +147,10 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
     }
 
-    func fetchDlcs(gameId: String) async {
+    func fetchDlcs(gameFamilyId: String) async {
         let query = """
-        query GetDLCs($gameId: ID!) {
-            dlcs(gameId: $gameId) {
+        query GetDLCs($gameFamilyId: ID!) {
+            dlcs(gameFamilyId: $gameFamilyId) {
                 id
                 name
                 slug
@@ -159,7 +162,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
         do {
             let response: DLCsResponse = try await NetworkService.shared.fetch(
                 query: query,
-                variables: ["gameId": gameId]
+                variables: ["gameFamilyId": gameFamilyId]
             )
             DispatchQueue.main.async {
                 self.dlcs = response.dlcs
@@ -171,7 +174,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
     }
 
-    func createAchievementSet(title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String, gameVersionId: String? = nil, dlcId: String? = nil) async -> Bool {
+    func createAchievementSet(title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameFamilyId: String, gameVersionId: String? = nil, dlcId: String? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -186,9 +189,11 @@ class AdminAchievementSetsViewModel: ObservableObject {
                     title
                     type
                     visibility
-                    game {
+                    gameFamilyId
+                    gameFamily {
                         id
                         title
+                        slug
                     }
                     dlc {
                         id
@@ -204,7 +209,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
             "title": title,
             "type": type.rawValue,
             "visibility": visibility.rawValue,
-            "gameId": gameId
+            "gameFamilyId": gameFamilyId
         ]
 
         if let gameVersionId = gameVersionId, !gameVersionId.isEmpty {
@@ -242,7 +247,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
         }
     }
 
-    func updateAchievementSet(id: String, title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameId: String, gameVersionId: String? = nil, dlcId: String? = nil) async -> Bool {
+    func updateAchievementSet(id: String, title: String, type: AchievementSetType, visibility: AchievementSetVisibility, gameFamilyId: String, gameVersionId: String? = nil, dlcId: String? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -257,9 +262,11 @@ class AdminAchievementSetsViewModel: ObservableObject {
                     title
                     type
                     visibility
-                    game {
+                    gameFamilyId
+                    gameFamily {
                         id
                         title
+                        slug
                     }
                     dlc {
                         id
@@ -275,7 +282,7 @@ class AdminAchievementSetsViewModel: ObservableObject {
             "title": title,
             "type": type.rawValue,
             "visibility": visibility.rawValue,
-            "gameId": gameId
+            "gameFamilyId": gameFamilyId
         ]
 
         if let gameVersionId = gameVersionId {

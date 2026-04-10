@@ -23,7 +23,7 @@ class GameProgressViewModel: ObservableObject {
         let query = """
         query GetMyGameProgress {
             myGameProgress {
-                gameId
+                gameFamilyId
                 gameTitle
                 gameCoverUrl
                 earnedCount

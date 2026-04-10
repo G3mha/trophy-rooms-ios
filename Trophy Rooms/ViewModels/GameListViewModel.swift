@@ -22,17 +22,18 @@ class GameListViewModel: ObservableObject {
     }
 
     private func groupGamesByTitle(_ games: [GameSummary]) -> [GameGroup] {
+        // Group by gameFamilyId if available, otherwise by normalized title
         var groups: [String: [GameSummary]] = [:]
 
         for game in games {
-            let key = game.title.trimmingCharacters(in: .whitespaces).lowercased()
+            let key = game.gameFamilyId ?? game.title.trimmingCharacters(in: .whitespaces).lowercased()
             if groups[key] == nil {
                 groups[key] = []
             }
             groups[key]?.append(game)
         }
 
-        return groups.values.map { gameList in
+        return groups.map { (key, gameList) in
             let platforms = gameList.compactMap { $0.platform }
             let slug = gameList[0].title
                 .lowercased()
@@ -40,6 +41,7 @@ class GameListViewModel: ObservableObject {
                 .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
 
             return GameGroup(
+                gameFamilyId: gameList[0].gameFamilyId,
                 title: gameList[0].title,
                 slug: slug,
                 games: gameList,
@@ -85,11 +87,12 @@ class GameListViewModel: ObservableObject {
             gamesPage(page: $page, pageSize: $pageSize, filter: $filter, orderBy: $orderBy) {
                 items {
                     id
+                    gameFamilyId
                     title
                     description
                     coverUrl
                     type
-                    baseGameId
+                    baseGameFamilyId
                     achievementSetCount
                     achievementCount
                     trophyCount

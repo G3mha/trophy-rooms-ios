@@ -7,15 +7,15 @@ class AdminDLCsViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
 
-    func fetchDLCs(gameId: String) async {
+    func fetchDLCs(gameFamilyId: String) async {
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
         }
 
         let query = """
-        query GetDLCs($gameId: ID!) {
-            dlcs(gameId: $gameId) {
+        query GetDLCs($gameFamilyId: ID!) {
+            dlcs(gameFamilyId: $gameFamilyId) {
                 id
                 name
                 slug
@@ -25,10 +25,11 @@ class AdminDLCsViewModel: ObservableObject {
                 effectiveCoverUrl
                 releaseDate
                 price
-                gameId
-                game {
+                gameFamilyId
+                gameFamily {
                     id
                     title
+                    slug
                 }
                 achievementSetCount
             }
@@ -38,7 +39,7 @@ class AdminDLCsViewModel: ObservableObject {
         do {
             let response: DLCsResponse = try await NetworkService.shared.fetch(
                 query: query,
-                variables: ["gameId": gameId]
+                variables: ["gameFamilyId": gameFamilyId]
             )
             DispatchQueue.main.async {
                 self.dlcs = response.dlcs
@@ -53,7 +54,7 @@ class AdminDLCsViewModel: ObservableObject {
     }
 
     func createDLC(
-        gameId: String,
+        gameFamilyId: String,
         name: String,
         slug: String,
         type: DLCType,
@@ -79,14 +80,14 @@ class AdminDLCsViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     price
-                    gameId
+                    gameFamilyId
                 }
             }
         }
         """
 
         var input: [String: Any] = [
-            "gameId": gameId,
+            "gameFamilyId": gameFamilyId,
             "name": name,
             "slug": slug,
             "type": type.rawValue
@@ -108,7 +109,7 @@ class AdminDLCsViewModel: ObservableObject {
                 variables: ["input": input]
             )
             if response.createDLC.success {
-                await fetchDLCs(gameId: gameId)
+                await fetchDLCs(gameFamilyId: gameFamilyId)
                 DispatchQueue.main.async {
                     self.successMessage = "DLC created successfully"
                 }
@@ -129,7 +130,7 @@ class AdminDLCsViewModel: ObservableObject {
 
     func updateDLC(
         id: String,
-        gameId: String,
+        gameFamilyId: String,
         name: String,
         slug: String,
         type: DLCType,
@@ -155,7 +156,7 @@ class AdminDLCsViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     price
-                    gameId
+                    gameFamilyId
                 }
             }
         }
@@ -183,7 +184,7 @@ class AdminDLCsViewModel: ObservableObject {
                 variables: ["id": id, "input": input]
             )
             if response.updateDLC.success {
-                await fetchDLCs(gameId: gameId)
+                await fetchDLCs(gameFamilyId: gameFamilyId)
                 DispatchQueue.main.async {
                     self.successMessage = "DLC updated successfully"
                 }
@@ -202,7 +203,7 @@ class AdminDLCsViewModel: ObservableObject {
         }
     }
 
-    func deleteDLC(id: String, gameId: String) async -> Bool {
+    func deleteDLC(id: String, gameFamilyId: String) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -242,7 +243,7 @@ class AdminDLCsViewModel: ObservableObject {
         }
     }
 
-    func bulkDeleteDLCs(ids: [String], gameId: String) async -> Int {
+    func bulkDeleteDLCs(ids: [String], gameFamilyId: String) async -> Int {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
