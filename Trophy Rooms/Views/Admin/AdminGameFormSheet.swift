@@ -242,6 +242,10 @@ struct AdminGameFormSheet: View {
                     achievementCount
                     trophyCount
                 }
+                totalCount
+                page
+                pageSize
+                totalPages
             }
         }
         """
