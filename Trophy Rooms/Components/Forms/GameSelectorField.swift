@@ -229,6 +229,290 @@ struct BaseGamePickerSheet: View {
     }
 }
 
+/// A multi-select game selector field for selecting multiple base games.
+/// Shows the count of selected games and presents MultiBaseGamePickerSheet when tapped.
+struct MultiGameSelectorField: View {
+    let title: String
+    @Binding var selectedGameIds: Set<String>
+    @Binding var selectedGames: [GameSummary]
+    var excludedGameIds: Set<String> = []
+
+    @State private var showingPicker = false
+
+    var body: some View {
+        Button {
+            showingPicker = true
+        } label: {
+            HStack {
+                Text(title)
+                    .foregroundStyle(.primary)
+                Spacer()
+                if selectedGames.isEmpty {
+                    Text("Select games")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("\(selectedGames.count) selected")
+                        .foregroundStyle(.secondary)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .sheet(isPresented: $showingPicker) {
+            MultiBaseGamePickerSheet(
+                selectedGameIds: $selectedGameIds,
+                selectedGames: $selectedGames,
+                excludedGameIds: excludedGameIds
+            )
+        }
+    }
+}
+
+/// A multi-select base game picker sheet that allows selecting multiple base games
+struct MultiBaseGamePickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel = GameListViewModel()
+
+    @Binding var selectedGameIds: Set<String>
+    @Binding var selectedGames: [GameSummary]
+    let excludedGameIds: Set<String>
+
+    @State private var searchText = ""
+    @State private var searchTask: Task<Void, Never>?
+
+    init(
+        selectedGameIds: Binding<Set<String>>,
+        selectedGames: Binding<[GameSummary]>,
+        excludedGameIds: Set<String> = []
+    ) {
+        self._selectedGameIds = selectedGameIds
+        self._selectedGames = selectedGames
+        self.excludedGameIds = excludedGameIds
+    }
+
+    var filteredGames: [GameSummary] {
+        viewModel.games.filter { game in
+            !excludedGameIds.contains(game.id) &&
+            (game.type == nil || game.type == .BASE_GAME)
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if viewModel.isLoading && viewModel.games.isEmpty {
+                    ProgressView("Loading games...")
+                } else if !viewModel.isLoading, let error = viewModel.errorMessage, viewModel.games.isEmpty {
+                    ContentUnavailableView {
+                        Label("Error", systemImage: "exclamationmark.triangle")
+                    } description: {
+                        Text(error)
+                    } actions: {
+                        Button("Retry") {
+                            Task {
+                                await loadGames()
+                            }
+                        }
+                    }
+                } else if filteredGames.isEmpty && !searchText.isEmpty && !viewModel.isLoading {
+                    ContentUnavailableView.search(text: searchText)
+                } else if filteredGames.isEmpty && !viewModel.isLoading {
+                    ContentUnavailableView {
+                        Label("No Base Games", systemImage: "gamecontroller")
+                    } description: {
+                        Text("No base games available")
+                    }
+                } else if filteredGames.isEmpty && viewModel.isLoading {
+                    ProgressView("Searching...")
+                } else {
+                    List {
+                        // Selected games section
+                        if !selectedGames.isEmpty {
+                            Section {
+                                ForEach(selectedGames) { game in
+                                    HStack(spacing: 12) {
+                                        GameCoverImage(url: game.coverUrl, size: 40)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(game.title)
+                                                .font(.subheadline)
+                                                .lineLimit(1)
+                                            if let platform = game.platform {
+                                                HStack(spacing: 4) {
+                                                    if let slug = platform.slug {
+                                                        PlatformIcon(slug: slug, size: 12)
+                                                    }
+                                                    Text(platform.name)
+                                                        .font(.caption)
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                            }
+                                        }
+                                        Spacer()
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.blue)
+                                    }
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        toggleGame(game)
+                                    }
+                                }
+                            } header: {
+                                Text("Selected (\(selectedGames.count))")
+                            }
+                        }
+
+                        // Available games section
+                        Section {
+                            ForEach(filteredGames) { game in
+                                let isSelected = selectedGameIds.contains(game.id)
+                                HStack(spacing: 12) {
+                                    GameCoverImage(url: game.coverUrl, size: 40)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(game.title)
+                                            .font(.subheadline)
+                                            .lineLimit(1)
+                                        if let platform = game.platform {
+                                            HStack(spacing: 4) {
+                                                if let slug = platform.slug {
+                                                    PlatformIcon(slug: slug, size: 12)
+                                                }
+                                                Text(platform.name)
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                    }
+                                    Spacer()
+                                    if isSelected {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.blue)
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundStyle(.gray.opacity(0.5))
+                                    }
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    toggleGame(game)
+                                }
+                            }
+
+                            if viewModel.hasNextPage {
+                                HStack {
+                                    Spacer()
+                                    Button {
+                                        Task {
+                                            await viewModel.goToNextPage(
+                                                search: searchText.isEmpty ? nil : searchText,
+                                                platformId: nil,
+                                                hasAchievements: nil,
+                                                orderBy: "TITLE_ASC"
+                                            )
+                                        }
+                                    } label: {
+                                        if viewModel.isLoading {
+                                            ProgressView()
+                                        } else {
+                                            Text("Load More")
+                                        }
+                                    }
+                                    .disabled(viewModel.isLoading)
+                                    Spacer()
+                                }
+                            }
+                        } header: {
+                            Text("Available Games")
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Select Base Games")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: "Search base games")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .task {
+                await loadGames()
+            }
+            .onChange(of: searchText) { _, newValue in
+                searchTask?.cancel()
+                searchTask = Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    if !Task.isCancelled {
+                        await viewModel.fetchGames(
+                            search: newValue.isEmpty ? nil : newValue,
+                            platformId: nil,
+                            hasAchievements: nil,
+                            orderBy: "TITLE_ASC",
+                            page: 1
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private func toggleGame(_ game: GameSummary) {
+        if selectedGameIds.contains(game.id) {
+            selectedGameIds.remove(game.id)
+            selectedGames.removeAll { $0.id == game.id }
+        } else {
+            selectedGameIds.insert(game.id)
+            selectedGames.append(game)
+        }
+    }
+
+    private func loadGames() async {
+        await viewModel.fetchGames(
+            search: searchText.isEmpty ? nil : searchText,
+            platformId: nil,
+            hasAchievements: nil,
+            orderBy: "TITLE_ASC",
+            page: 1
+        )
+    }
+}
+
+/// A small helper view for game cover images
+private struct GameCoverImage: View {
+    let url: String?
+    let size: CGFloat
+
+    var body: some View {
+        if let coverUrl = url, let imageUrl = URL(string: coverUrl) {
+            AsyncImage(url: imageUrl) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Color.gray.opacity(0.3)
+            }
+            .frame(width: size, height: size * 1.4)
+            .cornerRadius(4)
+        } else {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.gray.opacity(0.3))
+                .frame(width: size, height: size * 1.4)
+                .overlay {
+                    Image(systemName: "gamecontroller")
+                        .font(.caption2)
+                        .foregroundStyle(.gray)
+                }
+        }
+    }
+}
+
 #Preview("GameSelectorField - Empty") {
     Form {
         Section("Game Selection") {
@@ -240,8 +524,27 @@ struct BaseGamePickerSheet: View {
     }
 }
 
+#Preview("MultiGameSelectorField") {
+    Form {
+        Section("Multi Game Selection") {
+            MultiGameSelectorField(
+                title: "Base Games",
+                selectedGameIds: .constant(Set(["1", "2"])),
+                selectedGames: .constant([])
+            )
+        }
+    }
+}
+
 #Preview("BaseGamePickerSheet") {
     BaseGamePickerSheet { game in
         print("Selected: \(game.title)")
     }
+}
+
+#Preview("MultiBaseGamePickerSheet") {
+    MultiBaseGamePickerSheet(
+        selectedGameIds: .constant(Set()),
+        selectedGames: .constant([])
+    )
 }
