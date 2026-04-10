@@ -24,17 +24,12 @@ class BundleDetailViewModel: ObservableObject {
                 coverUrl
                 releaseDate
                 price
-                gameCount
+                gameFamilyCount
                 dlcCount
-                games {
+                gameFamilies {
                     id
                     title
                     coverUrl
-                    platform {
-                        id
-                        name
-                        slug
-                    }
                 }
                 dlcs {
                     id

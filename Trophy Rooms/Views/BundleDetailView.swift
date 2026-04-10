@@ -43,16 +43,16 @@ struct BundleDetailView: View {
                         }
 
                         // Games Section
-                        if let games = bundle.games, !games.isEmpty {
+                        if let games = bundle.gameFamilies, !games.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Games (\(games.count))")
                                     .font(.headline)
 
                                 ForEach(games) { game in
                                     NavigationLink {
-                                        GameDetailView(gameId: game.id)
+                                        GameFamilyDetailView(gameFamilyId: game.id)
                                     } label: {
-                                        BundleGameRow(game: game)
+                                        BundleGameFamilyRow(gameFamily: game)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -118,7 +118,7 @@ private struct BundleHeader: View {
                 BundleTypeBadgeLarge(type: bundle.type)
 
                 HStack(spacing: 12) {
-                    if let games = bundle.games, !games.isEmpty {
+                    if let games = bundle.gameFamilies, !games.isEmpty {
                         Label("\(games.count) games", systemImage: "gamecontroller")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -199,12 +199,12 @@ private struct BundleOwnershipButton: View {
     }
 }
 
-private struct BundleGameRow: View {
-    let game: BundleGame
+private struct BundleGameFamilyRow: View {
+    let gameFamily: BundleGameFamily
 
     var body: some View {
         HStack(spacing: 12) {
-            if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
+            if let coverUrl = gameFamily.coverUrl, let url = URL(string: coverUrl) {
                 AsyncImage(url: url) { image in
                     image
                         .resizable()
@@ -218,22 +218,15 @@ private struct BundleGameRow: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color.gray.opacity(0.3))
                     .frame(width: 50, height: 70)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(game.title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-
-                if let platform = game.platform, let slug = platform.slug {
-                    HStack(spacing: 4) {
-                        PlatformIcon(slug: slug, size: 12)
-                        Text(platform.name)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    .overlay {
+                        Image(systemName: "gamecontroller")
+                            .foregroundStyle(.gray)
                     }
-                }
             }
+
+            Text(gameFamily.title)
+                .font(.subheadline)
+                .fontWeight(.medium)
 
             Spacer()
 

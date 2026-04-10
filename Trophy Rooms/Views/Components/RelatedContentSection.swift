@@ -188,8 +188,8 @@ struct BundleRow: View {
                 },
                 subtitle: {
                     HStack(spacing: 8) {
-                        if bundle.gameCount > 0 {
-                            Text("\(bundle.gameCount) games")
+                        if bundle.gameFamilyCount > 0 {
+                            Text("\(bundle.gameFamilyCount) games")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -255,7 +255,7 @@ struct BundleRow: View {
                 type: .BUNDLE,
                 description: nil,
                 coverUrl: nil,
-                gameCount: 1,
+                gameFamilyCount: 1,
                 dlcCount: 1
             ))
         }

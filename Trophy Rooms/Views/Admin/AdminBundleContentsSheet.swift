@@ -32,7 +32,7 @@ struct AdminBundleContentsSheet: View {
                 .sheet(isPresented: $showGamePicker) {
                     GamePickerSheet(
                         title: "Add Game to Bundle",
-                        excludedGameIds: Set(bundle.games?.map(\.id) ?? [])
+                        excludedGameIds: Set(bundle.gameFamilies?.map(\.id) ?? [])
                     ) { selectedGame in
                         Task {
                             await viewModel.addGameToBundle(
@@ -66,7 +66,7 @@ struct AdminBundleContentsSheet: View {
     @ViewBuilder
     private func gamesSection(bundle: AppBundle) -> some View {
         Section {
-            if let games = bundle.games, !games.isEmpty {
+            if let games = bundle.gameFamilies, !games.isEmpty {
                 ForEach(games, id: \.id) { game in
                     HStack {
                         VStack(alignment: .leading) {
@@ -102,7 +102,7 @@ struct AdminBundleContentsSheet: View {
             HStack {
                 Text("Games")
                 Spacer()
-                Text("\(bundle.games?.count ?? 0)")
+                Text("\(bundle.gameFamilies?.count ?? 0)")
                     .foregroundStyle(.secondary)
             }
         }

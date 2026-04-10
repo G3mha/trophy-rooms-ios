@@ -35,7 +35,7 @@ class BundlesViewModel: ObservableObject {
                 type
                 description
                 coverUrl
-                gameCount
+                gameFamilyCount
                 dlcCount
             }
         }

@@ -86,8 +86,8 @@ struct AdminBundlesView: View {
                                     BundleTypeBadge(type: bundle.type)
                                 }
                                 HStack(spacing: 8) {
-                                    if bundle.gameCount > 0 {
-                                        Text("\(bundle.gameCount) games")
+                                    if bundle.gameFamilyCount > 0 {
+                                        Text("\(bundle.gameFamilyCount) games")
                                             .font(.caption2)
                                             .foregroundStyle(.tertiary)
                                     }

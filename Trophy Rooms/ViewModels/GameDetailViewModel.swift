@@ -107,7 +107,7 @@ class GameDetailViewModel: ObservableObject {
                     type
                     description
                     coverUrl
-                    gameCount
+                    gameFamilyCount
                     dlcCount
                 }
                 achievementSets {

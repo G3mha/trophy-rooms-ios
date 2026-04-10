@@ -31,9 +31,9 @@ class AdminBundlesViewModel: ObservableObject {
                     slug
                 }
                 platformId
-                gameCount
+                gameFamilyCount
                 dlcCount
-                games {
+                gameFamilies {
                     id
                     title
                 }
@@ -99,7 +99,7 @@ class AdminBundlesViewModel: ObservableObject {
                     price
                     platform { id name slug }
                     platformId
-                    gameCount
+                    gameFamilyCount
                     dlcCount
                 }
             }
@@ -179,7 +179,7 @@ class AdminBundlesViewModel: ObservableObject {
                     price
                     platform { id name slug }
                     platformId
-                    gameCount
+                    gameFamilyCount
                     dlcCount
                 }
             }

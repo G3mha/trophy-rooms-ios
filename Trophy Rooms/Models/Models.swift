@@ -214,7 +214,7 @@ struct GameBundle: Identifiable, Decodable {
     let type: BundleType
     let description: String?
     let coverUrl: String?
-    let gameCount: Int
+    let gameFamilyCount: Int
     let dlcCount: Int
 }
 
@@ -970,18 +970,17 @@ struct AppBundle: Identifiable, Decodable {
     let price: Double?
     let platform: Platform?
     let platformId: String?
-    let gameCount: Int
+    let gameFamilyCount: Int
     let dlcCount: Int
-    let games: [BundleGame]?
+    let gameFamilies: [BundleGameFamily]?
     let dlcs: [BundleDLC]?
     let isOwned: Bool?
 }
 
-struct BundleGame: Identifiable, Decodable {
+struct BundleGameFamily: Identifiable, Decodable {
     let id: String
     let title: String
     let coverUrl: String?
-    let platform: Platform?
 }
 
 struct BundleDLC: Identifiable, Decodable {
@@ -1351,7 +1350,7 @@ struct BundleListItem: Identifiable, Decodable {
     let coverUrl: String?
     let platform: Platform?
     let platformId: String?
-    let gameCount: Int
+    let gameFamilyCount: Int
     let dlcCount: Int
 }
 
