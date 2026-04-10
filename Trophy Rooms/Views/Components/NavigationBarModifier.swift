@@ -168,7 +168,7 @@ private struct UserMenuSheet: View {
                 await adminViewModel.checkAdminStatus()
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
     }
 
