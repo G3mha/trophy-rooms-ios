@@ -37,7 +37,7 @@ struct AdminBundleContentsSheet: View {
                         Task {
                             // Use the gameFamilyId from the selected game
                             if let gameFamilyId = selectedGame.gameFamilyId {
-                                await viewModel.addGameFamilyToBundle(
+                                _ = await viewModel.addGameFamilyToBundle(
                                     gameFamilyId: gameFamilyId,
                                     bundleId: bundleId
                                 )
