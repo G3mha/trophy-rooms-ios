@@ -14,6 +14,18 @@ struct HomeView: View {
     @State private var minAchievementCount = 0
     @State private var gameTypeFilter: GameTypeFilter = .all
     @State private var selectedPageSize = 25
+    @State private var showFilters = false
+
+    var activeFilterCount: Int {
+        var count = 0
+        if !selectedPlatformId.isEmpty { count += 1 }
+        if achievementFilter != .all { count += 1 }
+        if sortOption != .titleAsc { count += 1 }
+        if minAchievementCount > 0 { count += 1 }
+        if gameTypeFilter != .all { count += 1 }
+        if selectedPageSize != 25 { count += 1 }
+        return count
+    }
 
     var filteredGameGroups: [GameGroup] {
         gameListViewModel.gameGroups.filter { group in
@@ -30,52 +42,6 @@ struct HomeView: View {
                     .foregroundColor(.red)
             } else {
                 List {
-                    // MARK: - Games Filters Section
-                    Section {
-                        Picker("Platform", selection: $selectedPlatformId) {
-                            Text("All Platforms").tag("")
-                            ForEach(gameListViewModel.platforms) { platform in
-                                Text(platform.name).tag(platform.id)
-                            }
-                        }
-                        .pickerStyle(.menu)
-
-                        Picker("Achievements", selection: $achievementFilter) {
-                            ForEach(AchievementFilter.allCases) { filter in
-                                Text(filter.title).tag(filter)
-                            }
-                        }
-                        .pickerStyle(.menu)
-
-                        Picker("Sort", selection: $sortOption) {
-                            ForEach(SortOption.allCases) { option in
-                                Text(option.title).tag(option)
-                            }
-                        }
-                        .pickerStyle(.menu)
-
-                        Picker("Min Achievements", selection: $minAchievementCount) {
-                            ForEach(MinAchievementOption.allCases) { option in
-                                Text(option.title).tag(option.value)
-                            }
-                        }
-                        .pickerStyle(.menu)
-
-                        Picker("Type", selection: $gameTypeFilter) {
-                            ForEach(GameTypeFilter.allCases) { filter in
-                                Text(filter.title).tag(filter)
-                            }
-                        }
-                        .pickerStyle(.menu)
-
-                        Picker("Results", selection: $selectedPageSize) {
-                            ForEach(PageSizeOption.allCases) { option in
-                                Text(option.title).tag(option.rawValue)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                    }
-
                     // MARK: - Games List Section
                     Section {
                         ForEach(filteredGameGroups) { group in
@@ -164,8 +130,40 @@ struct HomeView: View {
             }
         }
         .navigationBar(title: "Home", showAuth: $showAuth)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showFilters = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                        if activeFilterCount > 0 {
+                            Text("\(activeFilterCount)")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.accentColor)
+                                .foregroundColor(.white)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+        }
         .sheet(isPresented: $showAuth) {
             AuthView()
+        }
+        .sheet(isPresented: $showFilters) {
+            GameFiltersSheet(
+                platforms: gameListViewModel.platforms,
+                selectedPlatformId: $selectedPlatformId,
+                achievementFilter: $achievementFilter,
+                sortOption: $sortOption,
+                minAchievementCount: $minAchievementCount,
+                gameTypeFilter: $gameTypeFilter,
+                selectedPageSize: $selectedPageSize
+            )
         }
         .searchable(text: $searchText)
         .onChange(of: searchText) {
@@ -894,5 +892,93 @@ private struct GroupedGameRowView: View {
                     .foregroundColor(.secondary)
             }
         }
+    }
+}
+
+// MARK: - Game Filters Sheet
+
+private struct GameFiltersSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let platforms: [Platform]
+    @Binding var selectedPlatformId: String
+    @Binding var achievementFilter: AchievementFilter
+    @Binding var sortOption: SortOption
+    @Binding var minAchievementCount: Int
+    @Binding var gameTypeFilter: GameTypeFilter
+    @Binding var selectedPageSize: Int
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Picker("Platform", selection: $selectedPlatformId) {
+                        Text("All Platforms").tag("")
+                        ForEach(platforms) { platform in
+                            Text(platform.name).tag(platform.id)
+                        }
+                    }
+
+                    Picker("Type", selection: $gameTypeFilter) {
+                        ForEach(GameTypeFilter.allCases) { filter in
+                            Text(filter.title).tag(filter)
+                        }
+                    }
+
+                    Picker("Achievements", selection: $achievementFilter) {
+                        ForEach(AchievementFilter.allCases) { filter in
+                            Text(filter.title).tag(filter)
+                        }
+                    }
+
+                    Picker("Min Achievements", selection: $minAchievementCount) {
+                        ForEach(MinAchievementOption.allCases) { option in
+                            Text(option.title).tag(option.value)
+                        }
+                    }
+                } header: {
+                    Text("Filter")
+                }
+
+                Section {
+                    Picker("Sort By", selection: $sortOption) {
+                        ForEach(SortOption.allCases) { option in
+                            Text(option.title).tag(option)
+                        }
+                    }
+
+                    Picker("Results Per Page", selection: $selectedPageSize) {
+                        ForEach(PageSizeOption.allCases) { option in
+                            Text(option.title).tag(option.rawValue)
+                        }
+                    }
+                } header: {
+                    Text("Display")
+                }
+
+                Section {
+                    Button("Reset Filters") {
+                        selectedPlatformId = ""
+                        achievementFilter = .all
+                        sortOption = .titleAsc
+                        minAchievementCount = 0
+                        gameTypeFilter = .all
+                        selectedPageSize = 25
+                    }
+                    .foregroundColor(.red)
+                }
+            }
+            .navigationTitle("Filters")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }
