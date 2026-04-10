@@ -125,7 +125,7 @@ struct AdminPlatformsView: View {
             Button("Delete", role: .destructive) {
                 if let platform = platformToDelete {
                     Task {
-                        await viewModel.deletePlatform(id: platform.id)
+                        _ = await viewModel.deletePlatform(id: platform.id)
                         platformToDelete = nil
                     }
                 }
@@ -139,7 +139,7 @@ struct AdminPlatformsView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 Task {
-                    await viewModel.bulkDeletePlatforms(ids: Array(selectedIds))
+                    _ = await viewModel.bulkDeletePlatforms(ids: Array(selectedIds))
                     selectedIds.removeAll()
                     isSelecting = false
                 }

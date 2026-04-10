@@ -205,7 +205,7 @@ struct AdminAchievementsView: View {
             Button("Delete", role: .destructive) {
                 if let achievement = achievementToDelete {
                     Task {
-                        await viewModel.deleteAchievement(id: achievement.id)
+                        _ = await viewModel.deleteAchievement(id: achievement.id)
                         achievementToDelete = nil
                     }
                 }
@@ -219,7 +219,7 @@ struct AdminAchievementsView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 Task {
-                    await viewModel.bulkDeleteAchievements(ids: Array(selectedIds))
+                    _ = await viewModel.bulkDeleteAchievements(ids: Array(selectedIds))
                     selectedIds.removeAll()
                     isSelecting = false
                 }

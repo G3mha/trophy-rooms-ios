@@ -151,7 +151,7 @@ struct AdminGameVersionsView: View {
             Button("Delete", role: .destructive) {
                 if let version = versionToDelete, let game = selectedGame {
                     Task {
-                        await viewModel.deleteVersion(id: version.id, gameId: game.id)
+                        _ = await viewModel.deleteVersion(id: version.id, gameId: game.id)
                         versionToDelete = nil
                     }
                 }
@@ -168,7 +168,7 @@ struct AdminGameVersionsView: View {
             Button("Set Default") {
                 if let version = versionToSetDefault, let game = selectedGame {
                     Task {
-                        await viewModel.setDefaultVersion(id: version.id, gameId: game.id)
+                        _ = await viewModel.setDefaultVersion(id: version.id, gameId: game.id)
                         versionToSetDefault = nil
                     }
                 }
@@ -186,7 +186,7 @@ struct AdminGameVersionsView: View {
                         !viewModel.versions.contains { $0.id == id && $0.isDefault }
                     })
                     Task {
-                        await viewModel.bulkDeleteVersions(ids: nonDefaultIds, gameId: game.id)
+                        _ = await viewModel.bulkDeleteVersions(ids: nonDefaultIds, gameId: game.id)
                         selectedIds.removeAll()
                         isSelecting = false
                     }

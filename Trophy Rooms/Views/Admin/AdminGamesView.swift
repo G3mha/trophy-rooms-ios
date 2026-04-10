@@ -241,7 +241,7 @@ struct AdminGamesView: View {
             Button("Delete", role: .destructive) {
                 if let game = gameToDelete {
                     Task {
-                        await viewModel.deleteGame(id: game.id)
+                        _ = await viewModel.deleteGame(id: game.id)
                         gameToDelete = nil
                     }
                 }
@@ -255,7 +255,7 @@ struct AdminGamesView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 Task {
-                    await viewModel.bulkDeleteGames(ids: Array(selectedIds))
+                    _ = await viewModel.bulkDeleteGames(ids: Array(selectedIds))
                     selectedIds.removeAll()
                     isSelecting = false
                 }

@@ -56,7 +56,7 @@ struct AddToCollectionSheet: View {
                             for index in indexSet {
                                 let item = existingItems[index]
                                 Task {
-                                    await viewModel.removeFromCollection(id: item.id)
+                                    _ = await viewModel.removeFromCollection(id: item.id)
                                     onSave()
                                 }
                             }

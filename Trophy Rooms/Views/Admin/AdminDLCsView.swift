@@ -55,7 +55,7 @@ struct AdminDLCsView: View {
             Button("Delete", role: .destructive) {
                 if let dlc = dlcToDelete, let game = selectedGame {
                     Task {
-                        await viewModel.deleteDLC(id: dlc.id, gameId: game.id)
+                        _ = await viewModel.deleteDLC(id: dlc.id, gameId: game.id)
                         dlcToDelete = nil
                     }
                 }
@@ -70,7 +70,7 @@ struct AdminDLCsView: View {
             Button("Delete", role: .destructive) {
                 if let game = selectedGame {
                     Task {
-                        await viewModel.bulkDeleteDLCs(ids: Array(selectedIds), gameId: game.id)
+                        _ = await viewModel.bulkDeleteDLCs(ids: Array(selectedIds), gameId: game.id)
                         selectedIds.removeAll()
                         isSelecting = false
                     }

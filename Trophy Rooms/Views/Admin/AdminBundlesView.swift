@@ -220,7 +220,7 @@ struct AdminBundlesView: View {
             Button("Delete", role: .destructive) {
                 if let bundle = bundleToDelete {
                     Task {
-                        await viewModel.deleteBundle(id: bundle.id)
+                        _ = await viewModel.deleteBundle(id: bundle.id)
                         bundleToDelete = nil
                     }
                 }
@@ -234,7 +234,7 @@ struct AdminBundlesView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 Task {
-                    await viewModel.bulkDeleteBundles(ids: Array(selectedIds))
+                    _ = await viewModel.bulkDeleteBundles(ids: Array(selectedIds))
                     selectedIds.removeAll()
                     isSelecting = false
                 }
