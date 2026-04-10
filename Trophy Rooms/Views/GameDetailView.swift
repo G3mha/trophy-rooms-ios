@@ -73,12 +73,11 @@ struct GameDetailView: View {
                         }
 
                         // Description
-                        if let description = game.description {
+                        if let description = game.description, !description.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("About")
                                     .font(.headline)
-                                Text(description)
-                                    .foregroundColor(.secondary)
+                                ExpandableText(content: description, lineLimit: 4)
                             }
                         }
 
