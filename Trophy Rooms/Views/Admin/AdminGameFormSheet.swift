@@ -11,8 +11,11 @@ struct AdminGameFormSheet: View {
     @State private var coverUrl: String = ""
     @State private var selectedPlatformId: String = ""
     @State private var selectedType: GameType = .BASE_GAME
-    @State private var selectedBaseGame: GameSummary?
+    @State private var selectedBaseGameIds: Set<String> = []
     @State private var isSaving = false
+    @State private var baseGameSearchText: String = ""
+    @State private var availableBaseGames: [GameSummary] = []
+    @State private var isLoadingBaseGames = false
 
     var isEditing: Bool {
         game != nil
@@ -21,6 +24,16 @@ struct AdminGameFormSheet: View {
     var isValid: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
         !selectedPlatformId.isEmpty
+    }
+
+    var filteredBaseGames: [GameSummary] {
+        let excludedIds: Set<String> = game.map { Set([$0.id]) } ?? []
+        let filtered = availableBaseGames.filter { !excludedIds.contains($0.id) }
+
+        if baseGameSearchText.isEmpty {
+            return filtered
+        }
+        return filtered.filter { $0.title.localizedCaseInsensitiveContains(baseGameSearchText) }
     }
 
     var body: some View {
@@ -45,25 +58,75 @@ struct AdminGameFormSheet: View {
                     Text("Game Details")
                 }
 
-                // Base Game picker (only for Fangames and ROM Hacks)
+                // Base Games picker (only for non-base game types)
                 if selectedType != .BASE_GAME {
                     Section {
-                        GameSelectorField(
-                            title: "Based On",
-                            selectedGame: $selectedBaseGame,
-                            excludedGameIds: game.map { Set([$0.id]) } ?? [],
-                            filterBaseGamesOnly: true
-                        )
+                        if isLoadingBaseGames {
+                            ProgressView("Loading games...")
+                        } else if availableBaseGames.isEmpty {
+                            Text("No base games available")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            TextField("Search games", text: $baseGameSearchText)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
 
-                        if selectedBaseGame != nil {
-                            Button("Clear Base Game", role: .destructive) {
-                                selectedBaseGame = nil
+                            ForEach(filteredBaseGames) { baseGame in
+                                HStack {
+                                    if let coverUrl = baseGame.coverUrl, let url = URL(string: coverUrl) {
+                                        AsyncImage(url: url) { image in
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                        } placeholder: {
+                                            Color.gray.opacity(0.3)
+                                        }
+                                        .frame(width: 40, height: 56)
+                                        .cornerRadius(4)
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 40, height: 56)
+                                            .overlay {
+                                                Image(systemName: "gamecontroller")
+                                                    .font(.caption)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(baseGame.title)
+                                            .font(.subheadline)
+                                        if let platform = baseGame.platform {
+                                            Text(platform.name)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer()
+                                    if selectedBaseGameIds.contains(baseGame.id) {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(.blue)
+                                    }
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    toggleBaseGame(baseGame)
+                                }
                             }
                         }
                     } header: {
-                        Text("Base Game")
+                        HStack {
+                            Text("Base Games")
+                            Spacer()
+                            if !selectedBaseGameIds.isEmpty {
+                                Text("\(selectedBaseGameIds.count) selected")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     } footer: {
-                        Text("Link this \(selectedType.displayName.lowercased()) to its original game")
+                        Text("Select all platform versions this \(selectedType.displayName.lowercased()) is based on")
                     }
                 }
 
@@ -128,30 +191,65 @@ struct AdminGameFormSheet: View {
                 selectedPlatformId = game.platformId ?? ""
                 selectedType = game.type ?? .BASE_GAME
 
-                // Restore base game if editing a derivative
-                if let baseGameId = game.baseGameId,
-                   let baseGame = viewModel.baseGameForId(baseGameId) {
-                    selectedBaseGame = GameSummary(
-                        id: baseGame.id,
-                        title: baseGame.title,
-                        description: nil,
-                        coverUrl: baseGame.coverUrl,
-                        type: baseGame.type,
-                        baseGameId: nil,
-                        platform: nil,
-                        achievementSetCount: 0,
-                        achievementCount: 0,
-                        trophyCount: 0
-                    )
+                // Restore base games if editing a derivative
+                if let baseGameIds = game.baseGameIds {
+                    selectedBaseGameIds = Set(baseGameIds)
+                } else if let baseGameId = game.baseGameId {
+                    selectedBaseGameIds = Set([baseGameId])
                 }
             } else if selectedPlatformId.isEmpty, let firstPlatform = viewModel.platforms.first {
                 selectedPlatformId = firstPlatform.id
             }
         }
+        .task {
+            await fetchBaseGames()
+        }
         .onChange(of: selectedType) { oldValue, newValue in
-            // Clear base game if switching to BASE_GAME type
+            // Clear base games if switching to BASE_GAME type
             if newValue == .BASE_GAME {
-                selectedBaseGame = nil
+                selectedBaseGameIds.removeAll()
+            }
+        }
+    }
+
+    private func toggleBaseGame(_ game: GameSummary) {
+        if selectedBaseGameIds.contains(game.id) {
+            selectedBaseGameIds.remove(game.id)
+        } else {
+            selectedBaseGameIds.insert(game.id)
+        }
+    }
+
+    private func fetchBaseGames() async {
+        isLoadingBaseGames = true
+
+        let query = """
+        query GetBaseGames {
+            gamesPage(pageSize: 100, filter: { type: BASE_GAME }) {
+                items {
+                    id
+                    title
+                    coverUrl
+                    type
+                    platform {
+                        id
+                        name
+                        slug
+                    }
+                }
+            }
+        }
+        """
+
+        do {
+            let response: GamesPageResponse = try await NetworkService.shared.fetch(query: query)
+            DispatchQueue.main.async {
+                self.availableBaseGames = response.gamesPage.items
+                self.isLoadingBaseGames = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.isLoadingBaseGames = false
             }
         }
     }
@@ -163,6 +261,7 @@ struct AdminGameFormSheet: View {
             let success: Bool
             let desc = description.trimmingCharacters(in: .whitespaces).isEmpty ? nil : description.trimmingCharacters(in: .whitespaces)
             let cover = coverUrl.trimmingCharacters(in: .whitespaces).isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespaces)
+            let baseGameIds = selectedBaseGameIds.isEmpty ? nil : Array(selectedBaseGameIds)
 
             if let game = game {
                 success = await viewModel.updateGame(
@@ -172,7 +271,7 @@ struct AdminGameFormSheet: View {
                     coverUrl: cover,
                     platformId: selectedPlatformId,
                     type: selectedType,
-                    baseGameId: selectedBaseGame?.id
+                    baseGameIds: baseGameIds
                 )
             } else {
                 success = await viewModel.createGame(
@@ -181,7 +280,7 @@ struct AdminGameFormSheet: View {
                     coverUrl: cover,
                     platformId: selectedPlatformId,
                     type: selectedType,
-                    baseGameId: selectedBaseGame?.id
+                    baseGameIds: baseGameIds
                 )
             }
 
