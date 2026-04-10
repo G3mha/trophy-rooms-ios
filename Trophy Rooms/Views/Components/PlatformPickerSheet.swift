@@ -7,17 +7,32 @@
 
 import SwiftUI
 
-struct PlatformPickerSheet: View {
+// Protocol to allow both Platform and AdminPlatform to be used
+protocol PlatformProtocol: Identifiable {
+    var id: String { get }
+    var name: String { get }
+    var platformSlug: String? { get }
+}
+
+extension Platform: PlatformProtocol {
+    var platformSlug: String? { slug }
+}
+
+extension AdminPlatform: PlatformProtocol {
+    var platformSlug: String? { slug }
+}
+
+struct PlatformPickerSheet<P: PlatformProtocol>: View {
     @Environment(\.dismiss) private var dismiss
 
-    let platforms: [Platform]
+    let platforms: [P]
     @Binding var selectedPlatformIds: Set<String>
     let allowsMultipleSelection: Bool
 
     @State private var searchText = ""
 
     init(
-        platforms: [Platform],
+        platforms: [P],
         selectedPlatformIds: Binding<Set<String>>,
         allowsMultipleSelection: Bool = true
     ) {
@@ -27,7 +42,7 @@ struct PlatformPickerSheet: View {
     }
 
     // Group platforms by manufacturer
-    private var groupedPlatforms: [(String, [Platform])] {
+    private var groupedPlatforms: [(String, [P])] {
         let groups: [(String, [String])] = [
             ("Nintendo", ["nes", "snes", "n64", "gamecube", "wii", "wii-u", "switch", "game-boy", "game-boy-color", "game-boy-advance", "nintendo-ds", "nintendo-3ds", "virtual-boy"]),
             ("Sony", ["playstation", "ps2", "ps3", "ps4", "ps5", "psp", "ps-vita"]),
@@ -38,12 +53,12 @@ struct PlatformPickerSheet: View {
             ("Digital Storefronts", ["steam", "epic-games", "gog", "itch-io", "humble-bundle"]),
         ]
 
-        var result: [(String, [Platform])] = []
+        var result: [(String, [P])] = []
         var usedPlatformIds = Set<String>()
 
         for (groupName, slugs) in groups {
             let matchingPlatforms = platforms.filter { platform in
-                guard let slug = platform.slug else { return false }
+                guard let slug = platform.platformSlug else { return false }
                 return slugs.contains(slug.lowercased())
             }.sorted { $0.name < $1.name }
 
@@ -63,7 +78,7 @@ struct PlatformPickerSheet: View {
         return result
     }
 
-    private var filteredGroupedPlatforms: [(String, [Platform])] {
+    private var filteredGroupedPlatforms: [(String, [P])] {
         if searchText.isEmpty {
             return groupedPlatforms
         }
@@ -84,7 +99,7 @@ struct PlatformPickerSheet: View {
                                 togglePlatform(platform)
                             } label: {
                                 HStack {
-                                    if let slug = platform.slug {
+                                    if let slug = platform.platformSlug {
                                         PlatformIcon(slug: slug, size: 20)
                                     }
                                     Text(platform.name)
@@ -121,7 +136,7 @@ struct PlatformPickerSheet: View {
         }
     }
 
-    private func togglePlatform(_ platform: Platform) {
+    private func togglePlatform(_ platform: P) {
         if selectedPlatformIds.contains(platform.id) {
             selectedPlatformIds.remove(platform.id)
         } else {
@@ -137,8 +152,8 @@ struct PlatformPickerSheet: View {
 // MARK: - Platform Selection Field
 
 /// A field that displays selected platforms as chips and opens a picker sheet
-struct PlatformSelectionField: View {
-    let platforms: [Platform]
+struct PlatformSelectionField<P: PlatformProtocol>: View {
+    let platforms: [P]
     @Binding var selectedPlatformIds: Set<String>
     let allowsMultipleSelection: Bool
     let isDisabled: Bool
@@ -146,7 +161,7 @@ struct PlatformSelectionField: View {
     @State private var showPicker = false
 
     init(
-        platforms: [Platform],
+        platforms: [P],
         selectedPlatformIds: Binding<Set<String>>,
         allowsMultipleSelection: Bool = true,
         isDisabled: Bool = false
@@ -157,7 +172,7 @@ struct PlatformSelectionField: View {
         self.isDisabled = isDisabled
     }
 
-    private var selectedPlatforms: [Platform] {
+    private var selectedPlatforms: [P] {
         platforms.filter { selectedPlatformIds.contains($0.id) }
             .sorted { $0.name < $1.name }
     }
@@ -169,7 +184,8 @@ struct PlatformSelectionField: View {
                 FlowLayout(spacing: 8) {
                     ForEach(selectedPlatforms) { platform in
                         PlatformChip(
-                            platform: platform,
+                            name: platform.name,
+                            slug: platform.platformSlug,
                             onRemove: isDisabled ? nil : {
                                 selectedPlatformIds.remove(platform.id)
                             }
@@ -205,15 +221,16 @@ struct PlatformSelectionField: View {
 // MARK: - Platform Chip
 
 private struct PlatformChip: View {
-    let platform: Platform
+    let name: String
+    let slug: String?
     let onRemove: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 6) {
-            if let slug = platform.slug {
+            if let slug = slug {
                 PlatformIcon(slug: slug, size: 14)
             }
-            Text(platform.name)
+            Text(name)
                 .font(.subheadline)
 
             if let onRemove = onRemove {
