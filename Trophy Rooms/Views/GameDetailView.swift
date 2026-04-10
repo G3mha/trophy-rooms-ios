@@ -433,9 +433,14 @@ private struct GameHeader: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text(game.title)
-                    .font(.title2)
-                    .bold()
+                HStack(spacing: 8) {
+                    Text(game.title)
+                        .font(.title2)
+                        .bold()
+                    if let type = game.type, type != .BASE_GAME {
+                        GameTypeBadge(type: type)
+                    }
+                }
 
                 if let platform = game.platform, let slug = platform.slug {
                     HStack(spacing: 4) {

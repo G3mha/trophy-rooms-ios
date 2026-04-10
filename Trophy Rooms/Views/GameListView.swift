@@ -518,15 +518,9 @@ private struct GameRowView: View {
                 HStack(spacing: 6) {
                     Text(game.title)
                         .font(.headline)
+                        .lineLimit(1)
                     if let type = game.type, type != .BASE_GAME {
-                        Text(type.shortName)
-                            .font(.caption2)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(type == .FANGAME ? Color.purple.opacity(0.2) : Color.orange.opacity(0.2))
-                            .foregroundColor(type == .FANGAME ? .purple : .orange)
-                            .clipShape(Capsule())
+                        GameTypeBadge(type: type)
                     }
                 }
                 if let platform = game.platform, let slug = platform.slug {
