@@ -136,7 +136,7 @@ struct PlatformPickerSheet<P: PlatformProtocol>: View {
                 Spacer()
                 if selectedPlatformIds.contains(platform.id) {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                         .fontWeight(.semibold)
                 }
             }
