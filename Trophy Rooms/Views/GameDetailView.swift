@@ -24,9 +24,9 @@ struct GameDetailView: View {
                         // Header with cover and title
                         GameHeader(game: game)
 
-                        // Base games section (for fangames/ROM hacks/DLCs/expansions)
-                        if let baseGames = game.baseGames, !baseGames.isEmpty {
-                            BaseGamesSectionView(baseGames: baseGames, gameType: game.type)
+                        // Base game families section (for fangames/ROM hacks/DLCs/expansions)
+                        if let baseGameFamilies = game.baseGameFamilies, !baseGameFamilies.isEmpty {
+                            BaseGameFamiliesSectionView(baseGameFamilies: baseGameFamilies, gameType: game.type)
                         }
 
                         // Library status and Collection buttons (authenticated only)
@@ -102,16 +102,16 @@ struct GameDetailView: View {
 
                         // MARK: - Related Content Sections (Bottom)
 
-                        // Derived games section (fangames/ROM hacks/DLCs/expansions based on this game)
-                        if let derivedGames = game.derivedGames, !derivedGames.isEmpty {
+                        // Derived game families section (fangames/ROM hacks/DLCs/expansions based on this game)
+                        if let derivedGameFamilies = game.derivedGameFamilies, !derivedGameFamilies.isEmpty {
                             RelatedContentSection(
                                 title: "Fangames, ROM Hacks & Mods",
                                 systemImage: "puzzlepiece.extension",
-                                count: derivedGames.count
+                                count: derivedGameFamilies.count
                             ) {
-                                ForEach(derivedGames) { derivative in
-                                    DerivativeRow(derivative: derivative)
-                                    if derivative.id != derivedGames.last?.id {
+                                ForEach(derivedGameFamilies) { derivative in
+                                    DerivedGameFamilyRow(gameFamily: derivative)
+                                    if derivative.id != derivedGameFamilies.last?.id {
                                         Divider()
                                     }
                                 }
@@ -677,10 +677,10 @@ private struct AchievementRow: View {
     }
 }
 
-// MARK: - Base Games Section (Multiple Base Games)
+// MARK: - Base Game Families Section
 
-private struct BaseGamesSectionView: View {
-    let baseGames: [BaseGameRef]
+private struct BaseGameFamiliesSectionView: View {
+    let baseGameFamilies: [GameFamilyRef]
     let gameType: GameType?
 
     var body: some View {
@@ -689,7 +689,7 @@ private struct BaseGamesSectionView: View {
                 Label("Based On", systemImage: "link")
                     .font(.headline)
                 Spacer()
-                Text("\(baseGames.count)")
+                Text("\(baseGameFamilies.count)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 8)
@@ -698,9 +698,9 @@ private struct BaseGamesSectionView: View {
                     .cornerRadius(4)
             }
 
-            ForEach(baseGames) { baseGame in
-                BaseGameRow(baseGame: baseGame, gameType: gameType)
-                if baseGame.id != baseGames.last?.id {
+            ForEach(baseGameFamilies) { gameFamily in
+                BaseGameFamilyRow(gameFamily: gameFamily, gameType: gameType)
+                if gameFamily.id != baseGameFamilies.last?.id {
                     Divider()
                 }
             }
@@ -730,14 +730,14 @@ private struct BaseGamesSectionView: View {
     }
 }
 
-private struct BaseGameRow: View {
-    let baseGame: BaseGameRef
+private struct BaseGameFamilyRow: View {
+    let gameFamily: GameFamilyRef
     let gameType: GameType?
 
     var body: some View {
-        NavigationLink(destination: GameDetailView(gameId: baseGame.id)) {
+        NavigationLink(destination: GameFamilyView(title: gameFamily.title)) {
             HStack(spacing: 12) {
-                if let coverUrl = baseGame.coverUrl, let url = URL(string: coverUrl) {
+                if let coverUrl = gameFamily.coverUrl, let url = URL(string: coverUrl) {
                     AsyncImage(url: url) { image in
                         image
                             .resizable()
@@ -759,16 +759,60 @@ private struct BaseGameRow: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(baseGame.title)
+                    Text(gameFamily.title)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    if let platform = baseGame.platform, let slug = platform.slug {
-                        HStack(spacing: 4) {
-                            PlatformIcon(slug: slug, size: 10)
-                            Text(platform.name)
-                                .font(.caption2)
+                    if let type = gameFamily.type {
+                        GameTypeBadge(type: type)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Derived Game Family Row
+
+private struct DerivedGameFamilyRow: View {
+    let gameFamily: GameFamilyRef
+
+    var body: some View {
+        NavigationLink(destination: GameFamilyView(title: gameFamily.title)) {
+            HStack(spacing: 12) {
+                if let coverUrl = gameFamily.coverUrl, let url = URL(string: coverUrl) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color.gray.opacity(0.3)
+                    }
+                    .frame(width: 40, height: 56)
+                    .cornerRadius(4)
+                } else {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 40, height: 56)
+                        .overlay {
+                            Image(systemName: "gamecontroller")
+                                .font(.caption)
+                                .foregroundStyle(.gray)
                         }
-                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(gameFamily.title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    if let type = gameFamily.type {
+                        GameTypeBadge(type: type)
                     }
                 }
 

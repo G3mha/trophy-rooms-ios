@@ -50,7 +50,7 @@ struct TrophyRoomView: View {
                                 }
 
                                 ForEach(progressViewModel.completedGames) { progress in
-                                    NavigationLink(destination: GameDetailView(gameId: progress.gameId)) {
+                                    NavigationLink(destination: GameFamilyView(title: progress.gameTitle)) {
                                         CompletedGameCard(progress: progress)
                                     }
                                     .buttonStyle(.plain)
@@ -74,7 +74,7 @@ struct TrophyRoomView: View {
                                 }
 
                                 ForEach(progressViewModel.inProgressGames) { progress in
-                                    NavigationLink(destination: GameDetailView(gameId: progress.gameId)) {
+                                    NavigationLink(destination: GameFamilyView(title: progress.gameTitle)) {
                                         GameProgressCard(progress: progress)
                                     }
                                     .buttonStyle(.plain)
