@@ -55,6 +55,7 @@ struct NavigationBarModifier: ViewModifier {
 // Custom profile image view
 private struct ProfileImage: View {
     let imageUrl: String?
+    var size: CGFloat = 30
 
     var body: some View {
         if let urlString = imageUrl, let url = URL(string: urlString) {
@@ -66,51 +67,93 @@ private struct ProfileImage: View {
                 Circle()
                     .fill(Color.gray.opacity(0.3))
             }
-            .frame(width: 30, height: 30)
+            .frame(width: size, height: size)
             .clipShape(Circle())
         } else {
             Image(systemName: "person.circle.fill")
                 .resizable()
-                .frame(width: 30, height: 30)
+                .frame(width: size, height: size)
                 .foregroundColor(.gray)
         }
     }
 }
 
-// User menu sheet - uses ClerkKitUI's UserButton for sign out
+// User menu sheet
 private struct UserMenuSheet: View {
     @Environment(Clerk.self) private var clerk
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var adminViewModel = AdminViewModel()
+    @State private var isSigningOut = false
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                if let user = clerk.user {
-                    VStack(spacing: 12) {
-                        ProfileImage(imageUrl: user.imageUrl)
-                            .scaleEffect(2)
-                            .padding(.top, 20)
+            List {
+                // Profile header section
+                Section {
+                    if let user = clerk.user {
+                        VStack(spacing: 16) {
+                            ProfileImage(imageUrl: user.imageUrl, size: 80)
 
-                        if let name = user.firstName {
-                            Text(name)
-                                .font(.title2)
-                                .fontWeight(.semibold)
+                            VStack(spacing: 4) {
+                                if let firstName = user.firstName, let lastName = user.lastName {
+                                    Text("\(firstName) \(lastName)")
+                                        .font(.title2)
+                                        .fontWeight(.semibold)
+                                } else if let firstName = user.firstName {
+                                    Text(firstName)
+                                        .font(.title2)
+                                        .fontWeight(.semibold)
+                                }
+
+                                Text(user.primaryEmailAddress?.emailAddress ?? "")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
                         }
-                        Text(user.primaryEmailAddress?.emailAddress ?? "")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .listRowBackground(Color.clear)
                     }
-                    .padding(.top, 40)
+                }
 
-                    Spacer()
+                // Admin section
+                if adminViewModel.canAccessAdmin {
+                    Section {
+                        NavigationLink {
+                            AdminDashboardView()
+                        } label: {
+                            Label {
+                                Text("Admin Dashboard")
+                            } icon: {
+                                Image(systemName: "gearshape.2.fill")
+                                    .foregroundColor(.purple)
+                            }
+                        }
+                    }
+                }
 
-                    // Use ClerkKitUI's UserButton for proper sign out
-                    UserButton()
-                        .padding()
-
-                    Spacer()
+                // Sign out section
+                Section {
+                    Button(role: .destructive) {
+                        Task {
+                            await signOut()
+                        }
+                    } label: {
+                        HStack {
+                            Spacer()
+                            if isSigningOut {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            } else {
+                                Text("Sign Out")
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(isSigningOut)
                 }
             }
+            .listStyle(.insetGrouped)
             .navigationTitle("Account")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -118,10 +161,26 @@ private struct UserMenuSheet: View {
                     Button("Done") {
                         dismiss()
                     }
+                    .fontWeight(.semibold)
                 }
+            }
+            .task {
+                await adminViewModel.checkAdminStatus()
             }
         }
         .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func signOut() async {
+        isSigningOut = true
+        do {
+            try await clerk.auth.signOut()
+            dismiss()
+        } catch {
+            print("Sign out error: \(error)")
+        }
+        isSigningOut = false
     }
 }
 
