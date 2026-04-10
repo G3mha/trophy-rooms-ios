@@ -44,25 +44,12 @@ struct AdminGameFormSheet: View {
                 }
 
                 Section {
-                    ForEach(viewModel.platforms) { platform in
-                        Button {
-                            if selectedPlatformIds.contains(platform.id) {
-                                selectedPlatformIds.remove(platform.id)
-                            } else {
-                                selectedPlatformIds.insert(platform.id)
-                            }
-                        } label: {
-                            HStack {
-                                Text(platform.name)
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                if selectedPlatformIds.contains(platform.id) {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(.blue)
-                                }
-                            }
-                        }
-                    }
+                    PlatformSelectionField(
+                        platforms: viewModel.platforms,
+                        selectedPlatformIds: $selectedPlatformIds,
+                        allowsMultipleSelection: !isEditing,
+                        isDisabled: isEditing
+                    )
                 } header: {
                     Text("Platforms")
                 } footer: {
