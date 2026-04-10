@@ -31,21 +31,20 @@ class GameDetailViewModel: ObservableObject {
                 description
                 coverUrl
                 type
-                baseGameId
-                baseGame {
+                baseGames {
                     id
                     title
                     coverUrl
                     platform { id name slug }
                 }
-                derivatives {
+                derivedGames {
                     id
                     title
                     coverUrl
                     type
                     platform { id name slug }
                 }
-                derivativeCount
+                derivedGameCount
                 trophyCount
                 releaseDate
                 developer

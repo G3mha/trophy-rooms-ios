@@ -147,7 +147,7 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    func createGame(title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameId: String? = nil) async -> Bool {
+    func createGame(title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameIds: [String]? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -180,8 +180,8 @@ class AdminGamesViewModel: ObservableObject {
         if let coverUrl = coverUrl, !coverUrl.isEmpty {
             input["coverUrl"] = coverUrl
         }
-        if let baseGameId = baseGameId {
-            input["baseGameId"] = baseGameId
+        if let baseGameIds = baseGameIds, !baseGameIds.isEmpty {
+            input["baseGameIds"] = baseGameIds
         }
 
         let variables: [String: Any] = ["input": input]
@@ -211,7 +211,7 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    func updateGame(id: String, title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameId: String? = nil) async -> Bool {
+    func updateGame(id: String, title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameIds: [String]? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -244,12 +244,12 @@ class AdminGamesViewModel: ObservableObject {
         if let coverUrl = coverUrl {
             input["coverUrl"] = coverUrl
         }
-        // baseGameId can be explicitly set to null to clear it
-        if let baseGameId = baseGameId {
-            input["baseGameId"] = baseGameId
+        // baseGameIds - pass the array (empty array clears all base games)
+        if let baseGameIds = baseGameIds {
+            input["baseGameIds"] = baseGameIds
         } else if type == .BASE_GAME {
-            // Clear baseGameId when switching to BASE_GAME
-            input["baseGameId"] = NSNull()
+            // Clear base games when switching to BASE_GAME
+            input["baseGameIds"] = [String]()
         }
 
         let variables: [String: Any] = [
@@ -432,7 +432,16 @@ class AdminGamesViewModel: ObservableObject {
                 description
                 coverUrl
                 type
-                baseGameId
+                baseGames {
+                    id
+                    title
+                    coverUrl
+                    platform {
+                        id
+                        name
+                        slug
+                    }
+                }
                 platform {
                     id
                     name
@@ -450,13 +459,15 @@ class AdminGamesViewModel: ObservableObject {
             DispatchQueue.main.async {
                 if let game = response.game {
                     // Map to AdminGameItem format
+                    let baseGameIds = game.baseGames?.map { $0.id } ?? []
                     self.gameToEdit = AdminGameItem(
                         id: game.id,
                         title: game.title,
                         description: game.description,
                         coverUrl: game.coverUrl,
                         type: game.type,
-                        baseGameId: game.baseGameId,
+                        baseGameId: baseGameIds.first,
+                        baseGameIds: baseGameIds,
                         platformId: game.platform?.id,
                         platformName: game.platform?.name,
                         platformSlug: game.platform?.slug,
