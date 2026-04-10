@@ -19,6 +19,14 @@ class AdminPlatformsViewModel: ObservableObject {
                 id
                 name
                 slug
+                description
+                consolePictureUrl
+                promotionalPictures
+                releases {
+                    id
+                    region
+                    releaseDate
+                }
             }
         }
         """
@@ -37,7 +45,13 @@ class AdminPlatformsViewModel: ObservableObject {
         }
     }
 
-    func createPlatform(name: String, slug: String) async -> Bool {
+    func createPlatform(
+        name: String,
+        slug: String,
+        description: String? = nil,
+        consolePictureUrl: String? = nil,
+        promotionalPictures: [String]? = nil
+    ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -51,17 +65,34 @@ class AdminPlatformsViewModel: ObservableObject {
                     id
                     name
                     slug
+                    description
+                    consolePictureUrl
+                    promotionalPictures
+                    releases {
+                        id
+                        region
+                        releaseDate
+                    }
                 }
             }
         }
         """
 
-        let variables: [String: Any] = [
-            "input": [
-                "name": name,
-                "slug": slug
-            ]
+        var inputDict: [String: Any] = [
+            "name": name,
+            "slug": slug
         ]
+        if let description = description, !description.isEmpty {
+            inputDict["description"] = description
+        }
+        if let consolePictureUrl = consolePictureUrl, !consolePictureUrl.isEmpty {
+            inputDict["consolePictureUrl"] = consolePictureUrl
+        }
+        if let promotionalPictures = promotionalPictures {
+            inputDict["promotionalPictures"] = promotionalPictures
+        }
+
+        let variables: [String: Any] = ["input": inputDict]
 
         do {
             let response: CreatePlatformResponse = try await NetworkService.shared.fetch(
@@ -88,7 +119,14 @@ class AdminPlatformsViewModel: ObservableObject {
         }
     }
 
-    func updatePlatform(id: String, name: String, slug: String) async -> Bool {
+    func updatePlatform(
+        id: String,
+        name: String,
+        slug: String,
+        description: String? = nil,
+        consolePictureUrl: String? = nil,
+        promotionalPictures: [String]? = nil
+    ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -102,17 +140,37 @@ class AdminPlatformsViewModel: ObservableObject {
                     id
                     name
                     slug
+                    description
+                    consolePictureUrl
+                    promotionalPictures
+                    releases {
+                        id
+                        region
+                        releaseDate
+                    }
                 }
             }
         }
         """
 
+        var inputDict: [String: Any] = [
+            "name": name,
+            "slug": slug
+        ]
+        // For update, we always send description and consolePictureUrl (can be null to clear)
+        if let description = description {
+            inputDict["description"] = description.isEmpty ? NSNull() : description
+        }
+        if let consolePictureUrl = consolePictureUrl {
+            inputDict["consolePictureUrl"] = consolePictureUrl.isEmpty ? NSNull() : consolePictureUrl
+        }
+        if let promotionalPictures = promotionalPictures {
+            inputDict["promotionalPictures"] = promotionalPictures
+        }
+
         let variables: [String: Any] = [
             "id": id,
-            "input": [
-                "name": name,
-                "slug": slug
-            ]
+            "input": inputDict
         ]
 
         do {
@@ -216,6 +274,156 @@ class AdminPlatformsViewModel: ObservableObject {
                 self.errorMessage = error.localizedDescription
             }
             return 0
+        }
+    }
+
+    // MARK: - Platform Release Methods
+
+    func createPlatformRelease(platformId: String, region: String, releaseDate: Date) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation CreatePlatformRelease($input: CreatePlatformReleaseInput!) {
+            createPlatformRelease(input: $input) {
+                success
+                release {
+                    id
+                }
+            }
+        }
+        """
+
+        let formatter = ISO8601DateFormatter()
+        let releaseDateString = formatter.string(from: releaseDate)
+
+        let variables: [String: Any] = [
+            "input": [
+                "platformId": platformId,
+                "region": region,
+                "releaseDate": releaseDateString
+            ]
+        ]
+
+        do {
+            let response: CreatePlatformReleaseResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: variables
+            )
+            if response.createPlatformRelease.success {
+                await fetchPlatforms()
+                DispatchQueue.main.async {
+                    self.successMessage = "Release date added successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to add release date"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    func updatePlatformRelease(id: String, region: String? = nil, releaseDate: Date? = nil) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation UpdatePlatformRelease($id: ID!, $input: UpdatePlatformReleaseInput!) {
+            updatePlatformRelease(id: $id, input: $input) {
+                success
+                release {
+                    id
+                }
+            }
+        }
+        """
+
+        var inputDict: [String: Any] = [:]
+        if let region = region {
+            inputDict["region"] = region
+        }
+        if let releaseDate = releaseDate {
+            let formatter = ISO8601DateFormatter()
+            inputDict["releaseDate"] = formatter.string(from: releaseDate)
+        }
+
+        let variables: [String: Any] = [
+            "id": id,
+            "input": inputDict
+        ]
+
+        do {
+            let response: UpdatePlatformReleaseResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: variables
+            )
+            if response.updatePlatformRelease.success {
+                await fetchPlatforms()
+                DispatchQueue.main.async {
+                    self.successMessage = "Release date updated successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to update release date"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
+    func deletePlatformRelease(id: String) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation DeletePlatformRelease($id: ID!) {
+            deletePlatformRelease(id: $id) {
+                success
+            }
+        }
+        """
+
+        do {
+            let response: DeletePlatformReleaseResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["id": id]
+            )
+            if response.deletePlatformRelease.success {
+                await fetchPlatforms()
+                DispatchQueue.main.async {
+                    self.successMessage = "Release date deleted successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to delete release date"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
         }
     }
 }
