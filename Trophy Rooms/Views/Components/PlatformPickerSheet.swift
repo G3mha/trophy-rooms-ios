@@ -92,26 +92,12 @@ struct PlatformPickerSheet<P: PlatformProtocol>: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(filteredGroupedPlatforms, id: \.0) { groupName, platforms in
+                ForEach(filteredGroupedPlatforms, id: \.0) { group in
+                    let groupName: String = group.0
+                    let groupPlatforms: [P] = group.1
                     Section(groupName) {
-                        ForEach(platforms) { platform in
-                            Button {
-                                togglePlatform(platform)
-                            } label: {
-                                HStack {
-                                    if let slug = platform.platformSlug {
-                                        PlatformIcon(slug: slug, size: 20)
-                                    }
-                                    Text(platform.name)
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    if selectedPlatformIds.contains(platform.id) {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.accentColor)
-                                            .fontWeight(.semibold)
-                                    }
-                                }
-                            }
+                        ForEach(groupPlatforms) { platform in
+                            platformRow(platform)
                         }
                     }
                 }
@@ -131,6 +117,27 @@ struct PlatformPickerSheet<P: PlatformProtocol>: View {
                         Text("\(selectedPlatformIds.count) selected")
                             .foregroundStyle(.secondary)
                     }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func platformRow(_ platform: P) -> some View {
+        Button {
+            togglePlatform(platform)
+        } label: {
+            HStack {
+                if let slug = platform.platformSlug {
+                    PlatformIcon(slug: slug, size: 20)
+                }
+                Text(platform.name)
+                    .foregroundStyle(.primary)
+                Spacer()
+                if selectedPlatformIds.contains(platform.id) {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(.accentColor)
+                        .fontWeight(.semibold)
                 }
             }
         }
