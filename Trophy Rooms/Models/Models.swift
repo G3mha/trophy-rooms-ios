@@ -24,7 +24,8 @@ struct GameSummary: Identifiable, Decodable, Equatable {
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?
+    let baseGameId: String?       // Backwards compatibility - first base game
+    let baseGameIds: [String]?    // All base game IDs
     let platform: Platform?
     let achievementSetCount: Int
     let achievementCount: Int
@@ -35,7 +36,14 @@ struct GameSummary: Identifiable, Decodable, Equatable {
     }
 
     var isDerivative: Bool {
-        type == .FANGAME || type == .ROM_HACK || type == .MOD
+        type == .FANGAME || type == .ROM_HACK || type == .MOD || type == .DLC || type == .EXPANSION
+    }
+
+    var hasBaseGames: Bool {
+        if let baseGameIds = baseGameIds, !baseGameIds.isEmpty {
+            return true
+        }
+        return baseGameId != nil
     }
 }
 
@@ -70,10 +78,9 @@ struct GameDetail: Identifiable, Decodable {
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?
-    let baseGame: BaseGameRef?
-    let derivatives: [DerivativeGame]?
-    let derivativeCount: Int?
+    let baseGames: [BaseGameRef]?
+    let derivedGames: [DerivativeGame]?
+    let derivedGameCount: Int?
     let trophyCount: Int
     let releaseDate: String?
     let developer: String?
@@ -91,7 +98,12 @@ struct GameDetail: Identifiable, Decodable {
     let bundles: [GameBundle]?
 
     var isDerivative: Bool {
-        type == .FANGAME || type == .ROM_HACK || type == .MOD
+        type == .FANGAME || type == .ROM_HACK || type == .MOD || type == .DLC || type == .EXPANSION
+    }
+
+    var hasBaseGames: Bool {
+        guard let baseGames = baseGames else { return false }
+        return !baseGames.isEmpty
     }
 }
 
@@ -995,8 +1007,9 @@ struct AdminGame: Identifiable, Decodable {
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?
-    let baseGame: BaseGameRef?
+    let baseGameId: String?       // Backwards compatibility - first base game
+    let baseGameIds: [String]?    // All base game IDs
+    let baseGames: [BaseGameRef]? // Full base game references
     let platform: Platform?
     let achievementSetCount: Int
 }
@@ -1051,7 +1064,9 @@ struct GameForEdit: Decodable {
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?
+    let baseGameId: String?       // Backwards compatibility - first base game
+    let baseGameIds: [String]?    // All base game IDs
+    let baseGames: [BaseGameRef]? // Full base game references
     let platform: Platform?
 }
 
@@ -1061,14 +1076,22 @@ struct AdminGameItem: Identifiable, Decodable {
     let description: String?
     let coverUrl: String?
     let type: GameType?
-    let baseGameId: String?
+    let baseGameId: String?       // Backwards compatibility - first base game
+    let baseGameIds: [String]?    // All base game IDs
     let platformId: String?
     let platformName: String?
     let platformSlug: String?
     let achievementSetCount: Int
 
     var isDerivative: Bool {
-        type == .FANGAME || type == .ROM_HACK || type == .MOD
+        type == .FANGAME || type == .ROM_HACK || type == .MOD || type == .DLC || type == .EXPANSION
+    }
+
+    var hasBaseGames: Bool {
+        if let baseGameIds = baseGameIds, !baseGameIds.isEmpty {
+            return true
+        }
+        return baseGameId != nil
     }
 
     // Memberwise initializer for creating instances programmatically
@@ -1079,6 +1102,7 @@ struct AdminGameItem: Identifiable, Decodable {
         coverUrl: String?,
         type: GameType?,
         baseGameId: String?,
+        baseGameIds: [String]?,
         platformId: String?,
         platformName: String?,
         platformSlug: String?,
@@ -1090,6 +1114,7 @@ struct AdminGameItem: Identifiable, Decodable {
         self.coverUrl = coverUrl
         self.type = type
         self.baseGameId = baseGameId
+        self.baseGameIds = baseGameIds
         self.platformId = platformId
         self.platformName = platformName
         self.platformSlug = platformSlug
