@@ -4,6 +4,8 @@ import ClerkKit
 struct BundleDetailView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = BundleDetailViewModel()
+    @StateObject private var platformsViewModel = PlatformsViewModel.shared
+    @State private var showingPlatformPicker = false
     let bundleId: String
 
     var body: some View {
@@ -19,14 +21,17 @@ struct BundleDetailView: View {
                         // Header
                         BundleHeader(bundle: bundle, isAuthenticated: clerk.user != nil)
 
-                        // Ownership toggle (authenticated only)
+                        // Ownership section (authenticated only)
                         if clerk.user != nil {
-                            BundleOwnershipButton(
-                                isOwned: bundle.isOwned ?? false,
+                            BundleOwnershipSection(
+                                bundle: bundle,
                                 isLoading: viewModel.isOwnershipLoading,
-                                onToggle: {
+                                onAddPlatform: {
+                                    showingPlatformPicker = true
+                                },
+                                onRemovePlatform: { platformId in
                                     Task {
-                                        await viewModel.toggleOwnership()
+                                        await viewModel.removeOwnership(platformId: platformId)
                                     }
                                 }
                             )
@@ -80,6 +85,18 @@ struct BundleDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.fetchBundle(id: bundleId)
+            await platformsViewModel.fetchPlatforms()
+        }
+        .sheet(isPresented: $showingPlatformPicker) {
+            BundlePlatformPickerSheet(
+                platforms: platformsViewModel.platforms,
+                ownedPlatformIds: Set(viewModel.bundle?.ownedPlatforms?.map { $0.id } ?? []),
+                onSelect: { platformId in
+                    Task {
+                        await viewModel.addOwnership(platformId: platformId)
+                    }
+                }
+            )
         }
     }
 }
@@ -169,32 +186,124 @@ private struct BundleTypeBadgeLarge: View {
     }
 }
 
-private struct BundleOwnershipButton: View {
-    let isOwned: Bool
+private struct BundleOwnershipSection: View {
+    let bundle: AppBundle
     let isLoading: Bool
-    let onToggle: () -> Void
+    let onAddPlatform: () -> Void
+    let onRemovePlatform: (String?) -> Void
+
+    var ownedPlatforms: [Platform] {
+        bundle.ownedPlatforms ?? []
+    }
 
     var body: some View {
-        Button(action: onToggle) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
+                Text("Ownership")
+                    .font(.headline)
+                Spacer()
                 if isLoading {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle())
-                } else {
-                    Image(systemName: isOwned ? "checkmark.circle.fill" : "plus.circle")
-                    Text(isOwned ? "Owned" : "Mark as Owned")
-                        .fontWeight(.medium)
                 }
-                Spacer()
             }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(isOwned ? Color.green.opacity(0.15) : Color(.secondarySystemBackground))
-            .foregroundColor(isOwned ? .green : .primary)
-            .cornerRadius(12)
+
+            // Show owned platforms
+            if !ownedPlatforms.isEmpty {
+                ForEach(ownedPlatforms) { platform in
+                    HStack {
+                        PlatformIcon(slug: platform.slug ?? "", size: 24)
+                        Text(platform.name)
+                            .font(.subheadline)
+                        Spacer()
+                        Button {
+                            onRemovePlatform(platform.id)
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isLoading)
+                    }
+                    .padding()
+                    .background(Color.green.opacity(0.15))
+                    .cornerRadius(8)
+                }
+            }
+
+            // Add platform button
+            Button(action: onAddPlatform) {
+                HStack {
+                    Image(systemName: "plus.circle")
+                    Text("Add Platform")
+                        .fontWeight(.medium)
+                    Spacer()
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color(.secondarySystemBackground))
+                .foregroundColor(.primary)
+                .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoading)
         }
-        .buttonStyle(.plain)
-        .disabled(isLoading)
+    }
+}
+
+private struct BundlePlatformPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let platforms: [Platform]
+    let ownedPlatformIds: Set<String>
+    let onSelect: (String?) -> Void
+
+    var availablePlatforms: [Platform] {
+        platforms.filter { !ownedPlatformIds.contains($0.id) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                // "Any Platform" option (no specific platform)
+                Button {
+                    onSelect(nil)
+                    dismiss()
+                } label: {
+                    HStack {
+                        Image(systemName: "square.stack.3d.up")
+                            .frame(width: 32)
+                        Text("Any Platform")
+                        Spacer()
+                    }
+                }
+
+                if !availablePlatforms.isEmpty {
+                    Section("Select Platform") {
+                        ForEach(availablePlatforms) { platform in
+                            Button {
+                                onSelect(platform.id)
+                                dismiss()
+                            } label: {
+                                HStack {
+                                    PlatformIcon(slug: platform.slug ?? "", size: 24)
+                                    Text(platform.name)
+                                    Spacer()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Add to Owned")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
 

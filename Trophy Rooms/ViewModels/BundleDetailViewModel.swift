@@ -44,6 +44,11 @@ class BundleDetailViewModel: ObservableObject {
                     }
                 }
                 isOwned
+                ownedPlatforms {
+                    id
+                    name
+                    slug
+                }
             }
         }
         """
@@ -65,37 +70,33 @@ class BundleDetailViewModel: ObservableObject {
         }
     }
 
-    func toggleOwnership() async {
+    func addOwnership(platformId: String?) async {
         guard let bundleId = bundle?.id else { return }
 
         DispatchQueue.main.async {
             self.isOwnershipLoading = true
         }
 
-        let isCurrentlyOwned = bundle?.isOwned ?? false
-        let mutationName = isCurrentlyOwned ? "RemoveBundleFromOwned" : "AddBundleToOwned"
-        let mutationField = isCurrentlyOwned ? "removeBundleFromOwned" : "addBundleToOwned"
-
         let mutation = """
-        mutation \(mutationName)($bundleId: ID!) {
-            \(mutationField)(bundleId: $bundleId) {
+        mutation AddBundleToOwned($bundleId: ID!, $platformId: ID) {
+            addBundleToOwned(bundleId: $bundleId, platformId: $platformId) {
                 success
             }
         }
         """
 
+        var variables: [String: Any] = ["bundleId": bundleId]
+        if let platformId = platformId {
+            variables["platformId"] = platformId
+        }
+
         do {
             let response: BundleOwnershipMutationResponse = try await NetworkService.shared.fetch(
                 query: mutation,
-                variables: ["bundleId": bundleId]
+                variables: variables
             )
 
-            let success = isCurrentlyOwned
-                ? response.removeBundleFromOwned?.success ?? false
-                : response.addBundleToOwned?.success ?? false
-
-            if success {
-                // Refetch bundle to get updated ownership state
+            if response.addBundleToOwned?.success == true {
                 await fetchBundle(id: bundleId)
             }
 
@@ -107,6 +108,59 @@ class BundleDetailViewModel: ObservableObject {
                 self.errorMessage = error.localizedDescription
                 self.isOwnershipLoading = false
             }
+        }
+    }
+
+    func removeOwnership(platformId: String?) async {
+        guard let bundleId = bundle?.id else { return }
+
+        DispatchQueue.main.async {
+            self.isOwnershipLoading = true
+        }
+
+        let mutation = """
+        mutation RemoveBundleFromOwned($bundleId: ID!, $platformId: ID) {
+            removeBundleFromOwned(bundleId: $bundleId, platformId: $platformId) {
+                success
+            }
+        }
+        """
+
+        var variables: [String: Any] = ["bundleId": bundleId]
+        if let platformId = platformId {
+            variables["platformId"] = platformId
+        }
+
+        do {
+            let response: BundleOwnershipMutationResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: variables
+            )
+
+            if response.removeBundleFromOwned?.success == true {
+                await fetchBundle(id: bundleId)
+            }
+
+            DispatchQueue.main.async {
+                self.isOwnershipLoading = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+                self.isOwnershipLoading = false
+            }
+        }
+    }
+
+    // Legacy method for backwards compatibility
+    func toggleOwnership() async {
+        guard let bundleId = bundle?.id else { return }
+        let isCurrentlyOwned = bundle?.isOwned ?? false
+
+        if isCurrentlyOwned {
+            await removeOwnership(platformId: nil)
+        } else {
+            await addOwnership(platformId: nil)
         }
     }
 }
