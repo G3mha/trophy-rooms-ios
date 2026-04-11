@@ -149,14 +149,32 @@ struct AddToCollectionSheet: View {
                         }
                     }
 
-                    // Condition toggles
-                    Toggle("Has Disc", isOn: $viewModel.hasDisc)
-                    Toggle("Has Box", isOn: $viewModel.hasBox)
-                    Toggle("Has Manual", isOn: $viewModel.hasManual)
-                    Toggle("Has Extras", isOn: $viewModel.hasExtras)
-                    Toggle("Sealed", isOn: $viewModel.isSealed)
+                    // Digital copy toggle
+                    Toggle("Digital Copy", isOn: $viewModel.isDigital)
+                }
 
-                    // Notes
+                // Physical condition section (disabled for digital copies)
+                Section {
+                    Toggle("Has Disc", isOn: $viewModel.hasDisc)
+                        .disabled(viewModel.isDigital)
+                    Toggle("Has Box", isOn: $viewModel.hasBox)
+                        .disabled(viewModel.isDigital)
+                    Toggle("Has Manual", isOn: $viewModel.hasManual)
+                        .disabled(viewModel.isDigital)
+                    Toggle("Has Extras", isOn: $viewModel.hasExtras)
+                        .disabled(viewModel.isDigital)
+                    Toggle("Sealed", isOn: $viewModel.isSealed)
+                        .disabled(viewModel.isDigital)
+                } header: {
+                    Text("Physical Condition")
+                } footer: {
+                    if viewModel.isDigital {
+                        Text("Physical condition options are not applicable for digital copies.")
+                    }
+                }
+
+                // Notes section
+                Section {
                     TextField("Notes (optional)", text: $viewModel.notes, axis: .vertical)
                         .lineLimit(3...6)
                 }
@@ -234,6 +252,15 @@ private struct CollectionItemSummaryRow: View {
             HStack {
                 Text(item.region.displayName)
                     .font(.headline)
+                if item.isDigital == true {
+                    Text("Digital")
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.cyan.opacity(0.2))
+                        .foregroundColor(.cyan)
+                        .cornerRadius(4)
+                }
                 if let version = item.gameVersion {
                     Text(version.name)
                         .font(.caption)
@@ -298,6 +325,7 @@ class AddToCollectionViewModel: ObservableObject {
     @Published var region: GameRegion = .NTSC_U
     @Published var platformId: String?
     @Published var gameVersionId: String?
+    @Published var isDigital = false
     @Published var hasDisc = true
     @Published var hasBox = true
     @Published var hasManual = true
@@ -326,11 +354,12 @@ class AddToCollectionViewModel: ObservableObject {
 
         var input: [String: Any] = [
             "gameId": gameId,
-            "hasDisc": hasDisc,
-            "hasBox": hasBox,
-            "hasManual": hasManual,
-            "hasExtras": hasExtras,
-            "isSealed": isSealed,
+            "isDigital": isDigital,
+            "hasDisc": isDigital ? false : hasDisc,
+            "hasBox": isDigital ? false : hasBox,
+            "hasManual": isDigital ? false : hasManual,
+            "hasExtras": isDigital ? false : hasExtras,
+            "isSealed": isDigital ? false : isSealed,
             "region": region.rawValue,
             "notes": notes.isEmpty ? NSNull() : notes
         ]
@@ -400,11 +429,12 @@ class AddToCollectionViewModel: ObservableObject {
         """
 
         var input: [String: Any] = [
-            "hasDisc": hasDisc,
-            "hasBox": hasBox,
-            "hasManual": hasManual,
-            "hasExtras": hasExtras,
-            "isSealed": isSealed,
+            "isDigital": isDigital,
+            "hasDisc": isDigital ? false : hasDisc,
+            "hasBox": isDigital ? false : hasBox,
+            "hasManual": isDigital ? false : hasManual,
+            "hasExtras": isDigital ? false : hasExtras,
+            "isSealed": isDigital ? false : isSealed,
             "region": region.rawValue,
             "notes": notes.isEmpty ? NSNull() : notes
         ]
@@ -437,6 +467,7 @@ class AddToCollectionViewModel: ObservableObject {
         region = item.region
         platformId = item.platform?.id
         gameVersionId = item.gameVersionId
+        isDigital = item.isDigital ?? false
         hasDisc = item.hasDisc
         hasBox = item.hasBox
         hasManual = item.hasManual
@@ -449,6 +480,7 @@ class AddToCollectionViewModel: ObservableObject {
         region = .NTSC_U
         platformId = nil
         gameVersionId = nil
+        isDigital = false
         hasDisc = true
         hasBox = true
         hasManual = true
