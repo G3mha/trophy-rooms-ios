@@ -13,7 +13,6 @@ struct AdminGamesView: View {
     @State private var showingCloneSheet = false
     @State private var selectedPageSize = 50
     @State private var groupToAddPlatform: AdminGameGroup?
-    @State private var showingAddPlatformSheet = false
 
     var body: some View {
         List {
@@ -185,7 +184,6 @@ struct AdminGamesView: View {
                             if !isSelecting, group.gameFamilyId != nil {
                                 Button {
                                     groupToAddPlatform = group
-                                    showingAddPlatformSheet = true
                                 } label: {
                                     HStack(spacing: 12) {
                                         Image(systemName: "plus.circle.fill")
@@ -367,15 +365,14 @@ struct AdminGamesView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingAddPlatformSheet) {
-            if let group = groupToAddPlatform, let gameFamilyId = group.gameFamilyId {
+        .sheet(item: $groupToAddPlatform) { group in
+            if let gameFamilyId = group.gameFamilyId {
                 AddPlatformSheet(
                     viewModel: viewModel,
                     gameFamilyId: gameFamilyId,
                     gameTitle: group.title,
                     existingPlatformIds: Set(group.games.compactMap { $0.platformId })
                 ) {
-                    showingAddPlatformSheet = false
                     groupToAddPlatform = nil
                 }
             }
