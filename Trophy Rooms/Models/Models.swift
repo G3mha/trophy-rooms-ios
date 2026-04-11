@@ -975,6 +975,7 @@ struct AppBundle: Identifiable, Decodable {
     let gameFamilies: [BundleGameFamily]?
     let dlcs: [BundleDLC]?
     let isOwned: Bool?
+    let ownedPlatforms: [Platform]?
 }
 
 struct BundleGameFamily: Identifiable, Decodable {
@@ -1080,6 +1081,7 @@ struct GameVersion: Identifiable, Decodable {
 struct GameVersionGame: Decodable {
     let id: String
     let title: String
+    let platform: Platform?
 }
 
 struct GameVersionsResponse: Decodable {
