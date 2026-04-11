@@ -76,7 +76,8 @@ struct AdminGameFormSheet: View {
 
                 Section {
                     TextField("Description", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
+                        .lineLimit(2...8)
+                        .frame(minHeight: 60, maxHeight: 150)
 
                     TextField("Cover URL", text: $coverUrl)
                         .textInputAutocapitalization(.never)
