@@ -882,6 +882,41 @@ struct DLCResponse: Decodable {
     let dlc: DLC?
 }
 
+// MARK: - DLC Detail (for DLCDetailView)
+
+struct DLCDetail: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let slug: String
+    let type: DLCType
+    let description: String?
+    let coverUrl: String?
+    let effectiveCoverUrl: String?
+    let releaseDate: String?
+    let price: Double?
+    let isOwned: Bool?
+    let gameFamily: GameFamilyRef?
+    let achievementSets: [AchievementSetSummary]?
+    let bundles: [DLCBundleRef]?
+}
+
+struct AchievementSetSummary: Identifiable, Decodable {
+    let id: String
+    let title: String
+    let achievementCount: Int
+}
+
+struct DLCBundleRef: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let type: BundleType
+    let coverUrl: String?
+}
+
+struct DLCDetailResponse: Decodable {
+    let dlc: DLCDetail?
+}
+
 struct CreateDLCResponse: Decodable {
     let createDLC: DLCMutationResult
 }
