@@ -13,6 +13,17 @@ struct StatusPickerSheet: View {
     let onSelect: (GameStatus, String?, String?) -> Void
     let onClear: () -> Void
 
+    /// Filter versions based on selected platform
+    var filteredVersions: [GameVersion] {
+        guard let platformId = selectedPlatformId else {
+            return versions
+        }
+        return versions.filter { version in
+            guard let games = version.games else { return true }
+            return games.contains { $0.platform?.id == platformId }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -27,12 +38,12 @@ struct StatusPickerSheet: View {
                     .pickerStyle(.menu)
                 }
 
-                // Version picker (only show if multiple versions exist)
-                if versions.count > 1 {
+                // Version picker (only show if multiple versions available for platform)
+                if filteredVersions.count > 1 {
                     Section("Version (Optional)") {
                         Picker("Version", selection: $selectedVersionId) {
                             Text("No Version").tag(nil as String?)
-                            ForEach(versions, id: \.id) { version in
+                            ForEach(filteredVersions, id: \.id) { version in
                                 HStack {
                                     Text(version.name)
                                     if version.isDefault {
@@ -98,6 +109,13 @@ struct StatusPickerSheet: View {
                 await platformsViewModel.fetchPlatforms()
                 selectedPlatformId = currentPlatformId
                 selectedVersionId = currentVersionId
+            }
+            .onChange(of: selectedPlatformId) { _, _ in
+                // Clear version if it's no longer available for the selected platform
+                if let versionId = selectedVersionId,
+                   !filteredVersions.contains(where: { $0.id == versionId }) {
+                    selectedVersionId = nil
+                }
             }
         }
         .presentationDetents([.medium])

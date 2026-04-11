@@ -18,6 +18,17 @@ struct AddToCollectionSheet: View {
     var isEditing: Bool { editingItem != nil || internalEditingItem != nil }
     var activeEditingItem: CollectionItem? { editingItem ?? internalEditingItem }
 
+    /// Filter versions based on selected platform
+    var filteredVersions: [GameVersion] {
+        guard let platformId = viewModel.platformId else {
+            return versions
+        }
+        return versions.filter { version in
+            guard let games = version.games else { return true }
+            return games.contains { $0.platform?.id == platformId }
+        }
+    }
+
     init(gameId: String, gameTitle: String, existingItems: [CollectionItem] = [], editingItem: CollectionItem? = nil, versions: [GameVersion] = [], onSave: @escaping () -> Void) {
         self.gameId = gameId
         self.gameTitle = gameTitle
@@ -91,11 +102,11 @@ struct AddToCollectionSheet: View {
                         }
                     }
 
-                    // Version (only show if multiple versions)
-                    if versions.count > 1 {
+                    // Version (only show if multiple versions available for platform)
+                    if filteredVersions.count > 1 {
                         Picker("Version", selection: $viewModel.gameVersionId) {
                             Text("No Version").tag(nil as String?)
-                            ForEach(versions, id: \.id) { version in
+                            ForEach(filteredVersions, id: \.id) { version in
                                 HStack {
                                     Text(version.name)
                                     if version.isDefault {
@@ -176,6 +187,13 @@ struct AddToCollectionSheet: View {
                 await platformsViewModel.fetchPlatforms()
                 if let item = editingItem {
                     viewModel.populateFromItem(item)
+                }
+            }
+            .onChange(of: viewModel.platformId) { _, _ in
+                // Clear version if it's no longer available for the selected platform
+                if let versionId = viewModel.gameVersionId,
+                   !filteredVersions.contains(where: { $0.id == versionId }) {
+                    viewModel.gameVersionId = nil
                 }
             }
         }
