@@ -420,9 +420,24 @@ private struct GameDetailBuylistButton: View {
 private struct GameHeader: View {
     let game: GameDetail
 
+    /// Use the default version's cover if available, otherwise fall back to game's cover
+    var effectiveCoverUrl: String? {
+        // Prefer the default version's effective cover
+        if let defaultVersion = game.defaultVersion {
+            if let effectiveCover = defaultVersion.effectiveCoverUrl {
+                return effectiveCover
+            }
+            if let versionCover = defaultVersion.coverUrl {
+                return versionCover
+            }
+        }
+        // Fall back to the game's cover
+        return game.coverUrl
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
+            if let coverUrl = effectiveCoverUrl, let url = URL(string: coverUrl) {
                 AsyncImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fit)
                 } placeholder: {
