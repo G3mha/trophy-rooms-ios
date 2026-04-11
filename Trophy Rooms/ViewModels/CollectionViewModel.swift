@@ -61,6 +61,7 @@ class CollectionViewModel: ObservableObject {
                 platform { id name slug }
                 gameVersion { id name }
                 gameVersionId
+                isDigital
                 hasDisc
                 hasBox
                 hasManual
