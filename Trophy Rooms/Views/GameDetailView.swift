@@ -83,7 +83,10 @@ struct GameDetailView: View {
 
                         // Game Versions Section
                         if let versions = game.versions, !versions.isEmpty {
-                            GameVersionsSectionView(versions: versions)
+                            GameVersionsSectionView(
+                                versions: versions,
+                                gameFamilyCoverUrl: game.coverUrl
+                            )
                         }
 
                         // Achievement Sets
@@ -846,6 +849,23 @@ private struct DerivedGameFamilyRow: View {
 
 private struct GameVersionsSectionView: View {
     let versions: [GameVersion]
+    let gameFamilyCoverUrl: String?
+
+    /// Get the cover URL for a version, using game family cover for default versions
+    func coverUrlForVersion(_ version: GameVersion) -> String? {
+        // If version has its own cover, use it
+        if let effectiveCover = version.effectiveCoverUrl {
+            return effectiveCover
+        }
+        if let versionCover = version.coverUrl {
+            return versionCover
+        }
+        // For default versions, fall back to game family cover
+        if version.isDefault, let familyCover = gameFamilyCoverUrl {
+            return familyCover
+        }
+        return nil
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -864,7 +884,7 @@ private struct GameVersionsSectionView: View {
 
             ForEach(versions) { version in
                 HStack(spacing: 12) {
-                    if let coverUrl = version.effectiveCoverUrl ?? version.coverUrl,
+                    if let coverUrl = coverUrlForVersion(version),
                        let url = URL(string: coverUrl) {
                         AsyncImage(url: url) { image in
                             image
