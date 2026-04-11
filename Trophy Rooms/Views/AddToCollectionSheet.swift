@@ -13,10 +13,19 @@ struct AddToCollectionSheet: View {
     let existingItems: [CollectionItem]
     let editingItem: CollectionItem?
     let versions: [GameVersion]
+    let gamePlatform: Platform?
     let onSave: () -> Void
 
     var isEditing: Bool { editingItem != nil || internalEditingItem != nil }
     var activeEditingItem: CollectionItem? { editingItem ?? internalEditingItem }
+
+    /// If a specific game platform was provided, only show that platform
+    var availablePlatforms: [Platform] {
+        if let gamePlatform = gamePlatform {
+            return [gamePlatform]
+        }
+        return platformsViewModel.platforms
+    }
 
     /// Filter versions based on selected platform
     var filteredVersions: [GameVersion] {
@@ -29,12 +38,13 @@ struct AddToCollectionSheet: View {
         }
     }
 
-    init(gameId: String, gameTitle: String, existingItems: [CollectionItem] = [], editingItem: CollectionItem? = nil, versions: [GameVersion] = [], onSave: @escaping () -> Void) {
+    init(gameId: String, gameTitle: String, existingItems: [CollectionItem] = [], editingItem: CollectionItem? = nil, versions: [GameVersion] = [], gamePlatform: Platform? = nil, onSave: @escaping () -> Void) {
         self.gameId = gameId
         self.gameTitle = gameTitle
         self.existingItems = existingItems
         self.editingItem = editingItem
         self.versions = versions
+        self.gamePlatform = gamePlatform
         self.onSave = onSave
     }
 
@@ -94,11 +104,24 @@ struct AddToCollectionSheet: View {
                 }
 
                 Section {
-                    // Platform
-                    Picker("Platform", selection: $viewModel.platformId) {
-                        Text("No Platform").tag(nil as String?)
-                        ForEach(platformsViewModel.platforms) { platform in
-                            Text(platform.name).tag(platform.id as String?)
+                    // Platform (only show picker if multiple platforms available)
+                    if availablePlatforms.count > 1 {
+                        Picker("Platform", selection: $viewModel.platformId) {
+                            Text("No Platform").tag(nil as String?)
+                            ForEach(availablePlatforms) { platform in
+                                Text(platform.name).tag(platform.id as String?)
+                            }
+                        }
+                    } else if let platform = availablePlatforms.first {
+                        // Single platform - show as read-only
+                        HStack {
+                            Text("Platform")
+                            Spacer()
+                            if let slug = platform.slug {
+                                PlatformIcon(slug: slug, size: 16)
+                            }
+                            Text(platform.name)
+                                .foregroundStyle(.secondary)
                         }
                     }
 
@@ -187,6 +210,9 @@ struct AddToCollectionSheet: View {
                 await platformsViewModel.fetchPlatforms()
                 if let item = editingItem {
                     viewModel.populateFromItem(item)
+                } else if let platform = gamePlatform {
+                    // Pre-select the game's platform for new collection items
+                    viewModel.platformId = platform.id
                 }
             }
             .onChange(of: viewModel.platformId) { _, _ in
