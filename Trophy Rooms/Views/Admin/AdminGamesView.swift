@@ -12,6 +12,8 @@ struct AdminGamesView: View {
     @State private var gameToClone: AdminGameItem?
     @State private var showingCloneSheet = false
     @State private var selectedPageSize = 50
+    @State private var groupToAddPlatform: AdminGameGroup?
+    @State private var showingAddPlatformSheet = false
 
     var body: some View {
         List {
@@ -175,6 +177,23 @@ struct AdminGamesView: View {
                                             Label("Clone", systemImage: "doc.on.doc")
                                         }
                                         .tint(.orange)
+                                    }
+                                }
+                            }
+
+                            // Add Platform button
+                            if !isSelecting, group.gameFamilyId != nil {
+                                Button {
+                                    groupToAddPlatform = group
+                                    showingAddPlatformSheet = true
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.title2)
+                                            .foregroundStyle(.blue)
+                                        Text("Add Platform")
+                                            .foregroundStyle(.blue)
+                                        Spacer()
                                     }
                                 }
                             }
@@ -348,6 +367,19 @@ struct AdminGamesView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingAddPlatformSheet) {
+            if let group = groupToAddPlatform, let gameFamilyId = group.gameFamilyId {
+                AddPlatformSheet(
+                    viewModel: viewModel,
+                    gameFamilyId: gameFamilyId,
+                    gameTitle: group.title,
+                    existingPlatformIds: Set(group.games.compactMap { $0.platformId })
+                ) {
+                    showingAddPlatformSheet = false
+                    groupToAddPlatform = nil
+                }
+            }
+        }
     }
 
     private func toggleSelection(_ id: String) {
@@ -455,6 +487,94 @@ struct CloneGameSheet: View {
                 }
             }
             .interactiveDismissDisabled(isCloning)
+        }
+        .presentationDetents([.medium])
+    }
+}
+
+// MARK: - Add Platform Sheet
+
+struct AddPlatformSheet: View {
+    @ObservedObject var viewModel: AdminGamesViewModel
+    let gameFamilyId: String
+    let gameTitle: String
+    let existingPlatformIds: Set<String>
+    let onDismiss: () -> Void
+
+    @State private var selectedPlatformId: String = ""
+    @State private var isAdding = false
+
+    var availablePlatforms: [AdminPlatform] {
+        // Filter out platforms that already have this game
+        viewModel.platforms.filter { !existingPlatformIds.contains($0.id) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text(gameTitle)
+                        .font(.headline)
+                } header: {
+                    Text("Game Family")
+                }
+
+                Section {
+                    if availablePlatforms.isEmpty {
+                        Text("All platforms already have this game")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Picker("Platform", selection: $selectedPlatformId) {
+                            Text("Select a platform").tag("")
+                            ForEach(availablePlatforms) { platform in
+                                HStack {
+                                    PlatformIcon(slug: platform.slug, size: 16)
+                                    Text(platform.name)
+                                }
+                                .tag(platform.id)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Add Platform")
+                } footer: {
+                    Text("Select a platform to add \(gameTitle) to.")
+                }
+
+                if let errorMessage = viewModel.errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Add Platform")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onDismiss()
+                    }
+                    .disabled(isAdding)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        Task {
+                            isAdding = true
+                            let success = await viewModel.addGameToFamily(
+                                gameFamilyId: gameFamilyId,
+                                platformId: selectedPlatformId
+                            )
+                            isAdding = false
+                            if success {
+                                onDismiss()
+                            }
+                        }
+                    }
+                    .disabled(selectedPlatformId.isEmpty || isAdding)
+                }
+            }
+            .interactiveDismissDisabled(isAdding)
         }
         .presentationDetents([.medium])
     }
