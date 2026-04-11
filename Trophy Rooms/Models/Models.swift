@@ -471,6 +471,7 @@ struct CollectionItem: Decodable, Identifiable {
     let platform: Platform?
     let gameVersion: GameVersionRef?
     let gameVersionId: String?
+    let isDigital: Bool?
     let hasDisc: Bool
     let hasBox: Bool
     let hasManual: Bool
@@ -482,7 +483,9 @@ struct CollectionItem: Decodable, Identifiable {
     let updatedAt: String
 
     var isComplete: Bool {
-        hasDisc && hasBox && hasManual
+        // Digital copies are considered complete by default
+        if isDigital == true { return true }
+        return hasDisc && hasBox && hasManual
     }
 }
 
