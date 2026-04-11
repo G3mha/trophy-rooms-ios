@@ -228,6 +228,7 @@ struct GameDetailView: View {
                     gameTitle: game.title,
                     existingItems: viewModel.collectionItems,
                     versions: game.versions ?? [],
+                    gamePlatform: game.platform,
                     onSave: {
                         Task {
                             await viewModel.fetchCollectionForGame(gameId: gameId)
