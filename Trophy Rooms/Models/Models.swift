@@ -989,7 +989,7 @@ struct BundleDLC: Identifiable, Decodable {
     let slug: String?
     let type: DLCType?
     let coverUrl: String?
-    let game: DLCGame?
+    let gameFamily: BundleGameFamily?
 }
 
 struct BundlesResponse: Decodable {
@@ -1036,7 +1036,7 @@ struct DLCPickerItem: Identifiable, Decodable {
     let name: String
     let type: DLCType
     let coverUrl: String?
-    let game: DLCGame?
+    let gameFamily: BundleGameFamily?
 }
 
 struct AddGameFamilyToBundleResponse: Decodable {
@@ -1352,6 +1352,7 @@ struct BundleListItem: Identifiable, Decodable {
     let platformId: String?
     let gameFamilyCount: Int
     let dlcCount: Int
+    let gameFamilies: [BundleGameFamily]?
 }
 
 struct BundlesListResponse: Decodable {
