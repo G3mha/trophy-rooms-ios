@@ -58,7 +58,7 @@ class AdminGameVersionsViewModel: ObservableObject {
     }
 
     func createVersion(
-        gameId: String,
+        gameIds: [String],
         name: String,
         slug: String,
         description: String?,
@@ -83,6 +83,10 @@ class AdminGameVersionsViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
+                    games {
+                        id
+                        title
+                    }
                     dlcs {
                         id
                         name
@@ -93,7 +97,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         """
 
         var input: [String: Any] = [
-            "gameIds": [gameId],
+            "gameIds": gameIds,
             "name": name,
             "slug": slug
         ]
@@ -117,7 +121,10 @@ class AdminGameVersionsViewModel: ObservableObject {
                 variables: ["input": input]
             )
             if response.createGameVersion.success {
-                await fetchVersions(gameId: gameId)
+                // Refresh versions for the first game
+                if let firstGameId = gameIds.first {
+                    await fetchVersions(gameId: firstGameId)
+                }
                 DispatchQueue.main.async {
                     self.successMessage = "Version created successfully"
                 }
@@ -138,7 +145,7 @@ class AdminGameVersionsViewModel: ObservableObject {
 
     func updateVersion(
         id: String,
-        gameId: String,
+        gameIds: [String],
         name: String,
         slug: String,
         description: String?,
@@ -162,6 +169,10 @@ class AdminGameVersionsViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
+                    games {
+                        id
+                        title
+                    }
                     dlcs {
                         id
                         name
@@ -172,6 +183,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         """
 
         var input: [String: Any] = [
+            "gameIds": gameIds,
             "name": name,
             "slug": slug
         ]
@@ -192,7 +204,10 @@ class AdminGameVersionsViewModel: ObservableObject {
                 variables: ["id": id, "input": input]
             )
             if response.updateGameVersion.success {
-                await fetchVersions(gameId: gameId)
+                // Refresh versions for the first game
+                if let firstGameId = gameIds.first {
+                    await fetchVersions(gameId: firstGameId)
+                }
                 DispatchQueue.main.async {
                     self.successMessage = "Version updated successfully"
                 }
