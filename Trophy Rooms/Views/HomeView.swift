@@ -971,7 +971,9 @@ private struct GlobalSearchResultsView: View {
                     if viewModel.dlcCount > 0 {
                         Section {
                             ForEach(viewModel.items.filter { $0.type == .DLC }) { item in
-                                SearchResultRow(item: item)
+                                NavigationLink(destination: DLCDetailView(dlcId: item.id)) {
+                                    SearchResultRow(item: item)
+                                }
                             }
                         } header: {
                             HStack {
