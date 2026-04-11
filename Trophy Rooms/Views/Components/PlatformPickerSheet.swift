@@ -44,13 +44,41 @@ struct PlatformPickerSheet<P: PlatformProtocol>: View {
     // Group platforms by manufacturer
     private var groupedPlatforms: [(String, [P])] {
         let groups: [(String, [String])] = [
-            ("Nintendo", ["nes", "snes", "n64", "gamecube", "wii", "wii-u", "switch", "game-boy", "game-boy-color", "game-boy-advance", "nintendo-ds", "nintendo-3ds", "virtual-boy"]),
-            ("Sony", ["playstation", "ps2", "ps3", "ps4", "ps5", "psp", "ps-vita"]),
-            ("Microsoft", ["xbox", "xbox-360", "xbox-one", "xbox-series-x"]),
-            ("Sega", ["master-system", "genesis", "mega-drive", "saturn", "dreamcast", "game-gear", "sega-cd", "sega-32x"]),
-            ("Atari", ["atari-2600", "atari-5200", "atari-7800", "atari-lynx", "atari-jaguar"]),
-            ("PC & Mobile", ["pc", "mac", "linux", "android", "ios"]),
-            ("Digital Storefronts", ["steam", "epic-games", "gog", "itch-io", "humble-bundle"]),
+            ("Nintendo", [
+                "nes", "snes", "n64", "gamecube", "wii", "wii-u",
+                "switch", "switch-2", "nintendo-switch", "nintendo-switch-2",
+                "game-boy", "gbc", "game-boy-color", "gba", "game-boy-advance",
+                "nds", "nintendo-ds", "3ds", "nintendo-3ds", "virtual-boy"
+            ]),
+            ("PlayStation", [
+                "ps1", "ps2", "ps3", "ps4", "ps5",
+                "playstation", "playstation-2", "playstation-3", "playstation-4", "playstation-5",
+                "psp", "vita", "ps-vita", "playstation-vita", "playstation-portable"
+            ]),
+            ("Xbox", [
+                "xbox", "xbox-360", "xbox-one",
+                "xbox-series", "xbox-series-x", "xbox-series-xs", "xbox-series-x-s"
+            ]),
+            ("Sega", [
+                "master-system", "sms", "genesis", "mega-drive", "saturn", "dreamcast",
+                "game-gear", "sega-cd", "sega-32x", "32x"
+            ]),
+            ("PC & Mobile", [
+                "pc", "windows", "mac", "macos", "linux",
+                "android", "ios", "mobile"
+            ]),
+            ("Digital Storefronts", [
+                "steam", "epic", "epic-games", "gog", "itch-io", "itch", "humble-bundle"
+            ]),
+            ("Atari", [
+                "atari-2600", "atari-5200", "atari-7800", "atari-lynx", "atari-jaguar"
+            ]),
+            ("Classic & Retro", [
+                "neo-geo", "neogeo", "neo-geo-aes", "neo-geo-cd",
+                "turbografx-16", "pc-engine", "turbo-grafx-16",
+                "3do", "colecovision", "intellivision", "vectrex",
+                "commodore-64", "c64", "amiga", "zx-spectrum", "msx"
+            ]),
         ]
 
         var result: [(String, [P])] = []
