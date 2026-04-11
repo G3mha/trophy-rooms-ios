@@ -1,6 +1,27 @@
 import Foundation
 import Combine
 
+// MARK: - Admin Game Group (for grouped display)
+
+struct AdminGameGroup: Identifiable {
+    let gameFamilyId: String?
+    let title: String
+    let coverUrl: String?
+    let games: [AdminGameItem]
+
+    var id: String { gameFamilyId ?? games.first?.id ?? UUID().uuidString }
+
+    var isSingleGame: Bool { games.count == 1 }
+
+    var platforms: [String] {
+        games.compactMap { $0.platformName }
+    }
+
+    var totalAchievementSets: Int {
+        games.reduce(0) { $0 + $1.achievementSetCount }
+    }
+}
+
 class AdminGamesViewModel: ObservableObject {
     @Published var games: [AdminGameItem] = []
     @Published var platforms: [AdminPlatform] = []
@@ -8,6 +29,7 @@ class AdminGamesViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
     @Published var searchText: String = ""
+    @Published var isGrouped: Bool = true
 
     @Published var currentPage: Int = 1
     @Published var totalCount: Int = 0
@@ -20,6 +42,46 @@ class AdminGamesViewModel: ObservableObject {
     var filteredGames: [AdminGameItem] {
         // Search is now handled server-side
         return games
+    }
+
+    var groupedGames: [AdminGameGroup] {
+        // Group games by gameFamilyId
+        var groups: [String: [AdminGameItem]] = [:]
+        var noFamilyGames: [AdminGameItem] = []
+
+        for game in games {
+            if let familyId = game.gameFamilyId {
+                groups[familyId, default: []].append(game)
+            } else {
+                noFamilyGames.append(game)
+            }
+        }
+
+        var result: [AdminGameGroup] = []
+
+        // Add grouped games
+        for (familyId, familyGames) in groups {
+            let firstGame = familyGames.first!
+            result.append(AdminGameGroup(
+                gameFamilyId: familyId,
+                title: firstGame.title,
+                coverUrl: firstGame.coverUrl,
+                games: familyGames.sorted { ($0.platformName ?? "") < ($1.platformName ?? "") }
+            ))
+        }
+
+        // Add games without family as individual groups
+        for game in noFamilyGames {
+            result.append(AdminGameGroup(
+                gameFamilyId: nil,
+                title: game.title,
+                coverUrl: game.coverUrl,
+                games: [game]
+            ))
+        }
+
+        // Sort by title
+        return result.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
     }
 
     // Helper to find a game by ID for the base game picker
