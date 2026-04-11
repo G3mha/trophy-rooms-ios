@@ -27,6 +27,11 @@ class AdminGameVersionsViewModel: ObservableObject {
                 games {
                     id
                     title
+                    platform {
+                        id
+                        name
+                        slug
+                    }
                 }
                 dlcs {
                     id

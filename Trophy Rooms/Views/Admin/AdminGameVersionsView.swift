@@ -242,9 +242,23 @@ private struct VersionRow: View {
                             .font(.caption)
                     }
                 }
-                Text(version.slug ?? "")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+
+                // Platform icons
+                if let games = version.games, !games.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(games.prefix(6), id: \.id) { game in
+                            if let platform = game.platform, let slug = platform.slug {
+                                PlatformIcon(slug: slug, size: 14)
+                            }
+                        }
+                        if games.count > 6 {
+                            Text("+\(games.count - 6)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 if let dlcs = version.dlcs, !dlcs.isEmpty {
                     Text("\(dlcs.count) DLC included")
                         .font(.caption2)
