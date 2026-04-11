@@ -61,6 +61,11 @@ class GameDetailViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
+                    games {
+                        id
+                        title
+                        platform { id name slug }
+                    }
                     dlcs {
                         id
                         name
