@@ -90,13 +90,26 @@ struct AdminGameVersionFormSheet: View {
                         Text("Available On")
                         Spacer()
                         if !availableGames.isEmpty {
-                            Text("\(selectedGameIds.count) selected")
+                            Text("\(selectedGameIds.count) of \(availableGames.count)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
                 } footer: {
-                    Text("Select which platforms this version is available on")
+                    if !availableGames.isEmpty {
+                        HStack(spacing: 16) {
+                            Button("Select All") {
+                                selectedGameIds = Set(availableGames.map { $0.id })
+                            }
+                            .disabled(selectedGameIds.count == availableGames.count)
+
+                            Button("Clear All") {
+                                selectedGameIds.removeAll()
+                            }
+                            .disabled(selectedGameIds.isEmpty)
+                        }
+                        .font(.caption)
+                    }
                 }
 
                 Section {
