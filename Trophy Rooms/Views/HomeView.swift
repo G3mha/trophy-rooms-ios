@@ -6,6 +6,7 @@ struct HomeView: View {
     @StateObject private var gameListViewModel = GameListViewModel()
     @StateObject private var leaderboardViewModel = LeaderboardViewModel()
     @StateObject private var activityViewModel = ActivityViewModel()
+    @StateObject private var globalSearchViewModel = GlobalSearchViewModel()
     @State private var showAuth = false
     @State private var searchText = ""
     @State private var selectedPlatformId = ""
@@ -33,9 +34,16 @@ struct HomeView: View {
         }
     }
 
+    var isSearching: Bool {
+        searchText.trimmingCharacters(in: .whitespaces).count >= 2
+    }
+
     var body: some View {
         Group {
-            if gameListViewModel.isLoading && gameListViewModel.games.isEmpty {
+            if isSearching {
+                // MARK: - Global Search Results
+                GlobalSearchResultsView(viewModel: globalSearchViewModel)
+            } else if gameListViewModel.isLoading && gameListViewModel.games.isEmpty {
                 ProgressView("Loading games...")
             } else if let error = gameListViewModel.errorMessage {
                 Text("Error: \(error)")
@@ -168,14 +176,11 @@ struct HomeView: View {
         .searchable(text: $searchText)
         .onChange(of: searchText) {
             Task {
-                await gameListViewModel.fetchGames(
-                    search: searchText,
-                    platformId: selectedPlatformId,
-                    hasAchievements: achievementFilter.boolValue,
-                    orderBy: sortOption.graphqlValue,
-                    type: gameTypeFilter.graphqlValue,
-                    page: 1
-                )
+                if isSearching {
+                    await globalSearchViewModel.search(query: searchText)
+                } else {
+                    globalSearchViewModel.clearResults()
+                }
             }
         }
         .onChange(of: selectedPlatformId) {
@@ -891,6 +896,153 @@ private struct GroupedGameRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+        }
+    }
+}
+
+// MARK: - Global Search Results
+
+private struct GlobalSearchResultsView: View {
+    @ObservedObject var viewModel: GlobalSearchViewModel
+
+    var body: some View {
+        Group {
+            if viewModel.isLoading {
+                VStack {
+                    Spacer()
+                    ProgressView("Searching...")
+                    Spacer()
+                }
+            } else if let error = viewModel.errorMessage {
+                VStack {
+                    Spacer()
+                    Text("Error: \(error)")
+                        .foregroundColor(.red)
+                    Spacer()
+                }
+            } else if !viewModel.hasResults {
+                VStack(spacing: 12) {
+                    Spacer()
+                    Image(systemName: "magnifyingglass")
+                        .font(.largeTitle)
+                        .foregroundColor(.secondary)
+                    Text("No results found")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+            } else {
+                List {
+                    // Games Section
+                    if viewModel.gameCount > 0 {
+                        Section {
+                            ForEach(viewModel.items.filter { $0.type == .GAME }) { item in
+                                NavigationLink(destination: GameFamilyView(title: item.title)) {
+                                    SearchResultRow(item: item)
+                                }
+                            }
+                        } header: {
+                            HStack {
+                                Image(systemName: "gamecontroller.fill")
+                                    .foregroundColor(.blue)
+                                Text("Games (\(viewModel.gameCount))")
+                            }
+                        }
+                    }
+
+                    // Bundles Section
+                    if viewModel.bundleCount > 0 {
+                        Section {
+                            ForEach(viewModel.items.filter { $0.type == .BUNDLE }) { item in
+                                NavigationLink(destination: BundleDetailView(bundleId: item.id)) {
+                                    SearchResultRow(item: item)
+                                }
+                            }
+                        } header: {
+                            HStack {
+                                Image(systemName: "shippingbox.fill")
+                                    .foregroundColor(.purple)
+                                Text("Bundles (\(viewModel.bundleCount))")
+                            }
+                        }
+                    }
+
+                    // DLCs Section
+                    if viewModel.dlcCount > 0 {
+                        Section {
+                            ForEach(viewModel.items.filter { $0.type == .DLC }) { item in
+                                SearchResultRow(item: item)
+                            }
+                        } header: {
+                            HStack {
+                                Image(systemName: "puzzlepiece.extension.fill")
+                                    .foregroundColor(.orange)
+                                Text("DLCs (\(viewModel.dlcCount))")
+                            }
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped)
+            }
+        }
+    }
+}
+
+private struct SearchResultRow: View {
+    let item: GlobalSearchItem
+
+    var iconName: String {
+        switch item.type {
+        case .GAME: return "gamecontroller.fill"
+        case .BUNDLE: return "shippingbox.fill"
+        case .DLC: return "puzzlepiece.extension.fill"
+        }
+    }
+
+    var iconColor: Color {
+        switch item.type {
+        case .GAME: return .blue
+        case .BUNDLE: return .purple
+        case .DLC: return .orange
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if let coverUrl = item.coverUrl, let url = URL(string: coverUrl) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color.gray.opacity(0.3)
+                }
+                .frame(width: 50, height: 50)
+                .cornerRadius(8)
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 50, height: 50)
+                    .overlay {
+                        Image(systemName: iconName)
+                            .foregroundStyle(.gray)
+                    }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title)
+                    .font(.headline)
+                    .lineLimit(1)
+
+                if let subtitle = item.subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
         }
     }
 }
