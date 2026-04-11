@@ -37,9 +37,10 @@ class BundleDetailViewModel: ObservableObject {
                     slug
                     type
                     coverUrl
-                    game {
+                    gameFamily {
                         id
                         title
+                        coverUrl
                     }
                 }
                 isOwned

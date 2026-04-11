@@ -40,9 +40,10 @@ class AdminBundlesViewModel: ObservableObject {
                 dlcs {
                     id
                     name
-                    game {
+                    gameFamily {
                         id
                         title
+                        coverUrl
                     }
                 }
             }
@@ -322,7 +323,11 @@ class AdminBundlesViewModel: ObservableObject {
                 name
                 type
                 coverUrl
-                game { id title }
+                gameFamily {
+                    id
+                    title
+                    coverUrl
+                }
             }
         }
         """

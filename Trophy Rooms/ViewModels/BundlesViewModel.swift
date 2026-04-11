@@ -37,6 +37,11 @@ class BundlesViewModel: ObservableObject {
                 coverUrl
                 gameFamilyCount
                 dlcCount
+                gameFamilies {
+                    id
+                    title
+                    coverUrl
+                }
             }
         }
         """
