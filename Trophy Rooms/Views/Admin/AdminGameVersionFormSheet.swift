@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AdminGameVersionFormSheet: View {
     @ObservedObject var viewModel: AdminGameVersionsViewModel
-    let gameId: String
+    let gameFamilyId: String
     let version: GameVersion?
     @Environment(\.dismiss) private var dismiss
 
@@ -11,10 +11,13 @@ struct AdminGameVersionFormSheet: View {
     @State private var description: String = ""
     @State private var coverUrl: String = ""
     @State private var selectedDlcIds: [String] = []
+    @State private var selectedGameIds: Set<String> = []
     @State private var isDefault: Bool = false
     @State private var isSaving = false
     @State private var availableDlcs: [DLC] = []
+    @State private var availableGames: [FamilyGame] = []
     @State private var isLoadingDlcs = false
+    @State private var isLoadingGames = false
 
     var isEditing: Bool {
         version != nil
@@ -22,7 +25,8 @@ struct AdminGameVersionFormSheet: View {
 
     var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !slug.trimmingCharacters(in: .whitespaces).isEmpty
+        !slug.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !selectedGameIds.isEmpty
     }
 
     var body: some View {
@@ -39,6 +43,60 @@ struct AdminGameVersionFormSheet: View {
                     Text("Version Details")
                 } footer: {
                     Text("Examples: Standard, Deluxe Edition, Game of the Year Edition")
+                }
+
+                // Platform/Game Selection
+                Section {
+                    if isLoadingGames {
+                        ProgressView("Loading platforms...")
+                    } else if availableGames.isEmpty {
+                        Text("No platform versions available")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(availableGames, id: \.id) { game in
+                            HStack {
+                                if let platform = game.platform {
+                                    PlatformIcon(slug: platform.slug ?? "", size: 20)
+                                }
+                                VStack(alignment: .leading) {
+                                    Text(game.platform?.name ?? "Unknown Platform")
+                                    if let platformSlug = game.platform?.slug {
+                                        Text(platformSlug)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                if selectedGameIds.contains(game.id) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.blue)
+                                } else {
+                                    Image(systemName: "circle")
+                                        .foregroundStyle(.gray)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                if selectedGameIds.contains(game.id) {
+                                    selectedGameIds.remove(game.id)
+                                } else {
+                                    selectedGameIds.insert(game.id)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("Available On")
+                        Spacer()
+                        if !availableGames.isEmpty {
+                            Text("\(selectedGameIds.count) selected")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } footer: {
+                    Text("Select which platforms this version is available on")
                 }
 
                 Section {
@@ -141,18 +199,61 @@ struct AdminGameVersionFormSheet: View {
                 coverUrl = version.coverUrl ?? ""
                 selectedDlcIds = version.dlcs?.map { $0.id } ?? []
                 isDefault = version.isDefault
+                // Pre-select games that this version is already linked to
+                if let games = version.games {
+                    selectedGameIds = Set(games.map { $0.id })
+                }
             }
         }
         .task {
+            await fetchGames()
             await fetchDlcs()
+        }
+    }
+
+    private func fetchGames() async {
+        isLoadingGames = true
+        let query = """
+        query GetGameFamilyGames($id: ID!) {
+            gameFamily(id: $id) {
+                games {
+                    id
+                    platform {
+                        id
+                        name
+                        slug
+                    }
+                }
+            }
+        }
+        """
+
+        do {
+            let response: GameFamilyGamesResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: ["id": gameFamilyId]
+            )
+            DispatchQueue.main.async {
+                self.availableGames = response.gameFamily?.games ?? []
+                self.isLoadingGames = false
+
+                // If creating new and no games selected, select all by default
+                if !isEditing && selectedGameIds.isEmpty {
+                    selectedGameIds = Set(availableGames.map { $0.id })
+                }
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.isLoadingGames = false
+            }
         }
     }
 
     private func fetchDlcs() async {
         isLoadingDlcs = true
         let query = """
-        query GetDLCs($gameId: ID!) {
-            dlcs(gameId: $gameId) {
+        query GetDLCs($gameFamilyId: ID!) {
+            dlcs(gameFamilyId: $gameFamilyId) {
                 id
                 name
                 slug
@@ -164,7 +265,7 @@ struct AdminGameVersionFormSheet: View {
         do {
             let response: DLCsResponse = try await NetworkService.shared.fetch(
                 query: query,
-                variables: ["gameId": gameId]
+                variables: ["gameFamilyId": gameFamilyId]
             )
             DispatchQueue.main.async {
                 self.availableDlcs = response.dlcs
@@ -186,13 +287,14 @@ struct AdminGameVersionFormSheet: View {
         let trimmedCoverUrl = coverUrl.trimmingCharacters(in: .whitespaces)
 
         let dlcIds: [String]? = selectedDlcIds.isEmpty ? nil : selectedDlcIds
+        let gameIds = Array(selectedGameIds)
 
         Task {
             let success: Bool
             if let version = version {
                 success = await viewModel.updateVersion(
                     id: version.id,
-                    gameId: gameId,
+                    gameIds: gameIds,
                     name: trimmedName,
                     slug: trimmedSlug,
                     description: trimmedDescription.isEmpty ? nil : trimmedDescription,
@@ -201,7 +303,7 @@ struct AdminGameVersionFormSheet: View {
                 )
             } else {
                 success = await viewModel.createVersion(
-                    gameId: gameId,
+                    gameIds: gameIds,
                     name: trimmedName,
                     slug: trimmedSlug,
                     description: trimmedDescription.isEmpty ? nil : trimmedDescription,
@@ -221,10 +323,25 @@ struct AdminGameVersionFormSheet: View {
     }
 }
 
+// MARK: - Response Models
+
+private struct GameFamilyGamesResponse: Decodable {
+    let gameFamily: GameFamilyWithGames?
+}
+
+private struct GameFamilyWithGames: Decodable {
+    let games: [FamilyGame]
+}
+
+struct FamilyGame: Identifiable, Decodable {
+    let id: String
+    let platform: Platform?
+}
+
 #Preview {
     AdminGameVersionFormSheet(
         viewModel: AdminGameVersionsViewModel(),
-        gameId: "test-game-id",
+        gameFamilyId: "test-family-id",
         version: nil
     )
 }
