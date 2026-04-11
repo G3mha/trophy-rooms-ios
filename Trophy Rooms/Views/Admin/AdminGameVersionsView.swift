@@ -135,13 +135,13 @@ struct AdminGameVersionsView: View {
             isSelecting = false
         }
         .sheet(isPresented: $showingCreateSheet) {
-            if let game = selectedGame {
-                AdminGameVersionFormSheet(viewModel: viewModel, gameId: game.id, version: nil)
+            if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+                AdminGameVersionFormSheet(viewModel: viewModel, gameFamilyId: gameFamilyId, version: nil)
             }
         }
         .sheet(item: $versionToEdit) { version in
-            if let game = selectedGame {
-                AdminGameVersionFormSheet(viewModel: viewModel, gameId: game.id, version: version)
+            if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+                AdminGameVersionFormSheet(viewModel: viewModel, gameFamilyId: gameFamilyId, version: version)
             }
         }
         .alert("Delete Version", isPresented: $showingDeleteConfirmation) {
