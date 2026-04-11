@@ -336,6 +336,58 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
+    func addGameToFamily(gameFamilyId: String, platformId: String) async -> Bool {
+        DispatchQueue.main.async {
+            self.errorMessage = nil
+            self.successMessage = nil
+        }
+
+        let mutation = """
+        mutation AddGameToFamily($input: AddGameToFamilyInput!) {
+            addGameToFamily(input: $input) {
+                success
+                error {
+                    code
+                    message
+                    field
+                }
+                game {
+                    id
+                }
+            }
+        }
+        """
+
+        let input: [String: Any] = [
+            "gameFamilyId": gameFamilyId,
+            "platformId": platformId
+        ]
+
+        do {
+            let response: AddGameToFamilyResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["input": input]
+            )
+            if response.addGameToFamily.success {
+                await fetchGames(page: currentPage)
+                DispatchQueue.main.async {
+                    self.successMessage = "Platform added successfully"
+                }
+                return true
+            } else {
+                DispatchQueue.main.async {
+                    self.errorMessage = response.addGameToFamily.error?.message ?? "Failed to add platform"
+                }
+                return false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            return false
+        }
+    }
+
     func updateGame(id: String, title: String, description: String?, coverUrl: String?, platformId: String, type: GameType = .BASE_GAME, baseGameFamilyIds: [String]? = nil) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
