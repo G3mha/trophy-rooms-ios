@@ -91,49 +91,114 @@ struct AdminGamesView: View {
             } else if let error = viewModel.errorMessage {
                 Text(error)
                     .foregroundStyle(.red)
-            } else {
-                ForEach(viewModel.filteredGames) { game in
-                    HStack(spacing: 12) {
-                        if isSelecting {
-                            Image(systemName: selectedIds.contains(game.id) ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(selectedIds.contains(game.id) ? .blue : .gray)
-                                .onTapGesture {
+            } else if viewModel.isGrouped {
+                // Grouped view
+                ForEach(viewModel.groupedGames) { group in
+                    if group.isSingleGame, let game = group.games.first {
+                        // Single game - show flat row
+                        AdminGameRow(
+                            game: game,
+                            isSelecting: isSelecting,
+                            isSelected: selectedIds.contains(game.id),
+                            onToggleSelection: { toggleSelection(game.id) },
+                            onTap: {
+                                if isSelecting {
                                     toggleSelection(game.id)
+                                } else {
+                                    gameToEdit = game
                                 }
-                        }
-                        AsyncImage(url: game.coverUrl.flatMap { URL(string: $0) }) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Color.gray.opacity(0.3)
-                        }
-                        .frame(width: 50, height: 50)
-                        .cornerRadius(8)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(game.title)
-                                .font(.headline)
-                                .lineLimit(1)
-                            if let platformName = game.platformName {
-                                Text(platformName)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
                             }
-                            Text("\(game.achievementSetCount) sets")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                        )
+                        .swipeActions(edge: .trailing) {
+                            if !isSelecting {
+                                Button(role: .destructive) {
+                                    gameToDelete = game
+                                    showingDeleteConfirmation = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+
+                                Button {
+                                    gameToEdit = game
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+
+                                Button {
+                                    gameToClone = game
+                                    showingCloneSheet = true
+                                } label: {
+                                    Label("Clone", systemImage: "doc.on.doc")
+                                }
+                                .tint(.orange)
+                            }
                         }
-                        Spacer()
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        if isSelecting {
-                            toggleSelection(game.id)
-                        } else {
-                            gameToEdit = game
+                    } else {
+                        // Multiple games - show expandable group
+                        DisclosureGroup {
+                            ForEach(group.games) { game in
+                                AdminGameRow(
+                                    game: game,
+                                    isSelecting: isSelecting,
+                                    isSelected: selectedIds.contains(game.id),
+                                    onToggleSelection: { toggleSelection(game.id) },
+                                    onTap: {
+                                        if isSelecting {
+                                            toggleSelection(game.id)
+                                        } else {
+                                            gameToEdit = game
+                                        }
+                                    },
+                                    isSubRow: true
+                                )
+                                .swipeActions(edge: .trailing) {
+                                    if !isSelecting {
+                                        Button(role: .destructive) {
+                                            gameToDelete = game
+                                            showingDeleteConfirmation = true
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+
+                                        Button {
+                                            gameToEdit = game
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .tint(.blue)
+
+                                        Button {
+                                            gameToClone = game
+                                            showingCloneSheet = true
+                                        } label: {
+                                            Label("Clone", systemImage: "doc.on.doc")
+                                        }
+                                        .tint(.orange)
+                                    }
+                                }
+                            }
+                        } label: {
+                            AdminGameGroupRow(group: group)
                         }
                     }
+                }
+            } else {
+                // Flat view
+                ForEach(viewModel.filteredGames) { game in
+                    AdminGameRow(
+                        game: game,
+                        isSelecting: isSelecting,
+                        isSelected: selectedIds.contains(game.id),
+                        onToggleSelection: { toggleSelection(game.id) },
+                        onTap: {
+                            if isSelecting {
+                                toggleSelection(game.id)
+                            } else {
+                                gameToEdit = game
+                            }
+                        }
+                    )
                     .swipeActions(edge: .trailing) {
                         if !isSelecting {
                             Button(role: .destructive) {
@@ -200,6 +265,18 @@ struct AdminGamesView: View {
                             isSelecting = true
                         } label: {
                             Label("Select", systemImage: "checkmark.circle")
+                        }
+
+                        Divider()
+
+                        Button {
+                            viewModel.isGrouped.toggle()
+                        } label: {
+                            if viewModel.isGrouped {
+                                Label("Show Flat List", systemImage: "list.bullet")
+                            } else {
+                                Label("Group by Family", systemImage: "rectangle.3.group")
+                            }
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -380,6 +457,121 @@ struct CloneGameSheet: View {
             .interactiveDismissDisabled(isCloning)
         }
         .presentationDetents([.medium])
+    }
+}
+
+// MARK: - Admin Game Row
+
+private struct AdminGameRow: View {
+    let game: AdminGameItem
+    let isSelecting: Bool
+    let isSelected: Bool
+    let onToggleSelection: () -> Void
+    let onTap: () -> Void
+    var isSubRow: Bool = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if isSelecting {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? .blue : .gray)
+                    .onTapGesture {
+                        onToggleSelection()
+                    }
+            }
+
+            if !isSubRow {
+                AsyncImage(url: game.coverUrl.flatMap { URL(string: $0) }) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color.gray.opacity(0.3)
+                }
+                .frame(width: 50, height: 50)
+                .cornerRadius(8)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                if isSubRow {
+                    // For sub-rows, just show platform name
+                    if let platformName = game.platformName {
+                        HStack(spacing: 6) {
+                            if let slug = game.platformSlug {
+                                PlatformIcon(slug: slug, size: 16)
+                            }
+                            Text(platformName)
+                                .font(.subheadline)
+                        }
+                    }
+                    Text("\(game.achievementSetCount) sets")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Text(game.title)
+                        .font(.headline)
+                        .lineLimit(1)
+                    if let platformName = game.platformName {
+                        Text(platformName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text("\(game.achievementSetCount) sets")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer()
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
+    }
+}
+
+// MARK: - Admin Game Group Row
+
+private struct AdminGameGroupRow: View {
+    let group: AdminGameGroup
+
+    private let maxPlatformIcons = 5
+
+    var body: some View {
+        HStack(spacing: 12) {
+            AsyncImage(url: group.coverUrl.flatMap { URL(string: $0) }) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Color.gray.opacity(0.3)
+            }
+            .frame(width: 50, height: 50)
+            .cornerRadius(8)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(group.title)
+                    .font(.headline)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    ForEach(Array(group.games.prefix(maxPlatformIcons)), id: \.id) { game in
+                        if let slug = game.platformSlug {
+                            PlatformIcon(slug: slug, size: 14)
+                        }
+                    }
+                    if group.games.count > maxPlatformIcons {
+                        Text("+\(group.games.count - maxPlatformIcons)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Text("\(group.games.count) platforms, \(group.totalAchievementSets) sets")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
     }
 }
 
