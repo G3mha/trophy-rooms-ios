@@ -275,7 +275,7 @@ private struct BundleDLCRow: View {
                     }
                 }
 
-                if let game = dlc.game {
+                if let game = dlc.gameFamily {
                     Text("for \(game.title)")
                         .font(.caption)
                         .foregroundStyle(.secondary)

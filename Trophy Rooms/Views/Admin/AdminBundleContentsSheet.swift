@@ -122,7 +122,7 @@ struct AdminBundleContentsSheet: View {
                         VStack(alignment: .leading) {
                             Text(dlc.name)
                                 .font(.headline)
-                            if let game = dlc.game {
+                            if let game = dlc.gameFamily {
                                 Text(game.title)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -181,7 +181,7 @@ private struct DLCPickerSheet: View {
         }
         return available.filter {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
-            ($0.game?.title.localizedCaseInsensitiveContains(searchText) ?? false)
+            ($0.gameFamily?.title.localizedCaseInsensitiveContains(searchText) ?? false)
         }
     }
 
@@ -234,7 +234,7 @@ private struct DLCPickerSheet: View {
                                     Text(dlc.name)
                                         .font(.headline)
                                         .foregroundStyle(.primary)
-                                    if let game = dlc.game {
+                                    if let game = dlc.gameFamily {
                                         Text(game.title)
                                             .font(.subheadline)
                                             .foregroundStyle(.secondary)
