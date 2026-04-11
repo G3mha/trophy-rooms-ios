@@ -1556,3 +1556,31 @@ struct CloneGameResult: Decodable {
 struct ClonedGameRef: Decodable {
     let id: String
 }
+
+// MARK: - Global Search
+
+enum SearchResultType: String, Codable {
+    case GAME
+    case BUNDLE
+    case DLC
+}
+
+struct GlobalSearchItem: Identifiable, Decodable {
+    let id: String
+    let type: SearchResultType
+    let title: String
+    let coverUrl: String?
+    let subtitle: String?
+}
+
+struct GlobalSearchResults: Decodable {
+    let items: [GlobalSearchItem]
+    let gameCount: Int
+    let bundleCount: Int
+    let dlcCount: Int
+    let totalCount: Int
+}
+
+struct GlobalSearchResponse: Decodable {
+    let globalSearch: GlobalSearchResults
+}
