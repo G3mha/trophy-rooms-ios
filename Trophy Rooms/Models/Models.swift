@@ -93,6 +93,35 @@ struct GameSummary: Identifiable, Decodable, Equatable {
     let achievementCount: Int
     let trophyCount: Int
 
+    // Memberwise initializer for programmatic creation
+    init(
+        id: String,
+        title: String,
+        description: String? = nil,
+        coverUrl: String? = nil,
+        type: GameType? = nil,
+        gameFamilyId: String? = nil,
+        baseGameFamilyId: String? = nil,
+        baseGameFamilyIds: [String]? = nil,
+        platform: Platform? = nil,
+        achievementSetCount: Int = 0,
+        achievementCount: Int = 0,
+        trophyCount: Int = 0
+    ) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.coverUrl = coverUrl
+        self.type = type
+        self.gameFamilyId = gameFamilyId
+        self.baseGameFamilyId = baseGameFamilyId
+        self.baseGameFamilyIds = baseGameFamilyIds
+        self.platform = platform
+        self.achievementSetCount = achievementSetCount
+        self.achievementCount = achievementCount
+        self.trophyCount = trophyCount
+    }
+
     static func == (lhs: GameSummary, rhs: GameSummary) -> Bool {
         lhs.id == rhs.id
     }
@@ -1241,6 +1270,7 @@ struct AdminGameItem: Identifiable, Decodable {
     let type: GameType?
     let baseGameFamilyId: String?       // First base game family
     let baseGameFamilyIds: [String]?    // All base game family IDs
+    let baseGameFamilies: [GameFamilyRef]? // Full base game family data for display
     let platformId: String?
     let platformName: String?
     let platformSlug: String?
@@ -1267,6 +1297,7 @@ struct AdminGameItem: Identifiable, Decodable {
         type: GameType?,
         baseGameFamilyId: String?,
         baseGameFamilyIds: [String]?,
+        baseGameFamilies: [GameFamilyRef]? = nil,
         platformId: String?,
         platformName: String?,
         platformSlug: String?,
@@ -1280,6 +1311,7 @@ struct AdminGameItem: Identifiable, Decodable {
         self.type = type
         self.baseGameFamilyId = baseGameFamilyId
         self.baseGameFamilyIds = baseGameFamilyIds
+        self.baseGameFamilies = baseGameFamilies
         self.platformId = platformId
         self.platformName = platformName
         self.platformSlug = platformSlug
