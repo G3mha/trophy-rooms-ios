@@ -626,14 +626,14 @@ private struct AdminGameRow: View {
                     Text(game.title)
                         .font(.headline)
                         .lineLimit(1)
-                    if let platformName = game.platformName {
-                        Text(platformName)
+                    HStack(spacing: 6) {
+                        if let slug = game.platformSlug {
+                            PlatformIcon(slug: slug, size: 14)
+                        }
+                        Text("\(game.achievementSetCount) sets")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.tertiary)
                     }
-                    Text("\(game.achievementSetCount) sets")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
                 }
             }
             Spacer()
