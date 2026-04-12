@@ -21,9 +21,7 @@ struct AdminDLCFormSheet: View {
             Form {
                 Section {
                     TextField("Name", text: $name)
-                    TextField("Slug", text: $slug)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    AutoSlugTextField("Slug", slug: $slug, from: name, isEditing: isEditing)
 
                     Picker("Type", selection: $type) {
                         ForEach(DLCType.allCases, id: \.self) { dlcType in

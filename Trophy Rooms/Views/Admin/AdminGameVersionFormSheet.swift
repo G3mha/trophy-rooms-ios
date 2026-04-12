@@ -36,9 +36,7 @@ struct AdminGameVersionFormSheet: View {
                     TextField("Name", text: $name)
                         .textInputAutocapitalization(.words)
 
-                    TextField("Slug", text: $slug)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    AutoSlugTextField("Slug", slug: $slug, from: name, isEditing: isEditing)
                 } header: {
                     Text("Version Details")
                 } footer: {

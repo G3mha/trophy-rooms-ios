@@ -36,7 +36,7 @@ struct AdminPlatformFormSheet: View {
         ) {
             Section("Platform Details") {
                 NameTextField("Name", text: $name)
-                SlugTextField("Slug", text: $slug)
+                AutoSlugTextField("Slug", slug: $slug, from: name, isEditing: isEditing)
             }
 
             Section("Description") {
