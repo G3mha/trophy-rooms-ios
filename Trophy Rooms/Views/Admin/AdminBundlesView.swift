@@ -76,24 +76,15 @@ struct AdminBundlesView: View {
                                         Text(platform.name)
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
-                                        Text("•")
-                                            .font(.caption)
-                                            .foregroundStyle(.tertiary)
                                     }
-                                    Text(bundle.slug)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    BundleTypeBadge(type: bundle.type)
-                                }
-                                HStack(spacing: 8) {
                                     if bundle.gameFamilyCount > 0 {
                                         Text("\(bundle.gameFamilyCount) games")
-                                            .font(.caption2)
+                                            .font(.caption)
                                             .foregroundStyle(.tertiary)
                                     }
                                     if bundle.dlcCount > 0 {
                                         Text("\(bundle.dlcCount) DLCs")
-                                            .font(.caption2)
+                                            .font(.caption)
                                             .foregroundStyle(.tertiary)
                                     }
                                 }
