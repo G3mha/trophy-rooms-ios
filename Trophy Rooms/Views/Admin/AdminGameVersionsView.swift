@@ -243,16 +243,20 @@ private struct VersionRow: View {
                     }
                 }
 
-                // Platform icons
+                // Unique platform icons
                 if let games = version.games, !games.isEmpty {
+                    let uniquePlatforms = Array(
+                        Dictionary(grouping: games.compactMap { $0.platform }, by: { $0.id })
+                            .compactMap { $0.value.first }
+                    )
                     HStack(spacing: 4) {
-                        ForEach(games.prefix(6), id: \.id) { game in
-                            if let platform = game.platform, let slug = platform.slug {
+                        ForEach(uniquePlatforms.prefix(6), id: \.id) { platform in
+                            if let slug = platform.slug {
                                 PlatformIcon(slug: slug, size: 14)
                             }
                         }
-                        if games.count > 6 {
-                            Text("+\(games.count - 6)")
+                        if uniquePlatforms.count > 6 {
+                            Text("+\(uniquePlatforms.count - 6)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
