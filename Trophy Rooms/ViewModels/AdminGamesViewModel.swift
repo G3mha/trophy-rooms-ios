@@ -644,6 +644,7 @@ class AdminGamesViewModel: ObservableObject {
                         type: game.type,
                         baseGameFamilyId: baseGameFamilyIds.first,
                         baseGameFamilyIds: baseGameFamilyIds,
+                        baseGameFamilies: game.baseGameFamilies,
                         platformId: game.platform?.id,
                         platformName: game.platform?.name,
                         platformSlug: game.platform?.slug,
