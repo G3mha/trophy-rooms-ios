@@ -1513,10 +1513,6 @@ struct AddPlatformToGameFamilyResult: Decodable {
     let game: GameIdRef?
 }
 
-struct GameIdRef: Decodable {
-    let id: String
-}
-
 struct UpdateGameResponse: Decodable {
     let updateGame: UpdateGameResult
 }
