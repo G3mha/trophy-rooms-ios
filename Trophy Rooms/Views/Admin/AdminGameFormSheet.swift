@@ -144,6 +144,18 @@ struct AdminGameFormSheet: View {
                 } else if let baseGameFamilyId = game.baseGameFamilyId {
                     selectedBaseGameIds = Set([baseGameFamilyId])
                 }
+
+                // Populate selectedBaseGames for display from baseGameFamilies
+                if let baseGameFamilies = game.baseGameFamilies {
+                    selectedBaseGames = baseGameFamilies.map { family in
+                        GameSummary(
+                            id: family.id,
+                            title: family.title,
+                            coverUrl: family.coverUrl,
+                            type: family.type
+                        )
+                    }
+                }
             }
         }
         .onChange(of: selectedType) { _, newValue in
