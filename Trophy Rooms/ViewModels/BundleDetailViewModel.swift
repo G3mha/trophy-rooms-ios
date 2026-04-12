@@ -154,7 +154,7 @@ class BundleDetailViewModel: ObservableObject {
 
     // Legacy method for backwards compatibility
     func toggleOwnership() async {
-        guard let bundleId = bundle?.id else { return }
+        guard bundle?.id != nil else { return }
         let isCurrentlyOwned = bundle?.isOwned ?? false
 
         if isCurrentlyOwned {
