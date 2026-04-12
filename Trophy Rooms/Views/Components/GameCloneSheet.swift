@@ -43,26 +43,16 @@ struct GameCloneSheet: View {
                 }
 
                 Section {
-                    ForEach(availablePlatforms) { platform in
-                        Button {
-                            togglePlatform(platform.id)
-                        } label: {
-                            HStack {
-                                PlatformIcon(slug: platform.slug, size: 20)
-                                Text(platform.name)
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                if selectedPlatformIds.contains(platform.id) {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(.blue)
-                                }
-                            }
-                        }
-                    }
-
                     if availablePlatforms.isEmpty {
                         Text("No other platforms available")
                             .foregroundStyle(.secondary)
+                    } else {
+                        PlatformSelectionField(
+                            platforms: availablePlatforms,
+                            selectedPlatformIds: $selectedPlatformIds,
+                            allowsMultipleSelection: true,
+                            isDisabled: false
+                        )
                     }
                 } header: {
                     Text("Target Platforms")

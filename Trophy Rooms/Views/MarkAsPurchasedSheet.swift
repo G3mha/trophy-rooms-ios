@@ -33,12 +33,16 @@ struct MarkAsPurchasedSheet: View {
                 // Platform selector (only for games)
                 if item.itemType == .GAME {
                     Section {
-                        Picker("Platform", selection: $viewModel.selectedPlatformId) {
-                            Text("No Platform").tag(nil as String?)
-                            ForEach(viewModel.platforms, id: \.id) { platform in
-                                Text(platform.name).tag(platform.id as String?)
-                            }
-                        }
+                        PlatformSelectionField(
+                            platforms: viewModel.platforms,
+                            selectedPlatformIds: $viewModel.selectedPlatformIds,
+                            allowsMultipleSelection: false,
+                            isDisabled: false
+                        )
+                    } header: {
+                        Text("Platform")
+                    } footer: {
+                        Text("Optional - select a platform for this game")
                     }
                 }
 
@@ -98,7 +102,7 @@ struct MarkAsPurchasedSheet: View {
 class MarkAsPurchasedSheetViewModel: ObservableObject {
     @Published var purchasePrice: Double?
     @Published var purchasedAt: Date = Date()
-    @Published var selectedPlatformId: String?
+    @Published var selectedPlatformIds: Set<String> = []
     @Published var platforms: [Platform] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -139,7 +143,7 @@ class MarkAsPurchasedSheetViewModel: ObservableObject {
         """
 
         var variables: [String: Any] = ["id": id]
-        if let platformId = selectedPlatformId {
+        if let platformId = selectedPlatformIds.first {
             variables["platformId"] = platformId
         }
         if let purchasePrice = purchasePrice, purchasePrice > 0 {

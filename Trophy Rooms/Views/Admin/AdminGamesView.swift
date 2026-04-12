@@ -394,7 +394,7 @@ struct CloneGameSheet: View {
     let game: AdminGameItem
     let onDismiss: () -> Void
 
-    @State private var selectedPlatformId: String = ""
+    @State private var selectedPlatformIds: Set<String> = []
     @State private var copyAchievementSets = false
     @State private var isCloning = false
 
@@ -433,12 +433,12 @@ struct CloneGameSheet: View {
                 }
 
                 Section {
-                    Picker("Target Platform", selection: $selectedPlatformId) {
-                        Text("Select a platform").tag("")
-                        ForEach(availablePlatforms) { platform in
-                            Text(platform.name).tag(platform.id)
-                        }
-                    }
+                    PlatformSelectionField(
+                        platforms: availablePlatforms,
+                        selectedPlatformIds: $selectedPlatformIds,
+                        allowsMultipleSelection: false,
+                        isDisabled: false
+                    )
                 } header: {
                     Text("Clone To")
                 }
@@ -467,11 +467,12 @@ struct CloneGameSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Clone") {
+                        guard let platformId = selectedPlatformIds.first else { return }
                         Task {
                             isCloning = true
                             let success = await viewModel.cloneGameToPlatform(
                                 gameId: game.id,
-                                targetPlatformId: selectedPlatformId,
+                                targetPlatformId: platformId,
                                 copyAchievementSets: copyAchievementSets
                             )
                             isCloning = false
@@ -480,7 +481,7 @@ struct CloneGameSheet: View {
                             }
                         }
                     }
-                    .disabled(selectedPlatformId.isEmpty || isCloning)
+                    .disabled(selectedPlatformIds.isEmpty || isCloning)
                 }
             }
             .interactiveDismissDisabled(isCloning)

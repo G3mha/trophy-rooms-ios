@@ -3,7 +3,7 @@ import SwiftUI
 struct StatusPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var platformsViewModel = PlatformsViewModel.shared
-    @State private var selectedPlatformId: String?
+    @State private var selectedPlatformIds: Set<String> = []
     @State private var selectedVersionId: String?
 
     let currentStatus: GameStatus?
@@ -15,7 +15,7 @@ struct StatusPickerSheet: View {
 
     /// Filter versions based on selected platform
     var filteredVersions: [GameVersion] {
-        guard let platformId = selectedPlatformId else {
+        guard let platformId = selectedPlatformIds.first else {
             return versions
         }
         return versions.filter { version in
@@ -28,14 +28,15 @@ struct StatusPickerSheet: View {
         NavigationStack {
             List {
                 // Platform picker
-                Section("Platform (Optional)") {
-                    Picker("Platform", selection: $selectedPlatformId) {
-                        Text("No Platform").tag(nil as String?)
-                        ForEach(platformsViewModel.platforms) { platform in
-                            Text(platform.name).tag(platform.id as String?)
-                        }
-                    }
-                    .pickerStyle(.menu)
+                Section {
+                    PlatformSelectionField(
+                        platforms: platformsViewModel.platforms,
+                        selectedPlatformIds: $selectedPlatformIds,
+                        allowsMultipleSelection: false,
+                        isDisabled: false
+                    )
+                } header: {
+                    Text("Platform (Optional)")
                 }
 
                 // Version picker (only show if multiple versions available for platform)
@@ -62,7 +63,7 @@ struct StatusPickerSheet: View {
                 Section("Status") {
                     ForEach(GameStatus.allCases, id: \.self) { status in
                         Button {
-                            onSelect(status, selectedPlatformId, selectedVersionId)
+                            onSelect(status, selectedPlatformIds.first, selectedVersionId)
                             dismiss()
                         } label: {
                             HStack {
@@ -107,10 +108,12 @@ struct StatusPickerSheet: View {
             }
             .task {
                 await platformsViewModel.fetchPlatforms()
-                selectedPlatformId = currentPlatformId
+                if let platformId = currentPlatformId {
+                    selectedPlatformIds = [platformId]
+                }
                 selectedVersionId = currentVersionId
             }
-            .onChange(of: selectedPlatformId) { _, _ in
+            .onChange(of: selectedPlatformIds) { _, _ in
                 // Clear version if it's no longer available for the selected platform
                 if let versionId = selectedVersionId,
                    !filteredVersions.contains(where: { $0.id == versionId }) {

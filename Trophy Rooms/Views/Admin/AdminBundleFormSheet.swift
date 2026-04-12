@@ -9,7 +9,7 @@ struct AdminBundleFormSheet: View {
     @State private var name = ""
     @State private var slug = ""
     @State private var type: BundleType = .BUNDLE
-    @State private var selectedPlatformId: String = ""
+    @State private var selectedPlatformIds: Set<String> = []
     @State private var bundleDescription = ""
     @State private var coverUrl = ""
     @State private var priceString = ""
@@ -30,14 +30,19 @@ struct AdminBundleFormSheet: View {
                         }
                     }
 
-                    Picker("Platform", selection: $selectedPlatformId) {
-                        Text("Select Platform").tag("")
-                        ForEach(platformsViewModel.platforms, id: \.id) { platform in
-                            Text(platform.name).tag(platform.id)
-                        }
-                    }
                 } header: {
                     Text("Basic Info")
+                }
+
+                Section {
+                    PlatformSelectionField(
+                        platforms: platformsViewModel.platforms,
+                        selectedPlatformIds: $selectedPlatformIds,
+                        allowsMultipleSelection: false,
+                        isDisabled: false
+                    )
+                } header: {
+                    Text("Platform")
                 }
 
                 Section {
@@ -83,7 +88,9 @@ struct AdminBundleFormSheet: View {
                     name = bundle.name
                     slug = bundle.slug
                     type = bundle.type
-                    selectedPlatformId = bundle.platformId ?? ""
+                    if let platformId = bundle.platformId {
+                        selectedPlatformIds = [platformId]
+                    }
                     bundleDescription = bundle.description ?? ""
                     coverUrl = bundle.coverUrl ?? ""
                     if let price = bundle.price {
@@ -110,7 +117,7 @@ struct AdminBundleFormSheet: View {
                 description: bundleDescription.isEmpty ? nil : bundleDescription.trimmingCharacters(in: .whitespacesAndNewlines),
                 coverUrl: coverUrl.isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespacesAndNewlines),
                 price: price,
-                platformId: selectedPlatformId.isEmpty ? nil : selectedPlatformId
+                platformId: selectedPlatformIds.first
             )
             if success {
                 dismiss()
@@ -123,7 +130,7 @@ struct AdminBundleFormSheet: View {
                 description: bundleDescription.isEmpty ? nil : bundleDescription.trimmingCharacters(in: .whitespacesAndNewlines),
                 coverUrl: coverUrl.isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespacesAndNewlines),
                 price: price,
-                platformId: selectedPlatformId.isEmpty ? nil : selectedPlatformId
+                platformId: selectedPlatformIds.first
             )
             if success {
                 dismiss()
