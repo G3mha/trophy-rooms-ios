@@ -7,15 +7,15 @@ class AdminGameVersionsViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
 
-    func fetchVersions(gameId: String) async {
+    func fetchVersions(gameFamilyId: String) async {
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
         }
 
         let query = """
-        query GetGameVersions($gameId: ID!) {
-            gameVersions(gameId: $gameId) {
+        query GetGameVersions($gameFamilyId: ID!) {
+            gameVersions(gameFamilyId: $gameFamilyId) {
                 id
                 name
                 slug
@@ -48,7 +48,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         do {
             let response: GameVersionsResponse = try await NetworkService.shared.fetch(
                 query: query,
-                variables: ["gameId": gameId]
+                variables: ["gameFamilyId": gameFamilyId]
             )
             DispatchQueue.main.async {
                 self.versions = response.gameVersions
@@ -63,6 +63,7 @@ class AdminGameVersionsViewModel: ObservableObject {
     }
 
     func createVersion(
+        gameFamilyId: String,
         gameIds: [String],
         name: String,
         slug: String,
@@ -126,10 +127,8 @@ class AdminGameVersionsViewModel: ObservableObject {
                 variables: ["input": input]
             )
             if response.createGameVersion.success {
-                // Refresh versions for the first game
-                if let firstGameId = gameIds.first {
-                    await fetchVersions(gameId: firstGameId)
-                }
+                // Refresh versions for the game family
+                await fetchVersions(gameFamilyId: gameFamilyId)
                 DispatchQueue.main.async {
                     self.successMessage = "Version created successfully"
                 }
@@ -150,6 +149,7 @@ class AdminGameVersionsViewModel: ObservableObject {
 
     func updateVersion(
         id: String,
+        gameFamilyId: String,
         gameIds: [String],
         name: String,
         slug: String,
@@ -209,10 +209,8 @@ class AdminGameVersionsViewModel: ObservableObject {
                 variables: ["id": id, "input": input]
             )
             if response.updateGameVersion.success {
-                // Refresh versions for the first game
-                if let firstGameId = gameIds.first {
-                    await fetchVersions(gameId: firstGameId)
-                }
+                // Refresh versions for the game family
+                await fetchVersions(gameFamilyId: gameFamilyId)
                 DispatchQueue.main.async {
                     self.successMessage = "Version updated successfully"
                 }
@@ -231,7 +229,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         }
     }
 
-    func deleteVersion(id: String, gameId: String) async -> Bool {
+    func deleteVersion(id: String, gameFamilyId: String) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -271,7 +269,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         }
     }
 
-    func setDefaultVersion(id: String, gameId: String) async -> Bool {
+    func setDefaultVersion(id: String, gameFamilyId: String) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
@@ -296,7 +294,7 @@ class AdminGameVersionsViewModel: ObservableObject {
                 variables: ["id": id]
             )
             if response.setDefaultVersion.success {
-                await fetchVersions(gameId: gameId)
+                await fetchVersions(gameFamilyId: gameFamilyId)
                 DispatchQueue.main.async {
                     self.successMessage = "Default version updated"
                 }
@@ -315,7 +313,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         }
     }
 
-    func bulkDeleteVersions(ids: [String], gameId: String) async -> Int {
+    func bulkDeleteVersions(ids: [String], gameFamilyId: String) async -> Int {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil

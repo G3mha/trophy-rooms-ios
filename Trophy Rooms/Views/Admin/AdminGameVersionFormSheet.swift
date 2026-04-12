@@ -321,6 +321,7 @@ struct AdminGameVersionFormSheet: View {
             if let version = version {
                 success = await viewModel.updateVersion(
                     id: version.id,
+                    gameFamilyId: gameFamilyId,
                     gameIds: gameIds,
                     name: trimmedName,
                     slug: trimmedSlug,
@@ -330,6 +331,7 @@ struct AdminGameVersionFormSheet: View {
                 )
             } else {
                 success = await viewModel.createVersion(
+                    gameFamilyId: gameFamilyId,
                     gameIds: gameIds,
                     name: trimmedName,
                     slug: trimmedSlug,
