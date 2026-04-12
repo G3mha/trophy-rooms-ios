@@ -128,6 +128,22 @@ struct AdminGameVersionFormSheet: View {
                     Text("Leave empty to use the game's cover image")
                 }
 
+                if !coverUrl.isEmpty, let url = URL(string: coverUrl) {
+                    Section {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } placeholder: {
+                            ProgressView()
+                        }
+                        .frame(height: 150)
+                        .frame(maxWidth: .infinity)
+                    } header: {
+                        Text("Cover Preview")
+                    }
+                }
+
                 Section {
                     if isLoadingDlcs {
                         ProgressView("Loading DLCs...")
