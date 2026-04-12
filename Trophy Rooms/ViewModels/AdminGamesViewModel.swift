@@ -336,24 +336,22 @@ class AdminGamesViewModel: ObservableObject {
         }
     }
 
-    func addGameToFamily(gameFamilyId: String, platformId: String) async -> Bool {
+    func addPlatformToGameFamily(gameFamilyId: String, platformId: String) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
             self.successMessage = nil
         }
 
         let mutation = """
-        mutation AddGameToFamily($input: AddGameToFamilyInput!) {
-            addGameToFamily(input: $input) {
+        mutation AddPlatformToGameFamily($input: AddPlatformToGameFamilyInput!) {
+            addPlatformToGameFamily(input: $input) {
                 success
                 error {
                     code
                     message
                     field
                 }
-                game {
-                    id
-                }
+                gameId
             }
         }
         """
@@ -364,11 +362,11 @@ class AdminGamesViewModel: ObservableObject {
         ]
 
         do {
-            let response: AddGameToFamilyResponse = try await NetworkService.shared.fetch(
+            let response: AddPlatformToGameFamilyResponse = try await NetworkService.shared.fetch(
                 query: mutation,
                 variables: ["input": input]
             )
-            if response.addGameToFamily.success {
+            if response.addPlatformToGameFamily.success {
                 await fetchGames(page: currentPage)
                 DispatchQueue.main.async {
                     self.successMessage = "Platform added successfully"
@@ -376,7 +374,7 @@ class AdminGamesViewModel: ObservableObject {
                 return true
             } else {
                 DispatchQueue.main.async {
-                    self.errorMessage = response.addGameToFamily.error?.message ?? "Failed to add platform"
+                    self.errorMessage = response.addPlatformToGameFamily.error?.message ?? "Failed to add platform"
                 }
                 return false
             }
