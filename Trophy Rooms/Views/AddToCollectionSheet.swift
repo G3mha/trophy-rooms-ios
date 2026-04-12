@@ -38,6 +38,22 @@ struct AddToCollectionSheet: View {
         }
     }
 
+    /// Get the currently selected version
+    var selectedVersion: GameVersion? {
+        guard let versionId = viewModel.gameVersionId else { return nil }
+        return filteredVersions.first { $0.id == versionId }
+    }
+
+    /// Check if the selected version is digital only
+    var isDigitalOnlyVersion: Bool {
+        selectedVersion?.digitalOnly ?? false
+    }
+
+    /// Check if form is valid for submission
+    var isFormValid: Bool {
+        viewModel.gameVersionId != nil
+    }
+
     init(gameId: String, gameTitle: String, existingItems: [CollectionItem] = [], editingItem: CollectionItem? = nil, versions: [GameVersion] = [], gamePlatform: Platform? = nil, onSave: @escaping () -> Void) {
         self.gameId = gameId
         self.gameTitle = gameTitle
@@ -46,6 +62,28 @@ struct AddToCollectionSheet: View {
         self.versions = versions
         self.gamePlatform = gamePlatform
         self.onSave = onSave
+    }
+
+    /// Auto-select version: single version gets auto-selected, otherwise select the default
+    private func autoSelectVersion() {
+        // Don't auto-select if editing an existing item (already has version set)
+        if editingItem != nil || internalEditingItem != nil {
+            return
+        }
+        // Don't override if already selected
+        if viewModel.gameVersionId != nil {
+            return
+        }
+        if filteredVersions.count == 1 {
+            // Single version - auto-select it
+            viewModel.gameVersionId = filteredVersions[0].id
+        } else if let defaultVersion = filteredVersions.first(where: { $0.isDefault }) {
+            // Multiple versions - select the default one
+            viewModel.gameVersionId = defaultVersion.id
+        } else if let firstVersion = filteredVersions.first {
+            // No default - select the first one
+            viewModel.gameVersionId = firstVersion.id
+        }
     }
 
     var body: some View {
@@ -125,10 +163,24 @@ struct AddToCollectionSheet: View {
                         }
                     }
 
-                    // Version (only show if multiple versions available for platform)
-                    if filteredVersions.count > 1 {
+                    // Version (required - always show)
+                    if filteredVersions.isEmpty {
+                        HStack {
+                            Text("Version")
+                            Spacer()
+                            Text("No versions available")
+                                .foregroundStyle(.red)
+                        }
+                    } else if filteredVersions.count == 1 {
+                        // Single version - show as read-only (auto-selected)
+                        HStack {
+                            Text("Version")
+                            Spacer()
+                            Text(filteredVersions[0].name)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
                         Picker("Version", selection: $viewModel.gameVersionId) {
-                            Text("No Version").tag(nil as String?)
                             ForEach(filteredVersions, id: \.id) { version in
                                 HStack {
                                     Text(version.name)
@@ -149,8 +201,16 @@ struct AddToCollectionSheet: View {
                         }
                     }
 
-                    // Digital copy toggle
+                    // Digital copy toggle (forced on for digital-only versions)
                     Toggle("Digital Copy", isOn: $viewModel.isDigital)
+                        .disabled(isDigitalOnlyVersion)
+                } footer: {
+                    if filteredVersions.isEmpty {
+                        Text("This game cannot be added to your collection because no versions are available for this platform.")
+                            .foregroundStyle(.red)
+                    } else if isDigitalOnlyVersion {
+                        Text("This version is only available as a digital copy.")
+                    }
                 }
 
                 // Physical condition section (disabled for digital copies)
@@ -205,7 +265,7 @@ struct AddToCollectionSheet: View {
                             Spacer()
                         }
                     }
-                    .disabled(viewModel.isLoading)
+                    .disabled(viewModel.isLoading || !isFormValid)
                 }
 
                 if let error = viewModel.errorMessage {
@@ -232,12 +292,22 @@ struct AddToCollectionSheet: View {
                     // Pre-select the game's platform for new collection items
                     viewModel.platformId = platform.id
                 }
+                // Auto-select version for new items
+                autoSelectVersion()
             }
             .onChange(of: viewModel.platformId) { _, _ in
                 // Clear version if it's no longer available for the selected platform
                 if let versionId = viewModel.gameVersionId,
                    !filteredVersions.contains(where: { $0.id == versionId }) {
                     viewModel.gameVersionId = nil
+                }
+                // Auto-select version when platform changes
+                autoSelectVersion()
+            }
+            .onChange(of: viewModel.gameVersionId) { _, _ in
+                // Enforce isDigital when digital-only version is selected
+                if isDigitalOnlyVersion {
+                    viewModel.isDigital = true
                 }
             }
         }
