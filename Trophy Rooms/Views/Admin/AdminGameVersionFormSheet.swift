@@ -13,6 +13,7 @@ struct AdminGameVersionFormSheet: View {
     @State private var selectedDlcIds: [String] = []
     @State private var selectedGameIds: Set<String> = []
     @State private var isDefault: Bool = false
+    @State private var digitalOnly: Bool = false
     @State private var isSaving = false
     @State private var availableDlcs: [DLC] = []
     @State private var availableGames: [FamilyGame] = []
@@ -193,6 +194,14 @@ struct AdminGameVersionFormSheet: View {
                     }
                 }
 
+                Section {
+                    Toggle("Digital Only", isOn: $digitalOnly)
+                } header: {
+                    Text("Distribution")
+                } footer: {
+                    Text("If enabled, users can only add this version as a digital copy (no physical option)")
+                }
+
                 if let error = viewModel.errorMessage {
                     Section {
                         Text(error)
@@ -226,6 +235,7 @@ struct AdminGameVersionFormSheet: View {
                 coverUrl = version.coverUrl ?? ""
                 selectedDlcIds = version.dlcs?.map { $0.id } ?? []
                 isDefault = version.isDefault
+                digitalOnly = version.digitalOnly ?? false
                 // Pre-select games that this version is already linked to
                 if let games = version.games {
                     selectedGameIds = Set(games.map { $0.id })
@@ -327,7 +337,8 @@ struct AdminGameVersionFormSheet: View {
                     slug: trimmedSlug,
                     description: trimmedDescription.isEmpty ? nil : trimmedDescription,
                     coverUrl: trimmedCoverUrl.isEmpty ? nil : trimmedCoverUrl,
-                    dlcIds: dlcIds
+                    dlcIds: dlcIds,
+                    digitalOnly: digitalOnly
                 )
             } else {
                 success = await viewModel.createVersion(
@@ -338,7 +349,8 @@ struct AdminGameVersionFormSheet: View {
                     description: trimmedDescription.isEmpty ? nil : trimmedDescription,
                     coverUrl: trimmedCoverUrl.isEmpty ? nil : trimmedCoverUrl,
                     dlcIds: dlcIds,
-                    isDefault: isDefault
+                    isDefault: isDefault,
+                    digitalOnly: digitalOnly
                 )
             }
 

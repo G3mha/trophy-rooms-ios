@@ -24,6 +24,7 @@ class AdminGameVersionsViewModel: ObservableObject {
                 effectiveCoverUrl
                 releaseDate
                 isDefault
+                digitalOnly
                 games {
                     id
                     title
@@ -70,7 +71,8 @@ class AdminGameVersionsViewModel: ObservableObject {
         description: String?,
         coverUrl: String?,
         dlcIds: [String]?,
-        isDefault: Bool
+        isDefault: Bool,
+        digitalOnly: Bool
     ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
@@ -120,6 +122,9 @@ class AdminGameVersionsViewModel: ObservableObject {
         if isDefault {
             input["isDefault"] = isDefault
         }
+        if digitalOnly {
+            input["digitalOnly"] = digitalOnly
+        }
 
         do {
             let response: CreateGameVersionResponse = try await NetworkService.shared.fetch(
@@ -155,7 +160,8 @@ class AdminGameVersionsViewModel: ObservableObject {
         slug: String,
         description: String?,
         coverUrl: String?,
-        dlcIds: [String]?
+        dlcIds: [String]?,
+        digitalOnly: Bool
     ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
@@ -202,6 +208,7 @@ class AdminGameVersionsViewModel: ObservableObject {
         if let dlcIds = dlcIds {
             input["dlcIds"] = dlcIds
         }
+        input["digitalOnly"] = digitalOnly
 
         do {
             let response: UpdateGameVersionResponse = try await NetworkService.shared.fetch(

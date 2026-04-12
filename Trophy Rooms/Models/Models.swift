@@ -1140,6 +1140,7 @@ struct GameVersion: Identifiable, Decodable {
     let dlcs: [DLCRef]?
     let dlcCount: Int?
     let isDefault: Bool
+    let digitalOnly: Bool?
     let games: [GameVersionGame]?
     let gameIds: [String]?
     let achievementSetCount: Int?
