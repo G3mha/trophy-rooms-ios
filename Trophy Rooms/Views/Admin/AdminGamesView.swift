@@ -498,7 +498,7 @@ struct AddPlatformSheet: View {
     let existingPlatformIds: Set<String>
     let onDismiss: () -> Void
 
-    @State private var selectedPlatformId: String = ""
+    @State private var selectedPlatformIds: Set<String> = []
     @State private var isAdding = false
 
     var availablePlatforms: [AdminPlatform] {
@@ -521,19 +521,15 @@ struct AddPlatformSheet: View {
                         Text("All platforms already have this game")
                             .foregroundStyle(.secondary)
                     } else {
-                        Picker("Platform", selection: $selectedPlatformId) {
-                            Text("Select a platform").tag("")
-                            ForEach(availablePlatforms) { platform in
-                                HStack {
-                                    PlatformIcon(slug: platform.slug, size: 16)
-                                    Text(platform.name)
-                                }
-                                .tag(platform.id)
-                            }
-                        }
+                        PlatformSelectionField(
+                            platforms: availablePlatforms,
+                            selectedPlatformIds: $selectedPlatformIds,
+                            allowsMultipleSelection: false,
+                            isDisabled: false
+                        )
                     }
                 } header: {
-                    Text("Add Platform")
+                    Text("Platform")
                 } footer: {
                     Text("Select a platform to add \(gameTitle) to.")
                 }
@@ -556,11 +552,12 @@ struct AddPlatformSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
+                        guard let platformId = selectedPlatformIds.first else { return }
                         Task {
                             isAdding = true
-                            let success = await viewModel.addGameToFamily(
+                            let success = await viewModel.addPlatformToGameFamily(
                                 gameFamilyId: gameFamilyId,
-                                platformId: selectedPlatformId
+                                platformId: platformId
                             )
                             isAdding = false
                             if success {
@@ -568,12 +565,12 @@ struct AddPlatformSheet: View {
                             }
                         }
                     }
-                    .disabled(selectedPlatformId.isEmpty || isAdding)
+                    .disabled(selectedPlatformIds.isEmpty || isAdding)
                 }
             }
             .interactiveDismissDisabled(isAdding)
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 }
 
