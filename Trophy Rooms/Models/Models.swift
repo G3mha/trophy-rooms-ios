@@ -1510,7 +1510,11 @@ struct AddPlatformToGameFamilyResponse: Decodable {
 struct AddPlatformToGameFamilyResult: Decodable {
     let success: Bool
     let error: MutationError?
-    let gameId: String?
+    let game: GameIdRef?
+}
+
+struct GameIdRef: Decodable {
+    let id: String
 }
 
 struct UpdateGameResponse: Decodable {

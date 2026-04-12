@@ -351,7 +351,9 @@ class AdminGamesViewModel: ObservableObject {
                     message
                     field
                 }
-                gameId
+                game {
+                    id
+                }
             }
         }
         """
