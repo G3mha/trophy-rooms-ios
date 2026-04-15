@@ -5,6 +5,7 @@ struct AdminDLCFormSheet: View {
     @ObservedObject var viewModel: AdminDLCsViewModel
     let gameFamilyId: String
     let dlc: DLC?
+    let availablePlatforms: [Platform]
 
     @State private var name = ""
     @State private var slug = ""
@@ -12,6 +13,7 @@ struct AdminDLCFormSheet: View {
     @State private var dlcDescription = ""
     @State private var coverUrl = ""
     @State private var priceString = ""
+    @State private var selectedPlatformIds: Set<String> = []
     @State private var isSaving = false
 
     var isEditing: Bool { dlc != nil }
@@ -43,6 +45,37 @@ struct AdminDLCFormSheet: View {
                         .keyboardType(.decimalPad)
                 } header: {
                     Text("Details")
+                }
+
+                Section {
+                    if availablePlatforms.isEmpty {
+                        Text("No platforms available")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(availablePlatforms) { platform in
+                            Button {
+                                if selectedPlatformIds.contains(platform.id) {
+                                    selectedPlatformIds.remove(platform.id)
+                                } else {
+                                    selectedPlatformIds.insert(platform.id)
+                                }
+                            } label: {
+                                HStack {
+                                    Text(platform.name)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    if selectedPlatformIds.contains(platform.id) {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(.blue)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Available On")
+                } footer: {
+                    Text("Select the platforms this DLC is available on.")
                 }
 
                 if !coverUrl.isEmpty, let url = URL(string: coverUrl) {
@@ -96,6 +129,10 @@ struct AdminDLCFormSheet: View {
                     if let price = dlc.price {
                         priceString = String(format: "%.2f", price)
                     }
+                    // Initialize selected platforms from existing DLC
+                    if let platforms = dlc.platforms {
+                        selectedPlatformIds = Set(platforms.map { $0.id })
+                    }
                 }
             }
         }
@@ -104,6 +141,7 @@ struct AdminDLCFormSheet: View {
     private func save() async {
         isSaving = true
         let price = Double(priceString)
+        let platformIds = Array(selectedPlatformIds)
 
         if let dlc = dlc {
             let success = await viewModel.updateDLC(
@@ -114,7 +152,8 @@ struct AdminDLCFormSheet: View {
                 type: type,
                 description: dlcDescription.isEmpty ? nil : dlcDescription.trimmingCharacters(in: .whitespacesAndNewlines),
                 coverUrl: coverUrl.isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespacesAndNewlines),
-                price: price
+                price: price,
+                platformIds: platformIds
             )
             if success {
                 dismiss()
@@ -127,7 +166,8 @@ struct AdminDLCFormSheet: View {
                 type: type,
                 description: dlcDescription.isEmpty ? nil : dlcDescription.trimmingCharacters(in: .whitespacesAndNewlines),
                 coverUrl: coverUrl.isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespacesAndNewlines),
-                price: price
+                price: price,
+                platformIds: platformIds
             )
             if success {
                 dismiss()

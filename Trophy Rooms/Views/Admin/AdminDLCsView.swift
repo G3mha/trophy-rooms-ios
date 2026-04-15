@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AdminDLCsView: View {
     @StateObject private var viewModel = AdminDLCsViewModel()
+    @StateObject private var platformsViewModel = AdminPlatformsViewModel()
     @State private var selectedGame: GameSummary?
     @State private var showingCreateSheet = false
     @State private var dlcToEdit: DLC?
@@ -40,12 +41,22 @@ struct AdminDLCsView: View {
         }
         .sheet(isPresented: $showingCreateSheet) {
             if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
-                AdminDLCFormSheet(viewModel: viewModel, gameFamilyId: gameFamilyId, dlc: nil)
+                AdminDLCFormSheet(
+                    viewModel: viewModel,
+                    gameFamilyId: gameFamilyId,
+                    dlc: nil,
+                    availablePlatforms: platformsViewModel.platforms.map { Platform(id: $0.id, name: $0.name, slug: $0.slug) }
+                )
             }
         }
         .sheet(item: $dlcToEdit) { dlc in
             if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
-                AdminDLCFormSheet(viewModel: viewModel, gameFamilyId: gameFamilyId, dlc: dlc)
+                AdminDLCFormSheet(
+                    viewModel: viewModel,
+                    gameFamilyId: gameFamilyId,
+                    dlc: dlc,
+                    availablePlatforms: platformsViewModel.platforms.map { Platform(id: $0.id, name: $0.name, slug: $0.slug) }
+                )
             }
         }
         .alert("Delete DLC", isPresented: $showingDeleteConfirmation) {
@@ -64,6 +75,9 @@ struct AdminDLCsView: View {
             if let dlc = dlcToDelete {
                 Text("Are you sure you want to delete \"\(dlc.name)\"? This action cannot be undone.")
             }
+        }
+        .task {
+            await platformsViewModel.fetchPlatforms()
         }
         .alert("Delete DLCs", isPresented: $showingBulkDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
