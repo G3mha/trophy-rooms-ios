@@ -891,6 +891,7 @@ struct DLC: Identifiable, Decodable {
     let price: Double?
     let gameFamilyId: String
     let gameFamily: GameFamilyRef?
+    let platforms: [Platform]?
     let achievementSetCount: Int?
 }
 
@@ -928,6 +929,7 @@ struct DLCDetail: Identifiable, Decodable {
     let price: Double?
     let isOwned: Bool?
     let gameFamily: GameFamilyRef?
+    let platforms: [Platform]?
     let achievementSets: [AchievementSetSummary]?
     let bundles: [DLCBundleRef]?
 }
