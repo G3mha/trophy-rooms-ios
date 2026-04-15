@@ -31,6 +31,11 @@ class AdminDLCsViewModel: ObservableObject {
                     title
                     slug
                 }
+                platforms {
+                    id
+                    name
+                    slug
+                }
                 achievementSetCount
             }
         }
@@ -60,7 +65,8 @@ class AdminDLCsViewModel: ObservableObject {
         type: DLCType,
         description: String?,
         coverUrl: String?,
-        price: Double?
+        price: Double?,
+        platformIds: [String]
     ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
@@ -81,6 +87,11 @@ class AdminDLCsViewModel: ObservableObject {
                     effectiveCoverUrl
                     price
                     gameFamilyId
+                    platforms {
+                        id
+                        name
+                        slug
+                    }
                 }
             }
         }
@@ -90,7 +101,8 @@ class AdminDLCsViewModel: ObservableObject {
             "gameFamilyId": gameFamilyId,
             "name": name,
             "slug": slug,
-            "type": type.rawValue
+            "type": type.rawValue,
+            "platformIds": platformIds
         ]
 
         if let description = description, !description.isEmpty {
@@ -136,7 +148,8 @@ class AdminDLCsViewModel: ObservableObject {
         type: DLCType,
         description: String?,
         coverUrl: String?,
-        price: Double?
+        price: Double?,
+        platformIds: [String]
     ) async -> Bool {
         DispatchQueue.main.async {
             self.errorMessage = nil
@@ -157,6 +170,11 @@ class AdminDLCsViewModel: ObservableObject {
                     effectiveCoverUrl
                     price
                     gameFamilyId
+                    platforms {
+                        id
+                        name
+                        slug
+                    }
                 }
             }
         }
@@ -165,7 +183,8 @@ class AdminDLCsViewModel: ObservableObject {
         var input: [String: Any] = [
             "name": name,
             "slug": slug,
-            "type": type.rawValue
+            "type": type.rawValue,
+            "platformIds": platformIds
         ]
 
         if let description = description {
