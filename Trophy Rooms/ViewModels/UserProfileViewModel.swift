@@ -24,6 +24,7 @@ class UserProfileViewModel: ObservableObject {
                 gamesWithAchievementsCount
                 stats {
                     totalPoints
+                    platinumCount
                     goldCount
                     silverCount
                     bronzeCount
