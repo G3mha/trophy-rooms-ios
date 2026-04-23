@@ -1,215 +1,68 @@
 import SwiftUI
 
 struct AdminGameVersionFormSheet: View {
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: AdminGameVersionsViewModel
+    @StateObject private var draft: AdminGameVersionFormDraft
     let gameFamilyId: String
     let version: GameVersion?
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var name: String = ""
-    @State private var slug: String = ""
-    @State private var description: String = ""
-    @State private var coverUrl: String = ""
-    @State private var selectedDlcIds: [String] = []
-    @State private var selectedGameIds: Set<String> = []
-    @State private var isDefault: Bool = false
-    @State private var digitalOnly: Bool = false
     @State private var isSaving = false
-    @State private var availableDlcs: [DLC] = []
-    @State private var availableGames: [FamilyGame] = []
-    @State private var isLoadingDlcs = false
-    @State private var isLoadingGames = false
 
-    var isEditing: Bool {
-        version != nil
+    init(viewModel: AdminGameVersionsViewModel, gameFamilyId: String, version: GameVersion?) {
+        self.viewModel = viewModel
+        self.gameFamilyId = gameFamilyId
+        self.version = version
+        _draft = StateObject(wrappedValue: AdminGameVersionFormDraft(version: version))
     }
 
-    var isValid: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !slug.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !selectedGameIds.isEmpty
+    private var controller: AdminGameVersionFormController {
+        AdminGameVersionFormController(
+            viewModel: viewModel,
+            api: viewModel.api,
+            gameFamilyId: gameFamilyId,
+            version: version
+        )
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    TextField("Name", text: $name)
-                        .textInputAutocapitalization(.words)
+                AdminGameVersionDetailsSection(
+                    name: $draft.name,
+                    slug: $draft.slug,
+                    isEditing: controller.isEditing
+                )
 
-                    AutoSlugTextField("Slug", slug: $slug, from: name, isEditing: isEditing)
-                } header: {
-                    Text("Version Details")
-                } footer: {
-                    Text("Examples: Standard, Deluxe Edition, Game of the Year Edition")
-                }
+                AdminGameVersionPlatformsSection(
+                    availableGames: draft.availableGames,
+                    selectedGameIds: $draft.selectedGameIds,
+                    isLoadingGames: draft.isLoadingGames
+                )
 
-                // Platform/Game Selection
-                Section {
-                    if isLoadingGames {
-                        ProgressView("Loading platforms...")
-                    } else if availableGames.isEmpty {
-                        Text("No platform versions available")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(availableGames, id: \.id) { game in
-                            HStack {
-                                if let platform = game.platform {
-                                    PlatformIcon(slug: platform.slug ?? "", size: 20)
-                                }
-                                VStack(alignment: .leading) {
-                                    Text(game.platform?.name ?? "Unknown Platform")
-                                    if let platformSlug = game.platform?.slug {
-                                        Text(platformSlug)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                Spacer()
-                                if selectedGameIds.contains(game.id) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.blue)
-                                } else {
-                                    Image(systemName: "circle")
-                                        .foregroundStyle(.gray)
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                if selectedGameIds.contains(game.id) {
-                                    selectedGameIds.remove(game.id)
-                                } else {
-                                    selectedGameIds.insert(game.id)
-                                }
-                            }
-                        }
-                    }
-                } header: {
-                    HStack {
-                        Text("Available On")
-                        Spacer()
-                        if !availableGames.isEmpty {
-                            Text("\(selectedGameIds.count) of \(availableGames.count)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                } footer: {
-                    if !availableGames.isEmpty {
-                        HStack(spacing: 16) {
-                            Button("Select All") {
-                                selectedGameIds = Set(availableGames.map { $0.id })
-                            }
-                            .disabled(selectedGameIds.count == availableGames.count)
+                AdminGameVersionDescriptionSection(description: $draft.description)
 
-                            Button("Clear All") {
-                                selectedGameIds.removeAll()
-                            }
-                            .disabled(selectedGameIds.isEmpty)
-                        }
-                        .font(.caption)
-                    }
-                }
+                AdminGameVersionCoverSection(coverUrl: $draft.coverUrl)
 
-                Section {
-                    TextField("Description (optional)", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
-                } header: {
-                    Text("Description")
-                }
+                AdminGameVersionCoverPreviewSection(coverUrl: draft.coverUrl)
 
-                Section {
-                    TextField("Cover URL (optional)", text: $coverUrl)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                } header: {
-                    Text("Cover Image")
-                } footer: {
-                    Text("Leave empty to use the game's cover image")
-                }
+                AdminGameVersionDLCSection(
+                    availableDlcs: draft.availableDlcs,
+                    selectedDlcIds: $draft.selectedDlcIds,
+                    isLoadingDlcs: draft.isLoadingDlcs
+                )
 
-                if !coverUrl.isEmpty, let url = URL(string: coverUrl) {
-                    Section {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                        } placeholder: {
-                            ProgressView()
-                        }
-                        .frame(height: 150)
-                        .frame(maxWidth: .infinity)
-                    } header: {
-                        Text("Cover Preview")
-                    }
-                }
+                AdminGameVersionDefaultSection(
+                    isEditing: controller.isEditing,
+                    isDefault: $draft.isDefault
+                )
 
-                Section {
-                    if isLoadingDlcs {
-                        ProgressView("Loading DLCs...")
-                    } else if availableDlcs.isEmpty {
-                        Text("No DLCs available for this game")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(availableDlcs, id: \.id) { dlc in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(dlc.name)
-                                    Text(dlc.type.displayName)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                if selectedDlcIds.contains(dlc.id) {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(.blue)
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                if selectedDlcIds.contains(dlc.id) {
-                                    selectedDlcIds.removeAll { $0 == dlc.id }
-                                } else {
-                                    selectedDlcIds.append(dlc.id)
-                                }
-                            }
-                        }
-                    }
-                } header: {
-                    Text("Included DLC")
-                } footer: {
-                    if !availableDlcs.isEmpty {
-                        Text("Tap to select DLCs included in this version")
-                    }
-                }
-
-                if !isEditing {
-                    Section {
-                        Toggle("Set as Default", isOn: $isDefault)
-                    } header: {
-                        Text("Default Version")
-                    } footer: {
-                        Text("The default version is selected automatically when users add this game to their library")
-                    }
-                }
-
-                Section {
-                    Toggle("Digital Only", isOn: $digitalOnly)
-                } header: {
-                    Text("Distribution")
-                } footer: {
-                    Text("If enabled, users can only add this version as a digital copy (no physical option)")
-                }
+                AdminGameVersionDistributionSection(digitalOnly: $draft.digitalOnly)
 
                 if let error = viewModel.errorMessage {
-                    Section {
-                        Text(error)
-                            .foregroundStyle(.red)
-                    }
+                    AdminGameVersionErrorSection(error: error)
                 }
             }
-            .navigationTitle(isEditing ? "Edit Version" : "New Version")
+            .navigationTitle(controller.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -219,164 +72,51 @@ struct AdminGameVersionFormSheet: View {
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditing ? "Save" : "Create") {
-                        save()
+                    Button(controller.saveButtonTitle) {
+                        Task {
+                            await save()
+                        }
                     }
-                    .disabled(!isValid || isSaving)
+                    .disabled(!draft.isValid || isSaving)
                 }
             }
             .interactiveDismissDisabled(isSaving)
         }
-        .onAppear {
-            if let version = version {
-                name = version.name
-                slug = version.slug ?? ""
-                description = version.description ?? ""
-                coverUrl = version.coverUrl ?? ""
-                selectedDlcIds = version.dlcs?.map { $0.id } ?? []
-                isDefault = version.isDefault
-                digitalOnly = version.digitalOnly ?? false
-                // Pre-select games that this version is already linked to
-                if let games = version.games {
-                    selectedGameIds = Set(games.map { $0.id })
-                }
-            }
-        }
         .task {
-            await fetchGames()
-            await fetchDlcs()
+            await loadLookups()
         }
     }
 
-    private func fetchGames() async {
-        isLoadingGames = true
-        let query = """
-        query GetGameFamilyGames($id: ID!) {
-            gameFamily(id: $id) {
-                games {
-                    id
-                    platform {
-                        id
-                        name
-                        slug
-                    }
-                }
-            }
-        }
-        """
+    private func loadLookups() async {
+        draft.isLoadingGames = true
+        draft.isLoadingDlcs = true
 
-        do {
-            let response: GameFamilyGamesResponse = try await NetworkService.shared.fetch(
-                query: query,
-                variables: ["id": gameFamilyId]
-            )
-            DispatchQueue.main.async {
-                self.availableGames = response.gameFamily?.games ?? []
-                self.isLoadingGames = false
+        async let gamesTask = controller.fetchFamilyGames()
+        async let dlcsTask = controller.fetchAvailableDlcs()
 
-                // If creating new and no games selected, select all by default
-                if !isEditing && selectedGameIds.isEmpty {
-                    selectedGameIds = Set(availableGames.map { $0.id })
-                }
-            }
-        } catch {
-            DispatchQueue.main.async {
-                self.isLoadingGames = false
-            }
+        let games = await gamesTask
+        let dlcs = await dlcsTask
+
+        draft.availableGames = games
+        draft.isLoadingGames = false
+        if !controller.isEditing && draft.selectedGameIds.isEmpty {
+            draft.selectedGameIds = Set(games.map { $0.id })
         }
+
+        draft.availableDlcs = dlcs
+        draft.isLoadingDlcs = false
     }
 
-    private func fetchDlcs() async {
-        isLoadingDlcs = true
-        let query = """
-        query GetDLCs($gameFamilyId: ID!) {
-            dlcs(gameFamilyId: $gameFamilyId) {
-                id
-                name
-                slug
-                type
-            }
-        }
-        """
-
-        do {
-            let response: DLCsResponse = try await NetworkService.shared.fetch(
-                query: query,
-                variables: ["gameFamilyId": gameFamilyId]
-            )
-            DispatchQueue.main.async {
-                self.availableDlcs = response.dlcs
-                self.isLoadingDlcs = false
-            }
-        } catch {
-            DispatchQueue.main.async {
-                self.isLoadingDlcs = false
-            }
-        }
-    }
-
-    private func save() {
+    private func save() async {
         isSaving = true
 
-        let trimmedName = name.trimmingCharacters(in: .whitespaces)
-        let trimmedSlug = slug.trimmingCharacters(in: .whitespaces)
-        let trimmedDescription = description.trimmingCharacters(in: .whitespaces)
-        let trimmedCoverUrl = coverUrl.trimmingCharacters(in: .whitespaces)
-
-        let dlcIds: [String]? = selectedDlcIds.isEmpty ? nil : selectedDlcIds
-        let gameIds = Array(selectedGameIds)
-
-        Task {
-            let success: Bool
-            if let version = version {
-                success = await viewModel.updateVersion(
-                    id: version.id,
-                    gameFamilyId: gameFamilyId,
-                    gameIds: gameIds,
-                    name: trimmedName,
-                    slug: trimmedSlug,
-                    description: trimmedDescription.isEmpty ? nil : trimmedDescription,
-                    coverUrl: trimmedCoverUrl.isEmpty ? nil : trimmedCoverUrl,
-                    dlcIds: dlcIds,
-                    digitalOnly: digitalOnly
-                )
-            } else {
-                success = await viewModel.createVersion(
-                    gameFamilyId: gameFamilyId,
-                    gameIds: gameIds,
-                    name: trimmedName,
-                    slug: trimmedSlug,
-                    description: trimmedDescription.isEmpty ? nil : trimmedDescription,
-                    coverUrl: trimmedCoverUrl.isEmpty ? nil : trimmedCoverUrl,
-                    dlcIds: dlcIds,
-                    isDefault: isDefault,
-                    digitalOnly: digitalOnly
-                )
-            }
-
-            DispatchQueue.main.async {
-                isSaving = false
-                if success {
-                    dismiss()
-                }
-            }
+        let success = await controller.save(draft: draft)
+        if success {
+            dismiss()
         }
+
+        isSaving = false
     }
-}
-
-// MARK: - Response Models
-
-private struct GameFamilyGamesResponse: Decodable {
-    let gameFamily: GameFamilyWithGames?
-}
-
-private struct GameFamilyWithGames: Decodable {
-    let games: [FamilyGame]
-}
-
-struct FamilyGame: Identifiable, Decodable {
-    let id: String
-    let platform: Platform?
 }
 
 #Preview {

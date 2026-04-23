@@ -3,298 +3,151 @@ import SwiftUI
 struct AdminDLCsView: View {
     @StateObject private var viewModel = AdminDLCsViewModel()
     @StateObject private var platformsViewModel = AdminPlatformsViewModel()
-    @State private var selectedGame: GameSummary?
-    @State private var showingCreateSheet = false
-    @State private var dlcToEdit: DLC?
-    @State private var dlcToDelete: DLC?
-    @State private var showingDeleteConfirmation = false
-    @State private var selectedIds: Set<String> = []
-    @State private var isSelecting = false
-    @State private var showingBulkDeleteConfirmation = false
+    @StateObject private var screenState = AdminDLCsScreenState()
+
+    private var selectedGameFamilyId: String? {
+        screenState.selectedGame?.gameFamilyId
+    }
+
+    private var availablePlatforms: [Platform] {
+        platformsViewModel.platforms.map { Platform(id: $0.id, name: $0.name, slug: $0.slug) }
+    }
 
     var body: some View {
         List {
-            gameSelectionSection
+            AdminDLCGameSelectionSection(selectedGame: $screenState.selectedGame)
 
-            if selectedGame != nil {
-                dlcListSection
-            }
+            AdminDLCListSection(
+                selectedGame: screenState.selectedGame,
+                isLoading: viewModel.isLoading,
+                errorMessage: viewModel.errorMessage,
+                dlcs: viewModel.dlcs,
+                isSelecting: screenState.isSelecting,
+                selectedIds: screenState.selectedIds,
+                onTapDLC: { dlc in
+                    if screenState.isSelecting {
+                        screenState.toggleSelection(dlc.id)
+                    } else {
+                        screenState.dlcToEdit = dlc
+                    }
+                },
+                onToggleSelection: { screenState.toggleSelection($0) },
+                onEdit: { screenState.dlcToEdit = $0 },
+                onDelete: { screenState.presentDelete(for: $0) }
+            )
         }
         .navigationTitle("DLCs & Expansions")
-        .toolbar { toolbarContent }
-        .safeAreaInset(edge: .bottom) { bulkDeleteButton }
-        .refreshable {
-            if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
-                await viewModel.fetchDLCs(gameFamilyId: gameFamilyId)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                if screenState.selectedGame != nil {
+                    if screenState.isSelecting {
+                        Button("Done") {
+                            screenState.finishSelection()
+                        }
+                    } else {
+                        Menu {
+                            Button {
+                                screenState.showingCreateSheet = true
+                            } label: {
+                                Label("Add DLC", systemImage: "plus")
+                            }
+
+                            Button {
+                                screenState.isSelecting = true
+                            } label: {
+                                Label("Select", systemImage: "checkmark.circle")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                    }
+                }
             }
         }
-        .onChange(of: selectedGame) { _, newValue in
-            if let game = newValue, let gameFamilyId = game.gameFamilyId {
+        .safeAreaInset(edge: .bottom) {
+            if screenState.isSelecting && !screenState.selectedIds.isEmpty {
+                Button(role: .destructive) {
+                    screenState.showingBulkDeleteConfirmation = true
+                } label: {
+                    Label("Delete \(screenState.selectedIds.count)", systemImage: "trash")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .padding()
+                .background(.bar)
+            }
+        }
+        .refreshable {
+            if let selectedGameFamilyId {
+                await viewModel.fetchDLCs(gameFamilyId: selectedGameFamilyId)
+            }
+        }
+        .onChange(of: screenState.selectedGame) { _, newValue in
+            if let gameFamilyId = newValue?.gameFamilyId {
                 Task {
                     await viewModel.fetchDLCs(gameFamilyId: gameFamilyId)
                 }
             } else {
                 viewModel.dlcs = []
             }
-            selectedIds.removeAll()
-            isSelecting = false
+            screenState.finishSelection()
         }
-        .sheet(isPresented: $showingCreateSheet) {
-            if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+        .sheet(isPresented: $screenState.showingCreateSheet) {
+            if let selectedGameFamilyId {
                 AdminDLCFormSheet(
                     viewModel: viewModel,
-                    gameFamilyId: gameFamilyId,
+                    gameFamilyId: selectedGameFamilyId,
                     dlc: nil,
-                    availablePlatforms: platformsViewModel.platforms.map { Platform(id: $0.id, name: $0.name, slug: $0.slug) }
+                    availablePlatforms: availablePlatforms
                 )
             }
         }
-        .sheet(item: $dlcToEdit) { dlc in
-            if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+        .sheet(item: $screenState.dlcToEdit) { dlc in
+            if let selectedGameFamilyId {
                 AdminDLCFormSheet(
                     viewModel: viewModel,
-                    gameFamilyId: gameFamilyId,
+                    gameFamilyId: selectedGameFamilyId,
                     dlc: dlc,
-                    availablePlatforms: platformsViewModel.platforms.map { Platform(id: $0.id, name: $0.name, slug: $0.slug) }
+                    availablePlatforms: availablePlatforms
                 )
             }
         }
-        .alert("Delete DLC", isPresented: $showingDeleteConfirmation) {
+        .alert("Delete DLC", isPresented: $screenState.showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) {
-                dlcToDelete = nil
+                screenState.dlcToDelete = nil
             }
             Button("Delete", role: .destructive) {
-                if let dlc = dlcToDelete, let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+                if let dlc = screenState.dlcToDelete, let selectedGameFamilyId {
                     Task {
-                        _ = await viewModel.deleteDLC(id: dlc.id, gameFamilyId: gameFamilyId)
-                        dlcToDelete = nil
+                        _ = await viewModel.deleteDLC(id: dlc.id, gameFamilyId: selectedGameFamilyId)
+                        screenState.dlcToDelete = nil
                     }
                 }
             }
         } message: {
-            if let dlc = dlcToDelete {
+            if let dlc = screenState.dlcToDelete {
                 Text("Are you sure you want to delete \"\(dlc.name)\"? This action cannot be undone.")
             }
         }
         .task {
             await platformsViewModel.fetchPlatforms()
         }
-        .alert("Delete DLCs", isPresented: $showingBulkDeleteConfirmation) {
+        .alert("Delete DLCs", isPresented: $screenState.showingBulkDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
-                if let game = selectedGame, let gameFamilyId = game.gameFamilyId {
+                if let selectedGameFamilyId {
                     Task {
-                        _ = await viewModel.bulkDeleteDLCs(ids: Array(selectedIds), gameFamilyId: gameFamilyId)
-                        selectedIds.removeAll()
-                        isSelecting = false
+                        _ = await viewModel.bulkDeleteDLCs(
+                            ids: Array(screenState.selectedIds),
+                            gameFamilyId: selectedGameFamilyId
+                        )
+                        screenState.finishSelection()
                     }
                 }
             }
         } message: {
-            Text("Are you sure you want to delete \(selectedIds.count) DLC(s)? This action cannot be undone.")
-        }
-    }
-
-    // MARK: - Game Selection Section
-
-    private var gameSelectionSection: some View {
-        Section {
-            GameSelectorField(
-                title: "Game",
-                selectedGame: $selectedGame
-            )
-        } header: {
-            Text("Select Game")
-        }
-    }
-
-    // MARK: - DLC List Section
-
-    private var dlcListSection: some View {
-        Section {
-            if viewModel.isLoading && viewModel.dlcs.isEmpty {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-            } else if let error = viewModel.errorMessage {
-                Text(error)
-                    .foregroundStyle(.red)
-            } else if viewModel.dlcs.isEmpty {
-                Text("No DLCs found")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.dlcs, id: \.id) { dlc in
-                    DLCListRow(
-                        dlc: dlc,
-                        isSelecting: isSelecting,
-                        isSelected: selectedIds.contains(dlc.id),
-                        onTap: {
-                            if isSelecting {
-                                toggleSelection(dlc.id)
-                            } else {
-                                dlcToEdit = dlc
-                            }
-                        },
-                        onToggleSelection: { toggleSelection(dlc.id) },
-                        onEdit: { dlcToEdit = dlc },
-                        onDelete: {
-                            dlcToDelete = dlc
-                            showingDeleteConfirmation = true
-                        }
-                    )
-                }
-            }
-        } header: {
-            Text("DLCs & Expansions")
-        } footer: {
-            if !viewModel.dlcs.isEmpty {
-                Text("Swipe left to edit or delete.")
-            }
-        }
-    }
-
-    // MARK: - Toolbar
-
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
-            if selectedGame != nil {
-                if isSelecting {
-                    Button("Done") {
-                        isSelecting = false
-                        selectedIds.removeAll()
-                    }
-                } else {
-                    Menu {
-                        Button {
-                            showingCreateSheet = true
-                        } label: {
-                            Label("Add DLC", systemImage: "plus")
-                        }
-
-                        Button {
-                            isSelecting = true
-                        } label: {
-                            Label("Select", systemImage: "checkmark.circle")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Bulk Delete Button
-
-    @ViewBuilder
-    private var bulkDeleteButton: some View {
-        if isSelecting && !selectedIds.isEmpty {
-            Button(role: .destructive) {
-                showingBulkDeleteConfirmation = true
-            } label: {
-                Label("Delete \(selectedIds.count)", systemImage: "trash")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .padding()
-            .background(.bar)
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func toggleSelection(_ id: String) {
-        if selectedIds.contains(id) {
-            selectedIds.remove(id)
-        } else {
-            selectedIds.insert(id)
-        }
-    }
-}
-
-// MARK: - DLC List Row
-
-private struct DLCListRow: View {
-    let dlc: DLC
-    let isSelecting: Bool
-    let isSelected: Bool
-    let onTap: () -> Void
-    let onToggleSelection: () -> Void
-    let onEdit: () -> Void
-    let onDelete: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            if isSelecting {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? .blue : .gray)
-                    .onTapGesture { onToggleSelection() }
-            }
-
-            coverImage
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(dlc.name)
-                    .font(.headline)
-                    .lineLimit(1)
-                HStack(spacing: 8) {
-                    Text(dlc.slug)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    DLCTypeBadge(type: dlc.type)
-                }
-                if let price = dlc.price {
-                    Text(String(format: "$%.2f", price))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-
-            Spacer()
-
-            if let count = dlc.achievementSetCount, count > 0 {
-                Text("\(count) sets")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
-        .swipeActions(edge: .trailing) {
-            if !isSelecting {
-                Button(role: .destructive) {
-                    onDelete()
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-
-                Button {
-                    onEdit()
-                } label: {
-                    Label("Edit", systemImage: "pencil")
-                }
-                .tint(.blue)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var coverImage: some View {
-        if let coverUrl = dlc.effectiveCoverUrl, let url = URL(string: coverUrl) {
-            AsyncImage(url: url) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Color.gray.opacity(0.3)
-            }
-            .frame(width: 50, height: 50)
-            .cornerRadius(8)
-        } else {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 50, height: 50)
+            Text("Are you sure you want to delete \(screenState.selectedIds.count) DLC(s)? This action cannot be undone.")
         }
     }
 }

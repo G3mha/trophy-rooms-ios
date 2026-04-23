@@ -6,6 +6,7 @@ enum AchievementTier: String, Codable, CaseIterable {
     case BRONZE
     case SILVER
     case GOLD
+    case PLATINUM
 }
 
 // MARK: - Platform
@@ -765,6 +766,7 @@ struct PublicUser: Codable, Identifiable {
 
 struct UserProfileStats: Codable {
     let totalPoints: Int
+    let platinumCount: Int
     let goldCount: Int
     let silverCount: Int
     let bronzeCount: Int
@@ -1504,6 +1506,10 @@ struct CreateGameFamilyResult: Decodable {
     let success: Bool
     let gameFamilyId: String?
     let error: MutationError?
+}
+
+struct ImportGameFamilyFromIGDBUrlResponse: Decodable {
+    let importGameFamilyFromIGDBUrl: CreateGameFamilyResult
 }
 
 struct AddPlatformToGameFamilyResponse: Decodable {

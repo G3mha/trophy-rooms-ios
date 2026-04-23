@@ -4,84 +4,48 @@ struct AdminBundleFormSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: AdminBundlesViewModel
     @StateObject private var platformsViewModel = AdminPlatformsViewModel()
+    @StateObject private var draft: AdminBundleFormDraft
     let bundle: AppBundle?
-
-    @State private var name = ""
-    @State private var slug = ""
-    @State private var type: BundleType = .BUNDLE
-    @State private var selectedPlatformIds: Set<String> = []
-    @State private var bundleDescription = ""
-    @State private var coverUrl = ""
-    @State private var priceString = ""
     @State private var isSaving = false
 
-    var isEditing: Bool { bundle != nil }
+    init(viewModel: AdminBundlesViewModel, bundle: AppBundle?) {
+        self.viewModel = viewModel
+        self.bundle = bundle
+        _draft = StateObject(wrappedValue: AdminBundleFormDraft(bundle: bundle))
+    }
+
+    private var controller: AdminBundleFormController {
+        AdminBundleFormController(viewModel: viewModel, bundle: bundle)
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    TextField("Name", text: $name)
-                    AutoSlugTextField("Slug", slug: $slug, from: name, isEditing: isEditing)
+                AdminBundleBasicInfoSection(
+                    name: $draft.name,
+                    slug: $draft.slug,
+                    type: $draft.type,
+                    isEditing: controller.isEditing
+                )
 
-                    Picker("Type", selection: $type) {
-                        ForEach(BundleType.allCases, id: \.self) { bundleType in
-                            Text(bundleType.displayName).tag(bundleType)
-                        }
-                    }
+                AdminBundlePlatformSection(
+                    platforms: platformsViewModel.platforms,
+                    selectedPlatformIds: $draft.selectedPlatformIds
+                )
 
-                } header: {
-                    Text("Basic Info")
-                }
+                AdminBundleDetailsSection(
+                    bundleDescription: $draft.bundleDescription,
+                    coverUrl: $draft.coverUrl,
+                    priceString: $draft.priceString
+                )
 
-                Section {
-                    PlatformSelectionField(
-                        platforms: platformsViewModel.platforms,
-                        selectedPlatformIds: $selectedPlatformIds,
-                        allowsMultipleSelection: false,
-                        isDisabled: false
-                    )
-                } header: {
-                    Text("Platform")
-                }
-
-                Section {
-                    TextField("Description", text: $bundleDescription, axis: .vertical)
-                        .lineLimit(3...6)
-                    TextField("Cover URL", text: $coverUrl)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                    TextField("Price (optional)", text: $priceString)
-                        .keyboardType(.decimalPad)
-                } header: {
-                    Text("Details")
-                }
-
-                if !coverUrl.isEmpty, let url = URL(string: coverUrl) {
-                    Section {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                        } placeholder: {
-                            ProgressView()
-                        }
-                        .frame(height: 150)
-                        .frame(maxWidth: .infinity)
-                    } header: {
-                        Text("Cover Preview")
-                    }
-                }
+                AdminBundleCoverPreviewSection(coverUrl: draft.coverUrl)
 
                 if let error = viewModel.errorMessage {
-                    Section {
-                        Text(error)
-                            .foregroundStyle(.red)
-                    }
+                    AdminBundleErrorSection(error: error)
                 }
             }
-            .navigationTitle(isEditing ? "Edit Bundle" : "New Bundle")
+            .navigationTitle(controller.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -90,30 +54,15 @@ struct AdminBundleFormSheet: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditing ? "Save" : "Create") {
+                    Button(controller.saveButtonTitle) {
                         Task {
                             await save()
                         }
                     }
-                    .disabled(name.isEmpty || slug.isEmpty || isSaving)
+                    .disabled(!draft.isValid || isSaving)
                 }
             }
             .interactiveDismissDisabled(isSaving)
-            .onAppear {
-                if let bundle = bundle {
-                    name = bundle.name
-                    slug = bundle.slug
-                    type = bundle.type
-                    if let platformId = bundle.platformId {
-                        selectedPlatformIds = [platformId]
-                    }
-                    bundleDescription = bundle.description ?? ""
-                    coverUrl = bundle.coverUrl ?? ""
-                    if let price = bundle.price {
-                        priceString = String(format: "%.2f", price)
-                    }
-                }
-            }
             .task {
                 await platformsViewModel.fetchPlatforms()
             }
@@ -122,36 +71,12 @@ struct AdminBundleFormSheet: View {
 
     private func save() async {
         isSaving = true
-        let price = Double(priceString)
 
-        if let bundle = bundle {
-            let success = await viewModel.updateBundle(
-                id: bundle.id,
-                name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                slug: slug.trimmingCharacters(in: .whitespacesAndNewlines),
-                type: type,
-                description: bundleDescription.isEmpty ? nil : bundleDescription.trimmingCharacters(in: .whitespacesAndNewlines),
-                coverUrl: coverUrl.isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespacesAndNewlines),
-                price: price,
-                platformId: selectedPlatformIds.first
-            )
-            if success {
-                dismiss()
-            }
-        } else {
-            let success = await viewModel.createBundle(
-                name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                slug: slug.trimmingCharacters(in: .whitespacesAndNewlines),
-                type: type,
-                description: bundleDescription.isEmpty ? nil : bundleDescription.trimmingCharacters(in: .whitespacesAndNewlines),
-                coverUrl: coverUrl.isEmpty ? nil : coverUrl.trimmingCharacters(in: .whitespacesAndNewlines),
-                price: price,
-                platformId: selectedPlatformIds.first
-            )
-            if success {
-                dismiss()
-            }
+        let success = await controller.save(draft: draft)
+        if success {
+            dismiss()
         }
+
         isSaving = false
     }
 }

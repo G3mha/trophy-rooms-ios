@@ -1,56 +1,34 @@
 import SwiftUI
 
 struct AdminSetFormSheet: View {
-    @ObservedObject var viewModel: AdminAchievementSetsViewModel
-    let achievementSet: AdminAchievementSet?
     @Environment(\.dismiss) private var dismiss
-
-    @State private var title: String = ""
-    @State private var selectedType: AchievementSetType = .OFFICIAL
-    @State private var selectedVisibility: AchievementSetVisibility = .PUBLIC
-    @State private var selectedGame: GameSummary?
-    @State private var selectedVersionId: String = ""
-    @State private var selectedDlcId: String = ""
+    @ObservedObject var viewModel: AdminAchievementSetsViewModel
+    @StateObject private var draft: AdminSetFormDraft
+    let achievementSet: AdminAchievementSet?
     @State private var isSaving = false
 
-    var isEditing: Bool {
-        achievementSet != nil
+    init(viewModel: AdminAchievementSetsViewModel, achievementSet: AdminAchievementSet?) {
+        self.viewModel = viewModel
+        self.achievementSet = achievementSet
+        _draft = StateObject(wrappedValue: AdminSetFormDraft(achievementSet: achievementSet))
     }
 
-    var isValid: Bool {
-        !title.trimmingCharacters(in: .whitespaces).isEmpty &&
-        selectedGame != nil
+    private var controller: AdminSetFormController {
+        AdminSetFormController(viewModel: viewModel, achievementSet: achievementSet)
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    TextField("Title", text: $title)
+                AdminSetDetailsSection(
+                    title: $draft.title,
+                    selectedType: $draft.selectedType,
+                    selectedVisibility: $draft.selectedVisibility
+                )
 
-                    Picker("Type", selection: $selectedType) {
-                        ForEach(AchievementSetType.allCases, id: \.self) { type in
-                            Text(type.displayName).tag(type)
-                        }
-                    }
-
-                    Picker("Visibility", selection: $selectedVisibility) {
-                        ForEach(AchievementSetVisibility.allCases, id: \.self) { visibility in
-                            Text(visibility.displayName).tag(visibility)
-                        }
-                    }
-                } header: {
-                    Text("Set Details")
-                }
-
-                Section {
-                    GameSelectorField(
-                        title: "Game",
-                        selectedGame: $selectedGame
-                    )
-                    .onChange(of: selectedGame) { _, newValue in
-                        selectedVersionId = ""
-                        selectedDlcId = ""
+                AdminSetGameSection(selectedGame: $draft.selectedGame)
+                    .onChange(of: draft.selectedGame) { _, newValue in
+                        draft.handleGameChange(newValue)
                         if let game = newValue, let gameFamilyId = game.gameFamilyId {
                             Task {
                                 await viewModel.fetchVersions(gameFamilyId: gameFamilyId)
@@ -61,62 +39,24 @@ struct AdminSetFormSheet: View {
                             viewModel.dlcs = []
                         }
                     }
-                } header: {
-                    Text("Game")
-                }
 
-                if selectedGame != nil && viewModel.versions.count > 1 {
-                    Section {
-                        Picker("Version", selection: $selectedVersionId) {
-                            Text("All Versions").tag("")
-                            ForEach(viewModel.versions, id: \.id) { version in
-                                HStack {
-                                    Text(version.name)
-                                    if version.isDefault {
-                                        Text("(Default)")
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                .tag(version.id)
-                            }
-                        }
-                        .pickerStyle(.navigationLink)
-                    } header: {
-                        Text("Version (Optional)")
-                    } footer: {
-                        Text("Select a specific version or leave as 'All Versions' to apply to the entire game")
-                    }
-                }
+                AdminSetVersionSection(
+                    selectedGame: draft.selectedGame,
+                    versions: viewModel.versions,
+                    selectedVersionId: $draft.selectedVersionId
+                )
 
-                if selectedGame != nil && !viewModel.dlcs.isEmpty {
-                    Section {
-                        Picker("DLC", selection: $selectedDlcId) {
-                            Text("Base Game").tag("")
-                            ForEach(viewModel.dlcs, id: \.id) { dlc in
-                                HStack {
-                                    Text(dlc.name)
-                                    Text("(\(dlc.type.displayName))")
-                                        .foregroundStyle(.secondary)
-                                }
-                                .tag(dlc.id)
-                            }
-                        }
-                        .pickerStyle(.navigationLink)
-                    } header: {
-                        Text("DLC (Optional)")
-                    } footer: {
-                        Text("Select a DLC if this achievement set belongs to specific downloadable content")
-                    }
-                }
+                AdminSetDLCSection(
+                    selectedGame: draft.selectedGame,
+                    dlcs: viewModel.dlcs,
+                    selectedDlcId: $draft.selectedDlcId
+                )
 
                 if let error = viewModel.errorMessage {
-                    Section {
-                        Text(error)
-                            .foregroundStyle(.red)
-                    }
+                    AdminSetErrorSection(error: error)
                 }
             }
-            .navigationTitle(isEditing ? "Edit Set" : "New Set")
+            .navigationTitle(controller.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -126,85 +66,33 @@ struct AdminSetFormSheet: View {
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditing ? "Save" : "Create") {
-                        save()
+                    Button(controller.saveButtonTitle) {
+                        Task {
+                            await save()
+                        }
                     }
-                    .disabled(!isValid || isSaving)
+                    .disabled(!draft.isValid || isSaving)
                 }
             }
             .interactiveDismissDisabled(isSaving)
         }
-        .onAppear {
-            if let set = achievementSet {
-                title = set.title
-                selectedType = set.typeEnum
-                selectedVisibility = set.visibilityEnum
-                selectedVersionId = set.gameVersionId ?? ""
-                selectedDlcId = set.dlcId ?? ""
-
-                // Create a GameSummary from the set's game family info
-                if let gameFamily = set.gameFamily, let gameFamilyId = set.gameFamilyId {
-                    selectedGame = GameSummary(
-                        id: gameFamily.id,
-                        title: gameFamily.title,
-                        description: nil,
-                        coverUrl: nil,
-                        type: nil,
-                        gameFamilyId: gameFamilyId,
-                        baseGameFamilyId: nil,
-                        baseGameFamilyIds: nil,
-                        platform: nil,
-                        achievementSetCount: 0,
-                        achievementCount: 0,
-                        trophyCount: 0
-                    )
-                    Task {
-                        await viewModel.fetchVersions(gameFamilyId: gameFamilyId)
-                        await viewModel.fetchDlcs(gameFamilyId: gameFamilyId)
-                    }
-                }
+        .task {
+            if let gameFamilyId = draft.selectedGame?.gameFamilyId {
+                await viewModel.fetchVersions(gameFamilyId: gameFamilyId)
+                await viewModel.fetchDlcs(gameFamilyId: gameFamilyId)
             }
         }
     }
 
-    private func save() {
-        guard let game = selectedGame, let gameFamilyId = game.gameFamilyId else { return }
+    private func save() async {
+        guard let gameFamilyId = draft.selectedGame?.gameFamilyId else { return }
 
         isSaving = true
-
-        Task {
-            let success: Bool
-            let versionId = selectedVersionId.isEmpty ? nil : selectedVersionId
-            let dlcId = selectedDlcId.isEmpty ? nil : selectedDlcId
-
-            if let set = achievementSet {
-                success = await viewModel.updateAchievementSet(
-                    id: set.id,
-                    title: title.trimmingCharacters(in: .whitespaces),
-                    type: selectedType,
-                    visibility: selectedVisibility,
-                    gameFamilyId: gameFamilyId,
-                    gameVersionId: versionId,
-                    dlcId: dlcId
-                )
-            } else {
-                success = await viewModel.createAchievementSet(
-                    title: title.trimmingCharacters(in: .whitespaces),
-                    type: selectedType,
-                    visibility: selectedVisibility,
-                    gameFamilyId: gameFamilyId,
-                    gameVersionId: versionId,
-                    dlcId: dlcId
-                )
-            }
-
-            DispatchQueue.main.async {
-                isSaving = false
-                if success {
-                    dismiss()
-                }
-            }
+        let success = await controller.save(draft: draft, gameFamilyId: gameFamilyId)
+        if success {
+            dismiss()
         }
+        isSaving = false
     }
 }
 
