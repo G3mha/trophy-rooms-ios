@@ -5,6 +5,7 @@ struct RootView: View {
     @State private var selectedTab = 0
     @StateObject private var adminViewModel = AdminViewModel()
     @EnvironmentObject private var inlineAdminContext: InlineAdminContext
+    @EnvironmentObject private var adminPresentationContext: AdminPresentationContext
 
     var body: some View {
         ZStack {
@@ -61,6 +62,10 @@ struct RootView: View {
                 }
             }
         }
+        .environmentObject(adminViewModel)
+        .onAppear {
+            inlineAdminContext.adminViewModel = adminViewModel
+        }
         .task {
             await adminViewModel.checkAdminStatus()
             inlineAdminContext.adminViewModel = adminViewModel
@@ -69,6 +74,11 @@ struct RootView: View {
             Task {
                 await adminViewModel.checkAdminStatus()
                 inlineAdminContext.adminViewModel = adminViewModel
+            }
+        }
+        .sheet(isPresented: $adminPresentationContext.isShowingDashboard) {
+            NavigationStack {
+                AdminDashboardView()
             }
         }
     }

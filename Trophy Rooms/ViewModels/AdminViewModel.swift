@@ -1,7 +1,13 @@
 import Foundation
 import Combine
+import ClerkKit
 
 class AdminViewModel: ObservableObject {
+    private enum CacheKeys {
+        static let isAdmin = "admin_view_model.is_admin"
+        static let isTrusted = "admin_view_model.is_trusted"
+    }
+
     @Published var isAdmin = false
     @Published var isTrusted = false
     @Published var currentUser: CurrentUser?
@@ -12,10 +18,33 @@ class AdminViewModel: ObservableObject {
         isAdmin || isTrusted
     }
 
+    init() {
+        isAdmin = UserDefaults.standard.bool(forKey: CacheKeys.isAdmin)
+        isTrusted = UserDefaults.standard.bool(forKey: CacheKeys.isTrusted)
+    }
+
+    private func persistAccess() {
+        UserDefaults.standard.set(isAdmin, forKey: CacheKeys.isAdmin)
+        UserDefaults.standard.set(isTrusted, forKey: CacheKeys.isTrusted)
+    }
+
+    private func clearPersistedAccess() {
+        UserDefaults.standard.removeObject(forKey: CacheKeys.isAdmin)
+        UserDefaults.standard.removeObject(forKey: CacheKeys.isTrusted)
+    }
+
     func checkAdminStatus() async {
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
+        }
+
+        guard Clerk.shared.user != nil else {
+            DispatchQueue.main.async {
+                self.reset()
+                self.isLoading = false
+            }
+            return
         }
 
         let query = """
@@ -30,21 +59,19 @@ class AdminViewModel: ObservableObject {
         do {
             let response: CurrentUserResponse = try await NetworkService.shared.fetch(query: query)
             DispatchQueue.main.async {
-                self.currentUser = response.me
                 if let user = response.me {
+                    self.currentUser = user
                     self.isAdmin = user.role == .ADMIN
                     self.isTrusted = user.role == .TRUSTED || user.role == .ADMIN
+                    self.persistAccess()
                 } else {
-                    self.isAdmin = false
-                    self.isTrusted = false
+                    self.errorMessage = "Unable to verify admin access right now."
                 }
                 self.isLoading = false
             }
         } catch {
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
-                self.isAdmin = false
-                self.isTrusted = false
                 self.isLoading = false
             }
         }
@@ -55,6 +82,7 @@ class AdminViewModel: ObservableObject {
             self.isAdmin = false
             self.isTrusted = false
             self.currentUser = nil
+            self.clearPersistedAccess()
         }
     }
 }

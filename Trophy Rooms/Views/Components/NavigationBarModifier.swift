@@ -82,7 +82,8 @@ private struct ProfileImage: View {
 private struct UserMenuSheet: View {
     @Environment(Clerk.self) private var clerk
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var adminViewModel = AdminViewModel()
+    @EnvironmentObject private var adminViewModel: AdminViewModel
+    @EnvironmentObject private var adminPresentationContext: AdminPresentationContext
     @State private var isSigningOut = false
 
     var body: some View {
@@ -119,8 +120,9 @@ private struct UserMenuSheet: View {
                 // Admin section
                 if adminViewModel.canAccessAdmin {
                     Section {
-                        NavigationLink {
-                            AdminDashboardView()
+                        Button {
+                            adminPresentationContext.presentDashboard()
+                            dismiss()
                         } label: {
                             Label {
                                 Text("Admin Dashboard")
@@ -163,9 +165,6 @@ private struct UserMenuSheet: View {
                     }
                     .fontWeight(.semibold)
                 }
-            }
-            .task {
-                await adminViewModel.checkAdminStatus()
             }
         }
         .presentationDetents([.medium, .large])

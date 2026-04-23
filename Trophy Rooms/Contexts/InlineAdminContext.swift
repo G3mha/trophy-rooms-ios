@@ -8,7 +8,7 @@ class InlineAdminContext: ObservableObject {
     @Published var currentEntity: AdminContextEntity?
 
     /// Reference to the AdminViewModel for checking admin access
-    weak var adminViewModel: AdminViewModel?
+    var adminViewModel: AdminViewModel?
 
     /// Whether the current user can access admin features
     var canAccessAdmin: Bool {

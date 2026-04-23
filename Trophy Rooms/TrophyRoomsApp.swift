@@ -4,6 +4,7 @@ import ClerkKit
 @main
 struct TrophyRoomsApp: App {
     @StateObject private var inlineAdminContext = InlineAdminContext()
+    @StateObject private var adminPresentationContext = AdminPresentationContext()
 
     init() {
         let publishableKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as? String ?? ""
@@ -22,6 +23,7 @@ struct TrophyRoomsApp: App {
             RootView()
                 .environment(Clerk.shared)
                 .environmentObject(inlineAdminContext)
+                .environmentObject(adminPresentationContext)
         }
     }
 }
