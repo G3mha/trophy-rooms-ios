@@ -155,35 +155,83 @@ private struct BuylistStatsBar: View {
     let stats: BuylistStats
 
     var body: some View {
-        HStack(spacing: 0) {
-            StatItem(value: "\(stats.totalItems)", label: "Items")
-            Divider().frame(height: 30)
-            StatItem(value: String(format: "$%.2f", stats.totalEstimatedCost), label: "Est. Total")
-            Divider().frame(height: 30)
-            StatItem(value: "\(stats.highPriorityCount)", label: "High Priority", color: .red)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 16) {
+                BuylistStatCard(
+                    title: "Total",
+                    value: "\(stats.totalItems)",
+                    icon: "cart.fill",
+                    color: .blue
+                )
+                BuylistStatCard(
+                    title: "Games",
+                    value: "\(stats.gameCount)",
+                    icon: "gamecontroller.fill",
+                    color: .blue
+                )
+                BuylistStatCard(
+                    title: "Bundles",
+                    value: "\(stats.bundleCount)",
+                    icon: "shippingbox.fill",
+                    color: .orange
+                )
+                BuylistStatCard(
+                    title: "DLCs",
+                    value: "\(stats.dlcCount)",
+                    icon: "puzzlepiece.extension.fill",
+                    color: .purple
+                )
+                BuylistStatCard(
+                    title: "High",
+                    value: "\(stats.highPriorityCount)",
+                    icon: "exclamationmark.circle.fill",
+                    color: .red
+                )
+                BuylistStatCard(
+                    title: "Est. Total",
+                    value: String(format: "$%.2f", stats.totalEstimatedCost),
+                    icon: "dollarsign.circle.fill",
+                    color: .green
+                )
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
         .background(Color(.secondarySystemBackground))
     }
 }
 
-private struct StatItem: View {
+private struct BuylistStatCard: View {
     let value: String
     let label: String
-    var color: Color = .primary
+    let icon: String
+    let color: Color
+
+    init(title: String, value: String, icon: String, color: Color) {
+        self.label = title
+        self.value = value
+        self.icon = icon
+        self.color = color
+    }
 
     var body: some View {
         VStack(spacing: 2) {
-            Text(value)
-                .font(.headline)
-                .fontWeight(.bold)
+            Image(systemName: icon)
+                .font(.title2)
                 .foregroundColor(color)
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .frame(maxWidth: .infinity)
+        .frame(width: 76)
+        .padding(.vertical, 8)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
     }
 }
 

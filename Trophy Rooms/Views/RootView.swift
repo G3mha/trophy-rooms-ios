@@ -42,7 +42,9 @@ struct RootView: View {
                 }
                 .tag(3)
 
-                CollectionView()
+                NavigationStack {
+                    CollectionView()
+                }
                 .tabItem {
                     Label("Collection", systemImage: "square.grid.2x2")
                 }

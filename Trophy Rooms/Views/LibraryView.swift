@@ -49,6 +49,11 @@ struct LibraryView: View {
                 .padding()
             } else {
                 VStack(spacing: 0) {
+                    LibraryStatsHeader(
+                        totalItems: viewModel.libraryItems.count,
+                        statusCounts: viewModel.statusCounts
+                    )
+
                     // Status and platform filter pills
                     LibraryFilterView(
                         selectedStatus: $viewModel.selectedStatus,
@@ -123,6 +128,84 @@ struct LibraryView: View {
                 }
             }
         }
+    }
+}
+
+private struct LibraryStatsHeader: View {
+    let totalItems: Int
+    let statusCounts: [GameStatus: Int]
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 16) {
+                LibraryStatCard(
+                    title: "Total",
+                    value: "\(totalItems)",
+                    icon: "books.vertical.fill",
+                    color: .blue
+                )
+
+                ForEach(GameStatus.allCases, id: \.self) { status in
+                    let count = statusCounts[status] ?? 0
+                    if count > 0 {
+                        LibraryStatCard(
+                            title: status.displayName,
+                            value: "\(count)",
+                            icon: icon(for: status),
+                            color: color(for: status)
+                        )
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+        }
+        .background(Color(.secondarySystemBackground))
+    }
+
+    private func color(for status: GameStatus) -> Color {
+        switch status {
+        case .BACKLOG: return .blue
+        case .PLAYING: return .green
+        case .PAUSED: return .orange
+        case .COMPLETED: return .purple
+        case .DROPPED: return .gray
+        }
+    }
+
+    private func icon(for status: GameStatus) -> String {
+        switch status {
+        case .BACKLOG: return "tray.full.fill"
+        case .PLAYING: return "play.circle.fill"
+        case .PAUSED: return "pause.circle.fill"
+        case .COMPLETED: return "checkmark.circle.fill"
+        case .DROPPED: return "xmark.circle.fill"
+        }
+    }
+}
+
+private struct LibraryStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(width: 76)
+        .padding(.vertical, 8)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
     }
 }
 
