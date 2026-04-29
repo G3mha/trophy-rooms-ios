@@ -25,7 +25,7 @@ class GlobalSearchViewModel: ObservableObject {
     }
 
     var hasResults: Bool {
-        results?.totalCount ?? 0 > 0
+        !(results?.items.isEmpty ?? true)
     }
 
     func search(query: String) async {
@@ -72,11 +72,13 @@ class GlobalSearchViewModel: ObservableObject {
                 variables: ["query": trimmedQuery, "limit": 30]
             )
             DispatchQueue.main.async {
-                self.results = response.globalSearch
+                self.results = response.globalSearch ?? .empty
                 self.isLoading = false
+                self.errorMessage = nil
             }
         } catch {
             DispatchQueue.main.async {
+                self.results = .empty
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
             }

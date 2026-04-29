@@ -1668,8 +1668,16 @@ struct GlobalSearchResults: Decodable {
     let bundleCount: Int
     let dlcCount: Int
     let totalCount: Int
+
+    static let empty = GlobalSearchResults(
+        items: [],
+        gameCount: 0,
+        bundleCount: 0,
+        dlcCount: 0,
+        totalCount: 0
+    )
 }
 
 struct GlobalSearchResponse: Decodable {
-    let globalSearch: GlobalSearchResults
+    let globalSearch: GlobalSearchResults?
 }
