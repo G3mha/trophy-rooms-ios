@@ -26,6 +26,8 @@ class GameProgressViewModel: ObservableObject {
                 gameFamilyId
                 gameTitle
                 gameCoverUrl
+                platformName
+                platformSlug
                 earnedCount
                 totalCount
                 earnedPoints

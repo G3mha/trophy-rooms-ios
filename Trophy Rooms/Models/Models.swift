@@ -267,6 +267,8 @@ struct FastestCompletionEntry: Codable, Identifiable {
     let userEmail: String
     let gameId: String
     let gameTitle: String
+    let platformName: String?
+    let platformSlug: String?
     let completionTimeHours: Float
     let completedAt: String
 
@@ -542,6 +544,8 @@ struct GameProgress: Codable, Identifiable {
     let gameFamilyId: String
     let gameTitle: String
     let gameCoverUrl: String?
+    let platformName: String?
+    let platformSlug: String?
     let earnedCount: Int
     let totalCount: Int
     let earnedPoints: Int

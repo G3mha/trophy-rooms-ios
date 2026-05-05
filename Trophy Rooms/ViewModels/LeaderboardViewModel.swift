@@ -159,6 +159,8 @@ class LeaderboardViewModel: ObservableObject {
                 userEmail
                 gameId
                 gameTitle
+                platformName
+                platformSlug
                 completionTimeHours
                 completedAt
             }

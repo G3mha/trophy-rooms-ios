@@ -139,9 +139,16 @@ private struct FastestCompletionRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.userName ?? entry.userEmail)
                     .font(.headline)
-                Text(entry.gameTitle)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                HStack(spacing: 6) {
+                    Text(entry.gameTitle)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    if let platformSlug = entry.platformSlug, let platformName = entry.platformName {
+                        PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
+                    } else if let platformName = entry.platformName {
+                        PlatformBadge(name: platformName)
+                    }
+                }
             }
 
             Spacer()
