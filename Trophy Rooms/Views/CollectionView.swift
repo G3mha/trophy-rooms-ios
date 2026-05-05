@@ -333,20 +333,7 @@ private struct CollectionItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let coverUrl = item.game.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray
-                }
-                .frame(width: 60, height: 80)
-                .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 60, height: 80)
-                    .cornerRadius(8)
-            }
+            CoverImage.gameRow(url: item.game.coverUrl)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.game.title)

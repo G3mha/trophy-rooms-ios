@@ -349,25 +349,12 @@ private struct BuylistItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Cover image
-            if let coverUrl = item.displayCoverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray
-                }
-                .frame(width: 60, height: 80)
-                .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 60, height: 80)
-                    .overlay {
-                        Image(systemName: item.itemType.iconName)
-                            .foregroundColor(.secondary)
-                    }
-                    .cornerRadius(8)
-            }
+            CoverImage(
+                url: item.displayCoverUrl,
+                width: 60,
+                height: 80,
+                placeholderIcon: item.itemType.iconName
+            )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.displayTitle)
