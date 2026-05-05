@@ -349,7 +349,6 @@ enum BuylistItemType: String, Codable, CaseIterable {
 
 struct BuylistItem: Codable, Identifiable {
     let id: String
-    let userId: String
     let gameFamilyId: String?
     let gameId: String?
     let gameVersionId: String?

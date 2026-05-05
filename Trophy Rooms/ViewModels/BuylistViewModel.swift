@@ -49,7 +49,6 @@ class BuylistViewModel: ObservableObject {
         query GetMyBuylist {
             myBuylist {
                 id
-                userId
                 gameId
                 gameVersionId
                 dlcId
