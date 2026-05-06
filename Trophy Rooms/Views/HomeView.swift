@@ -1,6 +1,12 @@
 import SwiftUI
 import ClerkKit
 
+private enum HomeTab: Int, Hashable {
+    case games = 0
+    case leaderboard = 1
+    case activity = 2
+}
+
 struct HomeView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var gameListViewModel = GameListViewModel()
@@ -16,7 +22,13 @@ struct HomeView: View {
     @State private var gameTypeFilter: GameTypeFilter = .all
     @State private var selectedPageSize = 25
     @State private var showFilters = false
-    @State private var selectedTab = 0
+    @State private var selectedTab: HomeTab = .games
+
+    private let homeTabs: [InlineTab<HomeTab>] = [
+        InlineTab(title: "Games", icon: "gamecontroller.fill", value: .games),
+        InlineTab(title: "Leaderboard", icon: "chart.bar.fill", value: .leaderboard),
+        InlineTab(title: "Activity", icon: "clock.fill", value: .activity)
+    ]
 
     var activeFilterCount: Int {
         var count = 0
@@ -48,7 +60,7 @@ struct HomeView: View {
                 // MARK: - Tabbed Content
                 VStack(spacing: 0) {
                     // Tab picker
-                    HomeTabPicker(selectedTab: $selectedTab)
+                    InlineTabPicker(selectedTab: $selectedTab, tabs: homeTabs)
 
                     // Tab content
                     TabView(selection: $selectedTab) {
@@ -62,15 +74,15 @@ struct HomeView: View {
                             sortOption: sortOption,
                             gameTypeFilter: gameTypeFilter
                         )
-                        .tag(0)
+                        .tag(HomeTab.games)
 
                         // MARK: - Leaderboard Tab
                         LeaderboardTab(viewModel: leaderboardViewModel)
-                            .tag(1)
+                            .tag(HomeTab.leaderboard)
 
                         // MARK: - Activity Tab
                         ActivityTab(viewModel: activityViewModel)
-                            .tag(2)
+                            .tag(HomeTab.activity)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                 }
@@ -79,7 +91,7 @@ struct HomeView: View {
         .navigationBar(title: "Home", showAuth: $showAuth)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                if selectedTab == 0 {
+                if selectedTab == .games {
                     Button {
                         showFilters = true
                     } label: {
@@ -196,54 +208,6 @@ struct HomeView: View {
             await leaderboardViewModel.fetchLeaderboard()
             await activityViewModel.fetchActivity()
         }
-    }
-}
-
-// MARK: - Home Tab Picker
-
-private struct HomeTabPicker: View {
-    @Binding var selectedTab: Int
-
-    var body: some View {
-        HStack(spacing: 0) {
-            TabButton(title: "Games", icon: "gamecontroller.fill", isSelected: selectedTab == 0) {
-                selectedTab = 0
-            }
-            TabButton(title: "Leaderboard", icon: "chart.bar.fill", isSelected: selectedTab == 1) {
-                selectedTab = 1
-            }
-            TabButton(title: "Activity", icon: "clock.fill", isSelected: selectedTab == 2) {
-                selectedTab = 2
-            }
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(Color(.systemBackground))
-    }
-}
-
-private struct TabButton: View {
-    let title: String
-    let icon: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(isSelected ? .semibold : .regular)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
-            .foregroundColor(isSelected ? .accentColor : .secondary)
-            .cornerRadius(8)
-        }
-        .buttonStyle(.plain)
     }
 }
 
