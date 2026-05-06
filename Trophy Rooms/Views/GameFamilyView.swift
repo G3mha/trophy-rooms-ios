@@ -116,30 +116,6 @@ struct GameFamilyView: View {
                                         Text("Unknown Platform")
                                             .font(.headline)
                                     }
-
-                                    Spacer()
-
-                                    VStack(alignment: .trailing, spacing: 4) {
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "star.fill")
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                            Text("\(game.achievementCount)")
-                                                .font(.subheadline)
-                                        }
-                                        .foregroundColor(.secondary)
-
-                                        if game.trophyCount > 0 {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: "trophy.fill")
-                                                    .font(.caption)
-                                                    .foregroundColor(.yellow)
-                                                Text("\(game.trophyCount)")
-                                                    .font(.subheadline)
-                                            }
-                                            .foregroundColor(.secondary)
-                                        }
-                                    }
                                 }
                                 .padding(.vertical, 4)
                             }
