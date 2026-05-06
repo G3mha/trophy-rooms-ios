@@ -165,6 +165,27 @@ struct Achievement: Identifiable, Decodable {
     let achievementSetId: String
 }
 
+extension Achievement {
+    func withCompletionState(_ isCompleted: Bool) -> Achievement {
+        Achievement(
+            id: id,
+            title: title,
+            description: description,
+            iconUrl: iconUrl,
+            points: points,
+            tier: tier,
+            isCompleted: isCompleted,
+            userCount: updatedUserCount(for: isCompleted),
+            achievementSetId: achievementSetId
+        )
+    }
+
+    private func updatedUserCount(for isCompleted: Bool) -> Int? {
+        guard let userCount else { return nil }
+        return isCompleted ? userCount + 1 : max(0, userCount - 1)
+    }
+}
+
 struct GameDetail: Identifiable, Decodable {
     let id: String
     let gameFamilyId: String?
@@ -199,6 +220,60 @@ struct GameDetail: Identifiable, Decodable {
     var hasBaseGameFamilies: Bool {
         guard let baseGameFamilies = baseGameFamilies else { return false }
         return !baseGameFamilies.isEmpty
+    }
+}
+
+extension AchievementSet {
+    func replacingAchievement(_ updatedAchievement: Achievement) -> AchievementSet {
+        AchievementSet(
+            id: id,
+            title: title,
+            type: type,
+            visibility: visibility,
+            gameFamilyId: gameFamilyId,
+            createdByUserId: createdByUserId,
+            gameVersionId: gameVersionId,
+            gameVersion: gameVersion,
+            dlcId: dlcId,
+            dlc: dlc,
+            achievements: achievements.map { achievement in
+                achievement.id == updatedAchievement.id ? updatedAchievement : achievement
+            }
+        )
+    }
+}
+
+extension GameDetail {
+    func replacingAchievement(_ updatedAchievement: Achievement) -> GameDetail {
+        GameDetail(
+            id: id,
+            gameFamilyId: gameFamilyId,
+            gameFamily: gameFamily,
+            title: title,
+            description: description,
+            coverUrl: coverUrl,
+            type: type,
+            baseGameFamilies: baseGameFamilies,
+            derivedGameFamilies: derivedGameFamilies,
+            derivedGameFamilyCount: derivedGameFamilyCount,
+            trophyCount: trophyCount,
+            releaseDate: releaseDate,
+            developer: developer,
+            publisher: publisher,
+            genre: genre,
+            esrbRating: esrbRating,
+            screenshots: screenshots,
+            platform: platform,
+            achievementSets: achievementSets.map { set in
+                set.id == updatedAchievement.achievementSetId ? set.replacingAchievement(updatedAchievement) : set
+            },
+            versions: versions,
+            versionCount: versionCount,
+            defaultVersion: defaultVersion,
+            dlcs: dlcs,
+            dlcCount: dlcCount,
+            bundles: bundles
+        )
     }
 }
 
@@ -286,7 +361,7 @@ struct ActivityEntry: Codable, Identifiable {
     let achievementTitle: String?
     let achievementTier: AchievementTier?
     let achievementPoints: Int?
-    let gameFamilyId: String
+    let gameFamilyId: String?
     let gameTitle: String
     let platformName: String?
     let platformSlug: String?
