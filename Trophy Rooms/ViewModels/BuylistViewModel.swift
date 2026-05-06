@@ -8,6 +8,8 @@ class BuylistViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var selectedPriority: BuylistPriority?
     @Published var selectedItemType: BuylistItemType?
+    @Published var selectedSortOption: BuylistSortOption = .priorityDesc
+    @Published var groupByPlatform: Bool = false
 
     var filteredItems: [BuylistItem] {
         var items = buylistItems
@@ -39,6 +41,52 @@ class BuylistViewModel: ObservableObject {
         return counts
     }
 
+    /// Groups filtered items by platform
+    var groupedItems: [(platform: BuylistPlatform?, items: [BuylistItem])] {
+        var groups: [String: (platform: BuylistPlatform?, items: [BuylistItem])] = [:]
+
+        for item in filteredItems {
+            let key = item.displayPlatform?.id ?? "other"
+            if groups[key] != nil {
+                groups[key]!.items.append(item)
+            } else {
+                groups[key] = (platform: item.displayPlatform, items: [item])
+            }
+        }
+
+        // Sort groups: platforms with names first, then "Other" (nil platform)
+        return groups.values.sorted { lhs, rhs in
+            if lhs.platform == nil { return false }
+            if rhs.platform == nil { return true }
+            return (lhs.platform?.name ?? "") < (rhs.platform?.name ?? "")
+        }
+    }
+
+    /// Available platforms from current buylist items
+    var availablePlatforms: [BuylistPlatform] {
+        var platforms: [BuylistPlatform] = []
+        var seen: Set<String> = []
+
+        for item in buylistItems {
+            if let platform = item.displayPlatform, !seen.contains(platform.id) {
+                platforms.append(platform)
+                seen.insert(platform.id)
+            }
+        }
+
+        return platforms.sorted { $0.name < $1.name }
+    }
+
+    /// Count of items per platform
+    var platformCounts: [String: Int] {
+        var counts: [String: Int] = [:]
+        for item in buylistItems {
+            let key = item.displayPlatform?.id ?? "other"
+            counts[key, default: 0] += 1
+        }
+        return counts
+    }
+
     func fetchBuylist() async {
         DispatchQueue.main.async {
             self.isLoading = true
@@ -46,8 +94,8 @@ class BuylistViewModel: ObservableObject {
         }
 
         let query = """
-        query GetMyBuylist {
-            myBuylist {
+        query GetMyBuylist($orderBy: BuylistOrderBy) {
+            myBuylist(orderBy: $orderBy) {
                 id
                 gameId
                 gameVersionId
@@ -59,6 +107,11 @@ class BuylistViewModel: ObservableObject {
                 itemType
                 displayTitle
                 displayCoverUrl
+                displayPlatform {
+                    id
+                    name
+                    slug
+                }
                 addedAt
                 updatedAt
             }
@@ -66,7 +119,10 @@ class BuylistViewModel: ObservableObject {
         """
 
         do {
-            let response: BuylistResponse = try await NetworkService.shared.fetch(query: query)
+            let response: BuylistResponse = try await NetworkService.shared.fetch(
+                query: query,
+                variables: ["orderBy": selectedSortOption.rawValue]
+            )
             DispatchQueue.main.async {
                 self.buylistItems = response.myBuylist
                 self.isLoading = false
