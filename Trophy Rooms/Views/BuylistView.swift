@@ -276,7 +276,7 @@ private struct BuylistFilterView: View {
                         title: "All",
                         count: priorityCounts.values.reduce(0, +),
                         isSelected: selectedPriority == nil && selectedItemType == nil,
-                        color: .primary
+                        color: Color(.darkGray)
                     ) {
                         selectedPriority = nil
                         selectedItemType = nil
