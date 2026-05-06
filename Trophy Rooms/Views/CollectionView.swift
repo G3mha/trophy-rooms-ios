@@ -9,6 +9,7 @@ struct CollectionView: View {
     @State private var editingItem: CollectionItem?
     @State private var editingItemVersions: [GameVersion] = []
     @State private var showEditSheet = false
+    @State private var showStats = true
 
     var body: some View {
         let showLoading = viewModel.isLoading || !viewModel.hasLoadedOnce
@@ -54,7 +55,11 @@ struct CollectionView: View {
                 VStack(spacing: 0) {
                     // Stats header
                     if let stats = viewModel.stats {
-                        CollectionStatsHeader(stats: stats)
+                        CollapsibleStatsBar(
+                            stats: collectionStatItems(from: stats),
+                            collapsedSummary: "\(stats.totalItems) items · \(stats.completeCount) CIB",
+                            isExpanded: $showStats
+                        )
                     }
 
                     // Filter bar
@@ -130,6 +135,34 @@ struct CollectionView: View {
         }
     }
 
+    private func collectionStatItems(from stats: CollectionStats) -> [StatItem] {
+        var items = [
+            StatItem(title: "Total", value: "\(stats.totalItems)", icon: "archivebox.fill", color: .blue),
+            StatItem(title: "Sealed", value: "\(stats.sealedCount)", icon: "seal.fill", color: .purple),
+            StatItem(title: "Complete", value: "\(stats.completeCount)", icon: "checkmark.seal.fill", color: .green),
+        ]
+
+        for regionCount in stats.byRegion {
+            items.append(StatItem(
+                title: regionCount.region.displayName,
+                value: "\(regionCount.count)",
+                icon: "globe",
+                color: regionColor(for: regionCount.region)
+            ))
+        }
+
+        return items
+    }
+
+    private func regionColor(for region: GameRegion) -> Color {
+        switch region {
+        case .NTSC_U: return .blue
+        case .PAL: return .green
+        case .NTSC_J: return .red
+        case .OTHER: return .gray
+        }
+    }
+
     private func fetchVersionsForGame(gameId: String) async {
         let query = """
         query GetGameVersions($gameId: ID!) {
@@ -161,66 +194,6 @@ struct CollectionView: View {
                 self.editingItemVersions = []
             }
         }
-    }
-}
-
-private struct CollectionStatsHeader: View {
-    let stats: CollectionStats
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 16) {
-                StatCard(title: "Total", value: "\(stats.totalItems)", icon: "archivebox.fill", color: .blue)
-                StatCard(title: "Sealed", value: "\(stats.sealedCount)", icon: "seal.fill", color: .purple)
-                StatCard(title: "Complete", value: "\(stats.completeCount)", icon: "checkmark.seal.fill", color: .green)
-
-                ForEach(stats.byRegion, id: \.region) { regionCount in
-                    StatCard(
-                        title: regionCount.region.displayName,
-                        value: "\(regionCount.count)",
-                        icon: "globe",
-                        color: regionColor(for: regionCount.region)
-                    )
-                }
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
-        }
-        .background(Color(.secondarySystemBackground))
-    }
-
-    func regionColor(for region: GameRegion) -> Color {
-        switch region {
-        case .NTSC_U: return .blue
-        case .PAL: return .green
-        case .NTSC_J: return .red
-        case .OTHER: return .gray
-        }
-    }
-}
-
-private struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(width: 70)
-        .padding(.vertical, 8)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
     }
 }
 
