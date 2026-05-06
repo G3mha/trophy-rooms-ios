@@ -240,56 +240,51 @@ private struct BuylistFilterView: View {
             )
 
             // Filter pills
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    // All filter
-                    FilterPill(
-                        title: "All",
-                        count: priorityCounts.values.reduce(0, +),
-                        isSelected: selectedPriority == nil && selectedItemType == nil,
-                        color: Color(.darkGray)
-                    ) {
-                        selectedPriority = nil
-                        selectedItemType = nil
-                    }
+            FilterBarContainer {
+                // All filter
+                FilterPill(
+                    title: "All",
+                    count: priorityCounts.values.reduce(0, +),
+                    isSelected: selectedPriority == nil && selectedItemType == nil,
+                    color: filterAllColor
+                ) {
+                    selectedPriority = nil
+                    selectedItemType = nil
+                }
 
-                    // Priority filters
-                    ForEach(BuylistPriority.allCases, id: \.self) { priority in
-                        let count = priorityCounts[priority] ?? 0
-                        if count > 0 {
-                            FilterPill(
-                                title: priority.displayName,
-                                count: count,
-                                isSelected: selectedPriority == priority,
-                                color: priorityColor(for: priority)
-                            ) {
-                                selectedPriority = priority
-                            }
-                        }
-                    }
-
-                    Divider().frame(height: 24)
-
-                    // Item type filters
-                    ForEach(BuylistItemType.allCases, id: \.self) { itemType in
-                        let count = itemTypeCounts[itemType] ?? 0
-                        if count > 0 {
-                            FilterPill(
-                                title: itemType.displayName,
-                                count: count,
-                                isSelected: selectedItemType == itemType,
-                                color: itemTypeColor(for: itemType)
-                            ) {
-                                selectedItemType = itemType
-                            }
+                // Priority filters
+                ForEach(BuylistPriority.allCases, id: \.self) { priority in
+                    let count = priorityCounts[priority] ?? 0
+                    if count > 0 {
+                        FilterPill(
+                            title: priority.displayName,
+                            count: count,
+                            isSelected: selectedPriority == priority,
+                            color: priorityColor(for: priority)
+                        ) {
+                            selectedPriority = priority
                         }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+
+                Divider().frame(height: 24)
+
+                // Item type filters
+                ForEach(BuylistItemType.allCases, id: \.self) { itemType in
+                    let count = itemTypeCounts[itemType] ?? 0
+                    if count > 0 {
+                        FilterPill(
+                            title: itemType.displayName,
+                            count: count,
+                            isSelected: selectedItemType == itemType,
+                            color: itemTypeColor(for: itemType)
+                        ) {
+                            selectedItemType = itemType
+                        }
+                    }
+                }
             }
         }
-        .background(Color(.systemBackground))
     }
 
     func priorityColor(for priority: BuylistPriority) -> Color {
@@ -306,36 +301,6 @@ private struct BuylistFilterView: View {
         case .DLC: return .purple
         case .BUNDLE: return .pink
         }
-    }
-}
-
-private struct FilterPill: View {
-    let title: String
-    let count: Int
-    let isSelected: Bool
-    let color: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(isSelected ? .semibold : .regular)
-                Text("\(count)")
-                    .font(.caption)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(isSelected ? Color.white.opacity(0.3) : Color.secondary.opacity(0.2))
-                    .cornerRadius(8)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isSelected ? color : Color(.secondarySystemBackground))
-            .foregroundColor(isSelected ? .white : .primary)
-            .cornerRadius(16)
-        }
-        .buttonStyle(.plain)
     }
 }
 

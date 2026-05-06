@@ -238,57 +238,52 @@ private struct LibraryFilterView: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // All filter
-                StatusPill(
-                    title: "All",
-                    count: statusCounts.values.reduce(0, +),
-                    isSelected: selectedStatus == nil && selectedPlatformId == nil,
-                    color: .primary
-                ) {
-                    selectedStatus = nil
-                    selectedPlatformId = nil
-                }
+        FilterBarContainer {
+            // All filter
+            FilterPill(
+                title: "All",
+                count: statusCounts.values.reduce(0, +),
+                isSelected: selectedStatus == nil && selectedPlatformId == nil,
+                color: filterAllColor
+            ) {
+                selectedStatus = nil
+                selectedPlatformId = nil
+            }
 
-                // Status filters
-                ForEach(GameStatus.allCases, id: \.self) { status in
-                    let count = statusCounts[status] ?? 0
-                    if count > 0 {
-                        StatusPill(
-                            title: status.displayName,
-                            count: count,
-                            isSelected: selectedStatus == status,
-                            color: statusColor(for: status)
-                        ) {
-                            selectedStatus = status
-                        }
-                    }
-                }
-
-                // Platform filter menu
-                if !availablePlatforms.isEmpty {
-                    Menu {
-                        Button("All Platforms") {
-                            selectedPlatformId = nil
-                        }
-                        ForEach(availablePlatforms, id: \.id) { platform in
-                            Button(platform.name) {
-                                selectedPlatformId = platform.id
-                            }
-                        }
-                    } label: {
-                        LibraryFilterChip(
-                            title: selectedPlatformName ?? "Platform",
-                            isActive: selectedPlatformId != nil
-                        )
+            // Status filters
+            ForEach(GameStatus.allCases, id: \.self) { status in
+                let count = statusCounts[status] ?? 0
+                if count > 0 {
+                    FilterPill(
+                        title: status.displayName,
+                        count: count,
+                        isSelected: selectedStatus == status,
+                        color: statusColor(for: status)
+                    ) {
+                        selectedStatus = status
                     }
                 }
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
+
+            // Platform filter menu
+            if !availablePlatforms.isEmpty {
+                Menu {
+                    Button("All Platforms") {
+                        selectedPlatformId = nil
+                    }
+                    ForEach(availablePlatforms, id: \.id) { platform in
+                        Button(platform.name) {
+                            selectedPlatformId = platform.id
+                        }
+                    }
+                } label: {
+                    FilterChip(
+                        title: selectedPlatformName ?? "Platform",
+                        isActive: selectedPlatformId != nil
+                    )
+                }
+            }
         }
-        .background(Color(.systemBackground))
     }
 
     func statusColor(for status: GameStatus) -> Color {
@@ -299,51 +294,6 @@ private struct LibraryFilterView: View {
         case .COMPLETED: return .purple
         case .DROPPED: return .gray
         }
-    }
-}
-
-private struct StatusPill: View {
-    let title: String
-    let count: Int
-    let isSelected: Bool
-    let color: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(isSelected ? .semibold : .regular)
-                Text("\(count)")
-                    .font(.caption)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(isSelected ? Color.white.opacity(0.3) : Color.secondary.opacity(0.2))
-                    .cornerRadius(8)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isSelected ? color : Color(.secondarySystemBackground))
-            .foregroundColor(isSelected ? .white : .primary)
-            .cornerRadius(16)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-private struct LibraryFilterChip: View {
-    let title: String
-    let isActive: Bool
-
-    var body: some View {
-        Text(title)
-            .font(.subheadline)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isActive ? Color.blue : Color(.secondarySystemBackground))
-            .foregroundColor(isActive ? .white : .primary)
-            .cornerRadius(16)
     }
 }
 

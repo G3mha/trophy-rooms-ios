@@ -268,91 +268,71 @@ private struct CollectionFilterBar: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // Platform filter
-                if !availablePlatforms.isEmpty {
-                    Menu {
-                        Button("All Platforms") {
-                            selectedPlatformId = nil
-                        }
-                        ForEach(availablePlatforms) { platform in
-                            Button(platform.name) {
-                                selectedPlatformId = platform.id
-                            }
-                        }
-                    } label: {
-                        FilterChip(
-                            title: selectedPlatformName ?? "Platform",
-                            isActive: selectedPlatformId != nil
-                        )
-                    }
-                }
-
-                // Region filter
+        FilterBarContainer {
+            // Platform filter
+            if !availablePlatforms.isEmpty {
                 Menu {
-                    Button("All Regions") {
-                        selectedRegion = nil
+                    Button("All Platforms") {
+                        selectedPlatformId = nil
                     }
-                    ForEach(GameRegion.allCases, id: \.self) { region in
-                        Button(region.displayName) {
-                            selectedRegion = region
+                    ForEach(availablePlatforms) { platform in
+                        Button(platform.name) {
+                            selectedPlatformId = platform.id
                         }
                     }
                 } label: {
                     FilterChip(
-                        title: selectedRegion?.displayName ?? "Region",
-                        isActive: selectedRegion != nil
+                        title: selectedPlatformName ?? "Platform",
+                        isActive: selectedPlatformId != nil
                     )
                 }
+            }
 
-                // Sealed filter
-                Button {
-                    showSealedOnly.toggle()
-                } label: {
-                    FilterChip(title: "Sealed", isActive: showSealedOnly)
+            // Region filter
+            Menu {
+                Button("All Regions") {
+                    selectedRegion = nil
                 }
-
-                // Complete filter
-                Button {
-                    showCompleteOnly.toggle()
-                } label: {
-                    FilterChip(title: "Complete", isActive: showCompleteOnly)
-                }
-
-                // Clear all button
-                if hasActiveFilters {
-                    Button {
-                        selectedRegion = nil
-                        selectedPlatformId = nil
-                        showSealedOnly = false
-                        showCompleteOnly = false
-                    } label: {
-                        Text("Clear")
-                            .font(.subheadline)
-                            .foregroundColor(.red)
+                ForEach(GameRegion.allCases, id: \.self) { region in
+                    Button(region.displayName) {
+                        selectedRegion = region
                     }
                 }
+            } label: {
+                FilterChip(
+                    title: selectedRegion?.displayName ?? "Region",
+                    isActive: selectedRegion != nil
+                )
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
+
+            // Sealed filter
+            Button {
+                showSealedOnly.toggle()
+            } label: {
+                FilterChip(title: "Sealed", isActive: showSealedOnly, activeColor: .purple)
+            }
+
+            // Complete filter
+            Button {
+                showCompleteOnly.toggle()
+            } label: {
+                FilterChip(title: "Complete", isActive: showCompleteOnly, activeColor: .green)
+            }
+
+            // Clear all button
+            if hasActiveFilters {
+                Button {
+                    selectedRegion = nil
+                    selectedPlatformId = nil
+                    showSealedOnly = false
+                    showCompleteOnly = false
+                } label: {
+                    Text("Clear")
+                        .font(.subheadline)
+                        .foregroundColor(.red)
+                }
+            }
         }
-        .background(Color(.systemBackground))
-    }
-}
-
-private struct FilterChip: View {
-    let title: String
-    let isActive: Bool
-
-    var body: some View {
-        Text(title)
-            .font(.subheadline)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isActive ? Color.blue : Color(.secondarySystemBackground))
-            .foregroundColor(isActive ? .white : .primary)
-            .cornerRadius(16)
     }
 }
 
