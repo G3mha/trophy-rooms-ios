@@ -128,14 +128,14 @@ private struct StatsHeader: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            StatCard(title: "Trophies", value: stats.totalTrophies, icon: "trophy.fill", color: Color(red: 0.863, green: 0.078, blue: 0.235))
-            StatCard(title: "Achievements", value: stats.totalAchievements, icon: "star.fill", color: .yellow)
-            StatCard(title: "Games", value: stats.totalGamesPlayed, icon: "gamecontroller.fill", color: .blue)
+            TrophyRoomStatCard(title: "Trophies", value: stats.totalTrophies, icon: "trophy.fill", color: Color(red: 0.863, green: 0.078, blue: 0.235))
+            TrophyRoomStatCard(title: "Achievements", value: stats.totalAchievements, icon: "star.fill", color: .yellow)
+            TrophyRoomStatCard(title: "Games", value: stats.totalGamesPlayed, icon: "gamecontroller.fill", color: .blue)
         }
     }
 }
 
-private struct StatCard: View {
+private struct TrophyRoomStatCard: View {
     let title: String
     let value: Int
     let icon: String
