@@ -8,8 +8,25 @@ class BuylistViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var selectedPriority: BuylistPriority?
     @Published var selectedItemType: BuylistItemType?
-    @Published var selectedSortOption: BuylistSortOption = .priorityDesc
-    @Published var groupByPlatform: Bool = false
+    @Published var selectedSortOption: BuylistSortOption = .priorityDesc {
+        didSet {
+            UserDefaults.standard.set(selectedSortOption.rawValue, forKey: "buylist_sortOption")
+        }
+    }
+    @Published var groupByPlatform: Bool = false {
+        didSet {
+            UserDefaults.standard.set(groupByPlatform, forKey: "buylist_groupByPlatform")
+        }
+    }
+
+    init() {
+        // Load persisted preferences
+        if let sortRaw = UserDefaults.standard.string(forKey: "buylist_sortOption"),
+           let sortOption = BuylistSortOption(rawValue: sortRaw) {
+            self.selectedSortOption = sortOption
+        }
+        self.groupByPlatform = UserDefaults.standard.bool(forKey: "buylist_groupByPlatform")
+    }
 
     var filteredItems: [BuylistItem] {
         var items = buylistItems

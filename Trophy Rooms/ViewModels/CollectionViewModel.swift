@@ -12,8 +12,25 @@ class CollectionViewModel: ObservableObject {
     @Published var selectedPlatformId: String?
     @Published var showSealedOnly = false
     @Published var showCompleteOnly = false
-    @Published var selectedSortOption: CollectionSortOption = .titleAsc
-    @Published var groupByPlatform: Bool = false
+    @Published var selectedSortOption: CollectionSortOption = .titleAsc {
+        didSet {
+            UserDefaults.standard.set(selectedSortOption.rawValue, forKey: "collection_sortOption")
+        }
+    }
+    @Published var groupByPlatform: Bool = false {
+        didSet {
+            UserDefaults.standard.set(groupByPlatform, forKey: "collection_groupByPlatform")
+        }
+    }
+
+    init() {
+        // Load persisted preferences
+        if let sortRaw = UserDefaults.standard.string(forKey: "collection_sortOption"),
+           let sortOption = CollectionSortOption(rawValue: sortRaw) {
+            self.selectedSortOption = sortOption
+        }
+        self.groupByPlatform = UserDefaults.standard.bool(forKey: "collection_groupByPlatform")
+    }
 
     var filteredItems: [CollectionItem] {
         var items = collectionItems

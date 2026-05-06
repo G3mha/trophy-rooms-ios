@@ -7,8 +7,25 @@ class LibraryViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var selectedStatus: GameStatus?
     @Published var selectedPlatformId: String?
-    @Published var selectedSortOption: LibrarySortOption = .titleAsc
-    @Published var groupByPlatform: Bool = false
+    @Published var selectedSortOption: LibrarySortOption = .titleAsc {
+        didSet {
+            UserDefaults.standard.set(selectedSortOption.rawValue, forKey: "library_sortOption")
+        }
+    }
+    @Published var groupByPlatform: Bool = false {
+        didSet {
+            UserDefaults.standard.set(groupByPlatform, forKey: "library_groupByPlatform")
+        }
+    }
+
+    init() {
+        // Load persisted preferences
+        if let sortRaw = UserDefaults.standard.string(forKey: "library_sortOption"),
+           let sortOption = LibrarySortOption(rawValue: sortRaw) {
+            self.selectedSortOption = sortOption
+        }
+        self.groupByPlatform = UserDefaults.standard.bool(forKey: "library_groupByPlatform")
+    }
 
     var filteredItems: [LibraryItem] {
         var items = libraryItems
