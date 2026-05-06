@@ -414,9 +414,6 @@ private struct BuylistItemRow: View {
                 HStack(spacing: 6) {
                     PriorityBadge(priority: item.priority)
                     ItemTypeBadge(itemType: item.itemType)
-                    if showPlatform, let platform = item.displayPlatform {
-                        PlatformBadge(name: platform.name)
-                    }
                 }
 
                 if let price = item.estimatedPrice {
@@ -439,6 +436,12 @@ private struct BuylistItemRow: View {
             }
 
             Spacer()
+
+            // Platform icon on the right
+            if showPlatform, let platform = item.displayPlatform, let slug = platform.slug {
+                PlatformIcon(slug: slug, size: 24)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(.vertical, 4)
     }
