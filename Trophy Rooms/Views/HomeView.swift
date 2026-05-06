@@ -1433,7 +1433,7 @@ private struct SearchSheet: View {
                             .foregroundColor(.secondary)
                         Text("Type at least 2 characters to search")
                             .font(.subheadline)
-                            .foregroundColor(.tertiary)
+                            .foregroundColor(.secondary.opacity(0.7))
                         Spacer()
                     }
                 }
