@@ -92,7 +92,7 @@ struct GameDetailView: View {
                         // Achievement Sets
                         ForEach(game.achievementSets) { set in
                             AchievementSetView(
-                                set: set,
+                                achievementSet: set,
                                 isAuthenticated: clerk.user != nil,
                                 onToggle: { achievement in
                                     Task {
@@ -561,121 +561,306 @@ private struct MetadataItem: View {
 }
 
 private struct AchievementSetView: View {
-    let set: AchievementSet
+    let achievementSet: AchievementSet
     let isAuthenticated: Bool
     let onToggle: (Achievement) -> Void
+    @State private var isExpanded = false
+
+    var completedCount: Int {
+        achievementSet.achievements.filter { $0.isCompleted == true }.count
+    }
+
+    var totalCount: Int {
+        achievementSet.achievements.count
+    }
+
+    var earnedPoints: Int {
+        achievementSet.achievements.reduce(0) { partialResult, achievement in
+            partialResult + (achievement.isCompleted == true ? achievement.points : 0)
+        }
+    }
+
+    var totalPoints: Int {
+        achievementSet.achievements.reduce(0) { $0 + $1.points }
+    }
+
+    var completionFraction: Double {
+        guard totalCount > 0 else { return 0 }
+        return Double(completedCount) / Double(totalCount)
+    }
+
+    var completionPercentText: String {
+        "\(Int((completionFraction * 100).rounded()))%"
+    }
+
+    var dominantTier: AchievementTier? {
+        if achievementSet.achievements.contains(where: { $0.tier == .PLATINUM }) { return .PLATINUM }
+        if achievementSet.achievements.contains(where: { $0.tier == .GOLD }) { return .GOLD }
+        if achievementSet.achievements.contains(where: { $0.tier == .SILVER }) { return .SILVER }
+        if achievementSet.achievements.contains(where: { $0.tier == .BRONZE }) { return .BRONZE }
+        return nil
+    }
+
+    var accentColor: Color {
+        if achievementSet.dlc != nil { return .blue }
+
+        switch achievementSet.type.uppercased() {
+        case "CUSTOM":
+            return .purple
+        case "COMMUNITY":
+            return .green
+        case "COMPLETIONIST":
+            return .orange
+        default:
+            return dominantTier?.accentColor ?? Color(.systemGray3)
+        }
+    }
+
+    var accentGlowColor: Color {
+        accentColor.opacity(0.28)
+    }
+
+    var showsVisibilityChip: Bool {
+        achievementSet.visibility.uppercased() != "PUBLIC"
+    }
+
+    var displayType: String {
+        switch achievementSet.type.uppercased() {
+        case "OFFICIAL":
+            return "Official"
+        case "COMPLETIONIST":
+            return "Completionist"
+        case "CUSTOM":
+            return "Custom"
+        case "COMMUNITY":
+            return "Community"
+        default:
+            return achievementSet.type.capitalized
+        }
+    }
+
+    var displayVisibility: String {
+        achievementSet.visibility.capitalized
+    }
+
+    var canExpand: Bool {
+        !achievementSet.achievements.isEmpty
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading) {
-                    HStack {
-                        Text(set.title)
-                            .font(.headline)
-                        if let dlc = set.dlc {
-                            DLCTypeBadge(type: dlc.type)
-                        }
-                    }
-                    HStack(spacing: 4) {
-                        Text("\(set.type) • \(set.visibility.lowercased())")
-                        if let version = set.gameVersion {
-                            Text("•")
-                            Text(version.name)
-                                .fontWeight(.medium)
-                        }
-                        if let dlc = set.dlc {
-                            Text("•")
-                            Text(dlc.name)
-                                .fontWeight(.medium)
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                }
-                Spacer()
-                Text("\(set.achievements.count)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(4)
-            }
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text(achievementSet.title)
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .lineLimit(2)
 
-            if set.achievements.isEmpty {
-                Text("No achievements yet")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            } else {
-                ForEach(set.achievements) { achievement in
-                    AchievementRow(
-                        achievement: achievement,
-                        isAuthenticated: isAuthenticated,
-                        onToggle: { onToggle(achievement) }
+                            if completedCount == totalCount && totalCount > 0 {
+                                Image(systemName: "sparkles")
+                                    .font(.caption)
+                                    .foregroundStyle(accentColor)
+                            }
+                        }
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                AchievementSetChip(
+                                    label: displayType,
+                                    systemImage: achievementSet.type.uppercased() == "CUSTOM" ? "paintpalette.fill" : "rosette",
+                                    tint: achievementSet.type.uppercased() == "CUSTOM" ? .purple : accentColor
+                                )
+                                if showsVisibilityChip {
+                                    AchievementSetChip(
+                                        label: displayVisibility,
+                                        systemImage: "eye.slash",
+                                        tint: .secondary
+                                    )
+                                }
+                                if let version = achievementSet.gameVersion {
+                                    AchievementSetChip(
+                                        label: version.name,
+                                        systemImage: "square.stack.3d.up.fill",
+                                        tint: .blue
+                                    )
+                                }
+                                if let dlc = achievementSet.dlc {
+                                    AchievementSetChip(
+                                        label: dlc.name,
+                                        systemImage: "puzzlepiece.extension.fill",
+                                        tint: .blue
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    .allowsHitTesting(false)
+
+                    Spacer(minLength: 8)
+
+                    HStack {
+                        Text("\(totalCount)")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(Color.white.opacity(0.06))
+                            )
+
+                        if canExpand {
+                            Image(systemName: isExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(accentColor)
+                        }
+                    }
+                }
+
+                AchievementSetProgressBar(
+                    progress: completionFraction,
+                    accentColor: accentColor
+                )
+                .allowsHitTesting(false)
+
+                HStack(spacing: 10) {
+                    AchievementSetSummaryPill(
+                        title: "Progress",
+                        value: "\(completedCount)/\(totalCount)",
+                        tint: accentColor
+                    )
+                    AchievementSetSummaryPill(
+                        title: "Points",
+                        value: "\(earnedPoints)/\(totalPoints) pts",
+                        tint: .yellow
+                    )
+                    AchievementSetSummaryPill(
+                        title: "Complete",
+                        value: completionPercentText,
+                        tint: completedCount == totalCount && totalCount > 0 ? .green : accentColor
                     )
                 }
+                .allowsHitTesting(false)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard canExpand else { return }
+                withAnimation(.easeInOut(duration: 0.24)) {
+                    isExpanded.toggle()
+                }
+            }
+
+            if achievementSet.achievements.isEmpty {
+                Text("No achievements yet")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
+            } else if isExpanded {
+                VStack(spacing: 10) {
+                    ForEach(achievementSet.achievements) { achievement in
+                        AchievementRow(
+                            achievement: achievement,
+                            isAuthenticated: isAuthenticated,
+                            accentColor: accentColor,
+                            onToggle: { onToggle(achievement) }
+                        )
+                    }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .overlay(alignment: .top) {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [accentGlowColor, accentGlowColor.opacity(0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(height: 72)
+                .mask(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                )
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(accentColor.opacity(0.25), lineWidth: 1)
+        )
+        .overlay(alignment: .top) {
+            Capsule()
+                .fill(accentColor.opacity(0.92))
+                .frame(width: 84, height: 5)
+                .padding(.top, 10)
+        }
+        .shadow(color: accentGlowColor.opacity(0.25), radius: 16, y: 8)
     }
 }
 
 private struct AchievementRow: View {
     let achievement: Achievement
     let isAuthenticated: Bool
+    let accentColor: Color
     let onToggle: () -> Void
+
+    var isCompleted: Bool {
+        achievement.isCompleted == true
+    }
+
+    var rowTint: Color {
+        achievement.tier?.accentColor ?? accentColor
+    }
 
     var body: some View {
         HStack(spacing: 12) {
-            // Achievement icon or placeholder
             if let iconUrl = achievement.iconUrl, let url = URL(string: iconUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                }
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
-            } else {
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Image(systemName: "star.fill")
-                            .foregroundColor(.gray)
-                    )
+                AchievementIconView(
+                    url: url,
+                    accentColor: rowTint,
+                    isCompleted: isCompleted
+                )
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(achievement.title)
                         .font(.subheadline)
-                        .fontWeight(.medium)
+                        .fontWeight(.semibold)
+                        .foregroundColor(isCompleted ? .primary : Color.primary.opacity(0.94))
+                        .lineLimit(2)
 
                     if let tier = achievement.tier {
                         TierBadge(tier: tier)
                     }
                 }
 
-                if let description = achievement.description {
+                if let description = achievement.description, !description.isEmpty {
                     Text(description)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
 
                 HStack(spacing: 8) {
-                    Text("\(achievement.points) pts")
-                        .font(.caption2)
-                        .foregroundColor(.blue)
+                    AchievementSetChip(
+                        label: "\(achievement.points) pts",
+                        systemImage: "star.fill",
+                        tint: .yellow,
+                        compact: true
+                    )
 
                     if let userCount = achievement.userCount, userCount > 0 {
                         Text("\(userCount) users")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -684,16 +869,152 @@ private struct AchievementRow: View {
 
             if isAuthenticated {
                 Button(action: onToggle) {
-                    Image(systemName: achievement.isCompleted == true ? "checkmark.circle.fill" : "circle")
-                        .font(.title2)
-                        .foregroundColor(achievement.isCompleted == true ? .green : .gray)
+                    ZStack {
+                        Circle()
+                            .fill(isCompleted ? rowTint.opacity(0.2) : Color.white.opacity(0.06))
+                            .frame(width: 34, height: 34)
+                        Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                            .font(.title3)
+                            .foregroundStyle(isCompleted ? rowTint : .secondary)
+                    }
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.vertical, 4)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(isCompleted ? rowTint.opacity(0.12) : rowTint.opacity(0.055))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(isCompleted ? rowTint.opacity(0.28) : rowTint.opacity(0.12), lineWidth: 1)
+        )
     }
 }
+
+private struct AchievementIconView: View {
+    let url: URL
+    let accentColor: Color
+    let isCompleted: Bool
+
+    var body: some View {
+        AsyncImage(url: url) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .aspectRatio(1, contentMode: .fill)
+            case .empty:
+                iconPlaceholder
+            case .failure:
+                iconPlaceholder
+            @unknown default:
+                iconPlaceholder
+            }
+        }
+        .frame(width: 52, height: 52)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(accentColor.opacity(isCompleted ? 0.4 : 0.2), lineWidth: 1)
+        )
+        .shadow(color: accentColor.opacity(isCompleted ? 0.2 : 0.1), radius: 8, y: 3)
+    }
+
+    private var iconPlaceholder: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(accentColor.opacity(isCompleted ? 0.18 : 0.1))
+            .overlay(
+                Image(systemName: "photo")
+                    .font(.caption)
+                    .foregroundStyle(accentColor.opacity(0.75))
+            )
+    }
+}
+
+private struct AchievementSetChip: View {
+    let label: String
+    let systemImage: String
+    let tint: Color
+    var compact: Bool = false
+
+    var body: some View {
+        HStack(spacing: compact ? 4 : 5) {
+            Image(systemName: systemImage)
+                .font(compact ? .caption2 : .caption)
+            Text(label)
+                .font(compact ? .caption2 : .caption)
+                .fontWeight(.medium)
+                .lineLimit(1)
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, compact ? 8 : 10)
+        .padding(.vertical, compact ? 5 : 6)
+        .background(
+            Capsule()
+                .fill(tint.opacity(0.14))
+        )
+    }
+}
+
+private struct AchievementSetSummaryPill: View {
+    let title: String
+    let value: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title.uppercased())
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.white.opacity(0.05))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(tint.opacity(0.18), lineWidth: 1)
+        )
+    }
+}
+
+private struct AchievementSetProgressBar: View {
+    let progress: Double
+    let accentColor: Color
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.07))
+
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [accentColor.opacity(0.82), accentColor, accentColor.opacity(0.78)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: geometry.size.width * max(0, min(progress, 1)))
+            }
+        }
+        .frame(height: 8)
+    }
+}
+
 
 // MARK: - Base Game Families Section
 
