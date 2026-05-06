@@ -348,18 +348,15 @@ private struct CollectionItemRow: View {
                     }
                 }
                 .foregroundColor(.secondary)
-
-                if let platform = item.platform, let slug = platform.slug {
-                    HStack(spacing: 4) {
-                        PlatformIcon(slug: slug, size: 12)
-                        Text(platform.name)
-                            .font(.caption)
-                    }
-                    .foregroundColor(.secondary)
-                }
             }
 
             Spacer()
+
+            // Platform icon on the right
+            if let platform = item.platform, let slug = platform.slug {
+                PlatformIcon(slug: slug, size: 24)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(.vertical, 4)
     }
