@@ -1,50 +1,59 @@
 import SwiftUI
 import ClerkKit
 
+enum AppTab: Hashable {
+    case home
+    case trophies
+    case library
+    case buylist
+    case collection
+    case search
+}
+
 struct RootView: View {
-    @State private var selectedTab = 0
+    @State private var selectedTab: AppTab = .home
     @StateObject private var adminViewModel = AdminViewModel()
     @EnvironmentObject private var inlineAdminContext: InlineAdminContext
     @EnvironmentObject private var adminPresentationContext: AdminPresentationContext
 
-    private let shellAnimation = Animation.spring(response: 0.34, dampingFraction: 0.88)
-
     var body: some View {
         TabView(selection: $selectedTab) {
-            NavigationStack {
-                HomeView()
+            Tab("Home", systemImage: "house.fill", value: .home) {
+                NavigationStack {
+                    HomeView()
+                }
             }
-            .tag(0)
 
-            NavigationStack {
-                TrophyRoomView()
+            Tab("Trophies", systemImage: "trophy.fill", value: .trophies) {
+                NavigationStack {
+                    TrophyRoomView()
+                }
             }
-            .tag(1)
 
-            NavigationStack {
-                LibraryView()
+            Tab("Library", systemImage: "books.vertical.fill", value: .library) {
+                NavigationStack {
+                    LibraryView()
+                }
             }
-            .tag(2)
 
-            NavigationStack {
-                BuylistView()
+            Tab("Buylist", systemImage: "cart.fill", value: .buylist) {
+                NavigationStack {
+                    BuylistView()
+                }
             }
-            .tag(3)
 
-            NavigationStack {
-                CollectionView()
+            Tab("Collection", systemImage: "square.grid.2x2.fill", value: .collection) {
+                NavigationStack {
+                    CollectionView()
+                }
             }
-            .tag(4)
+
+            Tab("Search", systemImage: "magnifyingglass", value: .search, role: .search) {
+                GlobalSearchSheet()
+            }
         }
-        .toolbar(.hidden, for: .tabBar)
+        .modifier(TabBarMinimizeModifier())
         .overlay(alignment: .bottom) {
-            GlassTabBar(selectedTab: $selectedTab)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-                .animation(shellAnimation, value: selectedTab)
-        }
-        .overlay(alignment: .bottom) {
-            // Floating admin toolbar overlay
             if inlineAdminContext.canAccessAdmin && inlineAdminContext.currentEntity != nil {
                 HStack {
                     Spacer()
@@ -76,72 +85,202 @@ struct RootView: View {
     }
 }
 
-// MARK: - Glass Tab Bar
+// MARK: - Tab Bar Minimize Modifier
 
-private struct GlassTabBar: View {
-    @Binding var selectedTab: Int
+private struct TabBarMinimizeModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            content
+        }
+    }
+}
 
-    private let glassBackground = Color.black.opacity(0.6)
-    private let glassBorder = Color.white.opacity(0.2)
+// MARK: - Global Search View
+
+private struct GlobalSearchSheet: View {
+    @StateObject private var viewModel = GlobalSearchViewModel()
+    @State private var searchText = ""
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
-        HStack(spacing: 0) {
-            GlassTabItem(icon: "house", selectedIcon: "house.fill", isSelected: selectedTab == 0) {
-                selectedTab = 0
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Search field
+                HStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.secondary)
+
+                    TextField("Search games, users, platforms...", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .focused($isSearchFocused)
+                        .submitLabel(.search)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                            viewModel.clearResults()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 18))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .padding(.horizontal)
+                .padding(.top, 8)
+
+                // Results
+                if searchText.trimmingCharacters(in: .whitespaces).count >= 2 {
+                    SearchResultsView(viewModel: viewModel)
+                } else {
+                    VStack(spacing: 12) {
+                        Spacer()
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 40, weight: .light))
+                            .foregroundStyle(.secondary.opacity(0.7))
+                        Text("Search for games, users, and more")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                }
             }
-            GlassTabItem(icon: "trophy", selectedIcon: "trophy.fill", isSelected: selectedTab == 1) {
-                selectedTab = 1
-            }
-            GlassTabItem(icon: "books.vertical", selectedIcon: "books.vertical.fill", isSelected: selectedTab == 2) {
-                selectedTab = 2
-            }
-            GlassTabItem(icon: "cart", selectedIcon: "cart.fill", isSelected: selectedTab == 3) {
-                selectedTab = 3
-            }
-            GlassTabItem(icon: "square.grid.2x2", selectedIcon: "square.grid.2x2.fill", isSelected: selectedTab == 4) {
-                selectedTab = 4
+            .navigationTitle("Search")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .onChange(of: searchText) {
+            Task {
+                if searchText.trimmingCharacters(in: .whitespaces).count >= 2 {
+                    await viewModel.search(query: searchText)
+                } else {
+                    viewModel.clearResults()
+                }
             }
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 6)
-        .background {
-            if #available(iOS 26.0, *) {
-                Capsule()
-                    .fill(.clear)
-                    .glassEffect(.regular.interactive(), in: .capsule)
+        .onAppear {
+            isSearchFocused = true
+        }
+    }
+}
+
+private struct SearchResultsView: View {
+    @ObservedObject var viewModel: GlobalSearchViewModel
+
+    var gameItems: [GlobalSearchItem] {
+        viewModel.items.filter { $0.type == .GAME }
+    }
+
+    var bundleItems: [GlobalSearchItem] {
+        viewModel.items.filter { $0.type == .BUNDLE }
+    }
+
+    var dlcItems: [GlobalSearchItem] {
+        viewModel.items.filter { $0.type == .DLC }
+    }
+
+    var body: some View {
+        Group {
+            if viewModel.isLoading {
+                VStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+            } else if !viewModel.hasResults {
+                VStack(spacing: 12) {
+                    Spacer()
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 40, weight: .light))
+                        .foregroundStyle(.secondary.opacity(0.7))
+                    Text("No results found")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
             } else {
-                Capsule()
-                    .fill(glassBackground)
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .overlay(Capsule().stroke(glassBorder, lineWidth: 1))
-                    .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 4)
+                List {
+                    if !gameItems.isEmpty {
+                        Section("Games") {
+                            ForEach(gameItems) { item in
+                                NavigationLink(destination: GameFamilyView(title: item.title)) {
+                                    SearchItemRow(item: item)
+                                }
+                            }
+                        }
+                    }
+                    if !bundleItems.isEmpty {
+                        Section("Bundles") {
+                            ForEach(bundleItems) { item in
+                                NavigationLink(destination: BundleDetailView(bundleId: item.id)) {
+                                    SearchItemRow(item: item)
+                                }
+                            }
+                        }
+                    }
+                    if !dlcItems.isEmpty {
+                        Section("DLCs") {
+                            ForEach(dlcItems) { item in
+                                NavigationLink(destination: DLCDetailView(dlcId: item.id)) {
+                                    SearchItemRow(item: item)
+                                }
+                            }
+                        }
+                    }
+                }
+                .listStyle(.plain)
             }
         }
     }
 }
 
-private struct GlassTabItem: View {
-    let icon: String
-    let selectedIcon: String
-    let isSelected: Bool
-    let action: () -> Void
+private struct SearchItemRow: View {
+    let item: GlobalSearchItem
 
-    private let buttonSize: CGFloat = 48
+    var iconName: String {
+        switch item.type {
+        case .GAME: return "gamecontroller.fill"
+        case .BUNDLE: return "shippingbox.fill"
+        case .DLC: return "puzzlepiece.extension.fill"
+        }
+    }
 
     var body: some View {
-        Button(action: action) {
-            Image(systemName: isSelected ? selectedIcon : icon)
-                .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(isSelected ? Color.accentColor : Color.white.opacity(0.7))
-                .frame(width: buttonSize, height: buttonSize)
-                .background {
-                    if isSelected {
-                        Capsule()
-                            .fill(Color.white.opacity(0.15))
-                    }
+        HStack(spacing: 12) {
+            if let coverUrl = item.coverUrl, let url = URL(string: coverUrl) {
+                AsyncImage(url: url) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color.gray.opacity(0.3)
                 }
-                .contentShape(Capsule())
+                .frame(width: 44, height: 44)
+                .cornerRadius(8)
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 44, height: 44)
+                    .overlay {
+                        Image(systemName: iconName)
+                            .foregroundStyle(.gray)
+                    }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.title)
+                    .font(.headline)
+                if let subtitle = item.subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
-        .buttonStyle(.plain)
     }
 }
