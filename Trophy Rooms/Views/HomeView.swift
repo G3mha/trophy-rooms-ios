@@ -46,10 +46,7 @@ struct HomeView: View {
                 GlobalSearchResultsView(viewModel: globalSearchViewModel)
             } else {
                 // MARK: - Tabbed Content
-                VStack(spacing: 0) {
-                    // Tab picker
-                    HomeTabPicker(selectedTab: $selectedTab)
-
+                ZStack(alignment: .bottom) {
                     // Tab content
                     TabView(selection: $selectedTab) {
                         // MARK: - Games Tab
@@ -73,6 +70,16 @@ struct HomeView: View {
                             .tag(2)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
+
+                    // Floating tab picker
+                    HomeTabPicker(selectedTab: $selectedTab)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(.ultraThinMaterial)
+                                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: -2)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 8)
                 }
             }
         }
@@ -217,9 +224,8 @@ private struct HomeTabPicker: View {
                 selectedTab = 2
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 8)
         .padding(.vertical, 8)
-        .background(Color(.systemBackground))
     }
 }
 
@@ -352,8 +358,10 @@ private struct GamesGridTab: View {
                                 }
                             }
                         )
-                        .padding(.bottom)
                     }
+
+                    // Bottom padding for floating tab bar
+                    Spacer().frame(height: 80)
                 }
             }
         }
@@ -447,8 +455,12 @@ private struct LeaderboardTab: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 LeaderboardSectionContent(viewModel: viewModel)
+
+                // Bottom padding for floating tab bar
+                Spacer().frame(height: 80)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top)
         }
     }
 }
@@ -462,8 +474,12 @@ private struct ActivityTab: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 ActivitySectionContent(viewModel: viewModel)
+
+                // Bottom padding for floating tab bar
+                Spacer().frame(height: 80)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top)
         }
     }
 }
