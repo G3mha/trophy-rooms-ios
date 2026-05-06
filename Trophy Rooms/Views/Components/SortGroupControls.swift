@@ -1,5 +1,12 @@
 import SwiftUI
 
+// MARK: - Sort Option Protocol
+
+protocol SortOptionProtocol: CaseIterable, Identifiable, Hashable where AllCases: RandomAccessCollection {
+    var title: String { get }
+    var shortTitle: String { get }
+}
+
 // MARK: - Platform Section Header
 
 struct PlatformSectionHeader: View {
@@ -24,7 +31,7 @@ struct PlatformSectionHeader: View {
 
 // MARK: - Sort Group Controls
 
-struct SortGroupControls<T: SortOption>: View {
+struct SortGroupControls<T: SortOptionProtocol>: View {
     @Binding var selectedSortOption: T
     @Binding var groupByPlatform: Bool
     let onSortChanged: () -> Void

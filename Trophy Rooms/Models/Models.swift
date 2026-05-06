@@ -1,12 +1,5 @@
 import Foundation
 
-// MARK: - Sort Option Protocol
-
-protocol SortOption: CaseIterable, Identifiable, Hashable {
-    var title: String { get }
-    var shortTitle: String { get }
-}
-
 // MARK: - Achievement Tier
 
 enum AchievementTier: String, Codable, CaseIterable {
@@ -377,7 +370,7 @@ struct ActivityEntry: Codable, Identifiable {
 
 // MARK: - Buylist Models
 
-enum BuylistSortOption: String, CaseIterable, Identifiable, SortOption {
+enum BuylistSortOption: String, CaseIterable, Identifiable, SortOptionProtocol {
     case priorityDesc = "PRIORITY_DESC"
     case priorityAsc = "PRIORITY_ASC"
     case dateAddedDesc = "ADDED_AT_DESC"
@@ -412,7 +405,7 @@ enum BuylistSortOption: String, CaseIterable, Identifiable, SortOption {
 
 // MARK: - Library Sort Option
 
-enum LibrarySortOption: String, CaseIterable, Identifiable, SortOption {
+enum LibrarySortOption: String, CaseIterable, Identifiable, SortOptionProtocol {
     case titleAsc = "TITLE_ASC"
     case titleDesc = "TITLE_DESC"
     case statusAsc = "STATUS_ASC"
@@ -445,7 +438,7 @@ enum LibrarySortOption: String, CaseIterable, Identifiable, SortOption {
 
 // MARK: - Collection Sort Option
 
-enum CollectionSortOption: String, CaseIterable, Identifiable, SortOption {
+enum CollectionSortOption: String, CaseIterable, Identifiable, SortOptionProtocol {
     case titleAsc = "TITLE_ASC"
     case titleDesc = "TITLE_DESC"
     case dateAddedDesc = "ADDED_AT_DESC"
