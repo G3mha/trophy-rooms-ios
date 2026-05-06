@@ -370,6 +370,62 @@ struct ActivityEntry: Codable, Identifiable {
 
 // MARK: - Buylist Models
 
+enum BuylistSortOption: String, CaseIterable, Identifiable {
+    case priorityDesc = "PRIORITY_DESC"
+    case priorityAsc = "PRIORITY_ASC"
+    case dateAddedDesc = "ADDED_AT_DESC"
+    case dateAddedAsc = "ADDED_AT_ASC"
+    case priceDesc = "PRICE_DESC"
+    case priceAsc = "PRICE_ASC"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .priorityDesc: return "Priority (High first)"
+        case .priorityAsc: return "Priority (Low first)"
+        case .dateAddedDesc: return "Date Added (Newest)"
+        case .dateAddedAsc: return "Date Added (Oldest)"
+        case .priceDesc: return "Price (High to Low)"
+        case .priceAsc: return "Price (Low to High)"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .priorityDesc: return "Priority"
+        case .priorityAsc: return "Priority"
+        case .dateAddedDesc: return "Newest"
+        case .dateAddedAsc: return "Oldest"
+        case .priceDesc: return "Price"
+        case .priceAsc: return "Price"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .priorityDesc, .priceDesc: return "arrow.down"
+        case .priorityAsc, .priceAsc: return "arrow.up"
+        case .dateAddedDesc: return "clock.arrow.circlepath"
+        case .dateAddedAsc: return "clock"
+        }
+    }
+}
+
+struct BuylistPlatform: Codable, Identifiable, Equatable, Hashable {
+    let id: String
+    let name: String
+    let slug: String?
+
+    static func == (lhs: BuylistPlatform, rhs: BuylistPlatform) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
 enum BuylistPriority: String, Codable, CaseIterable {
     case HIGH
     case MEDIUM
@@ -435,6 +491,7 @@ struct BuylistItem: Codable, Identifiable {
     let itemType: BuylistItemType
     let displayTitle: String
     let displayCoverUrl: String?
+    let displayPlatform: BuylistPlatform?
     let addedAt: String
     let updatedAt: String
 }
