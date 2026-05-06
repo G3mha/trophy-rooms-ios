@@ -1,5 +1,12 @@
 import Foundation
 
+// MARK: - Sort Option Protocol
+
+protocol SortOption: CaseIterable, Identifiable, Hashable {
+    var title: String { get }
+    var shortTitle: String { get }
+}
+
 // MARK: - Achievement Tier
 
 enum AchievementTier: String, Codable, CaseIterable {
@@ -370,7 +377,7 @@ struct ActivityEntry: Codable, Identifiable {
 
 // MARK: - Buylist Models
 
-enum BuylistSortOption: String, CaseIterable, Identifiable {
+enum BuylistSortOption: String, CaseIterable, Identifiable, SortOption {
     case priorityDesc = "PRIORITY_DESC"
     case priorityAsc = "PRIORITY_ASC"
     case dateAddedDesc = "ADDED_AT_DESC"
@@ -401,13 +408,68 @@ enum BuylistSortOption: String, CaseIterable, Identifiable {
         case .priceAsc: return "Price"
         }
     }
+}
 
-    var iconName: String {
+// MARK: - Library Sort Option
+
+enum LibrarySortOption: String, CaseIterable, Identifiable, SortOption {
+    case titleAsc = "TITLE_ASC"
+    case titleDesc = "TITLE_DESC"
+    case statusAsc = "STATUS_ASC"
+    case statusDesc = "STATUS_DESC"
+    case dateAddedDesc = "ADDED_AT_DESC"
+    case dateAddedAsc = "ADDED_AT_ASC"
+
+    var id: String { rawValue }
+
+    var title: String {
         switch self {
-        case .priorityDesc, .priceDesc: return "arrow.down"
-        case .priorityAsc, .priceAsc: return "arrow.up"
-        case .dateAddedDesc: return "clock.arrow.circlepath"
-        case .dateAddedAsc: return "clock"
+        case .titleAsc: return "Title (A-Z)"
+        case .titleDesc: return "Title (Z-A)"
+        case .statusAsc: return "Status (Backlog first)"
+        case .statusDesc: return "Status (Completed first)"
+        case .dateAddedDesc: return "Date Added (Newest)"
+        case .dateAddedAsc: return "Date Added (Oldest)"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .titleAsc, .titleDesc: return "Title"
+        case .statusAsc, .statusDesc: return "Status"
+        case .dateAddedDesc: return "Newest"
+        case .dateAddedAsc: return "Oldest"
+        }
+    }
+}
+
+// MARK: - Collection Sort Option
+
+enum CollectionSortOption: String, CaseIterable, Identifiable, SortOption {
+    case titleAsc = "TITLE_ASC"
+    case titleDesc = "TITLE_DESC"
+    case dateAddedDesc = "ADDED_AT_DESC"
+    case dateAddedAsc = "ADDED_AT_ASC"
+    case regionAsc = "REGION_ASC"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .titleAsc: return "Title (A-Z)"
+        case .titleDesc: return "Title (Z-A)"
+        case .dateAddedDesc: return "Date Added (Newest)"
+        case .dateAddedAsc: return "Date Added (Oldest)"
+        case .regionAsc: return "Region"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .titleAsc, .titleDesc: return "Title"
+        case .dateAddedDesc: return "Newest"
+        case .dateAddedAsc: return "Oldest"
+        case .regionAsc: return "Region"
         }
     }
 }
