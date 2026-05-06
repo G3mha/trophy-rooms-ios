@@ -8,7 +8,7 @@ struct LibraryView: View {
     @State private var showAuth = false
     @State private var editingItem: LibraryItem?
     @State private var showStatusPicker = false
-    @State private var showStats = true
+    @AppStorage("library_showStats") private var showStats = true
 
     var body: some View {
         Group {

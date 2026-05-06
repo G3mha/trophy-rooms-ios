@@ -10,7 +10,7 @@ struct CollectionView: View {
     @State private var editingItem: CollectionItem?
     @State private var editingItemVersions: [GameVersion] = []
     @State private var showEditSheet = false
-    @State private var showStats = true
+    @AppStorage("collection_showStats") private var showStats = true
 
     var body: some View {
         let showLoading = viewModel.isLoading || !viewModel.hasLoadedOnce

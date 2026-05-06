@@ -8,7 +8,7 @@ struct BuylistView: View {
     @State private var showAuth = false
     @State private var showPurchasedSheet = false
     @State private var selectedItemForPurchase: BuylistItem?
-    @State private var showStats = true
+    @AppStorage("buylist_showStats") private var showStats = true
 
     var body: some View {
         Group {
