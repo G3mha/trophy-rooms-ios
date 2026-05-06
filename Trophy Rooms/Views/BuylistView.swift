@@ -306,7 +306,7 @@ private struct BuylistFilterView: View {
 
 // MARK: - Item Row
 
-private struct BuylistItemRow: View {
+struct BuylistItemRow: View {
     let item: BuylistItem
     var showPlatform: Bool = true
 
