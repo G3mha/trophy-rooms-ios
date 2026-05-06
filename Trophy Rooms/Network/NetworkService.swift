@@ -54,6 +54,16 @@ class NetworkService {
 
         do {
             let response = try JSONDecoder().decode(GraphQLResponse<T>.self, from: responseData)
+            if let data = response.data {
+                #if DEBUG
+                if let errors = response.errors, !errors.isEmpty {
+                    let messages = errors.map { $0.message }.joined(separator: " | ")
+                    print("NetworkService: GraphQL returned partial data with errors: \(messages)")
+                }
+                #endif
+                return data
+            }
+
             if let errors = response.errors, let first = errors.first {
                 throw NSError(domain: "GraphQL", code: 0, userInfo: [NSLocalizedDescriptionKey: first.message])
             }
