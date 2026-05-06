@@ -82,18 +82,8 @@ struct HomeView: View {
 
             // Floating search button
             if !isSearching {
-                Button {
+                GlassSearchButton {
                     showSearch = true
-                } label: {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.primary)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-                        )
                 }
                 .padding(.top, 60)
                 .padding(.trailing, 16)
@@ -1380,6 +1370,39 @@ private struct GameFiltersSheet: View {
     }
 }
 
+// MARK: - Glass Search Button
+
+private struct GlassSearchButton: View {
+    let action: () -> Void
+
+    private let buttonSize: CGFloat = 44
+    private let glassBackground = Color.black.opacity(0.6)
+    private let glassBorder = Color.white.opacity(0.2)
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(0.9))
+                .frame(width: buttonSize, height: buttonSize)
+                .background {
+                    if #available(iOS 26.0, *) {
+                        Circle()
+                            .fill(.clear)
+                            .glassEffect(.regular.interactive(), in: .circle)
+                    } else {
+                        Circle()
+                            .fill(glassBackground)
+                            .background(.ultraThinMaterial, in: Circle())
+                            .overlay(Circle().stroke(glassBorder, lineWidth: 1))
+                            .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 4)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Search Sheet
 
 private struct SearchSheet: View {
@@ -1395,12 +1418,15 @@ private struct SearchSheet: View {
                 // Search field
                 HStack(spacing: 12) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.secondary)
 
                     TextField("Search games, users, platforms...", text: $searchText)
                         .textFieldStyle(.plain)
                         .focused($isSearchFocused)
                         .submitLabel(.search)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
 
                     if !searchText.isEmpty {
                         Button {
@@ -1408,32 +1434,30 @@ private struct SearchSheet: View {
                             viewModel.clearResults()
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
+                                .font(.system(size: 18))
+                                .foregroundStyle(.secondary)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
+                .padding(.vertical, 14)
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .padding(.horizontal)
-                .padding(.top)
+                .padding(.top, 8)
 
                 // Results
                 if searchText.trimmingCharacters(in: .whitespaces).count >= 2 {
                     GlobalSearchResultsView(viewModel: viewModel)
                 } else {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         Spacer()
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: 48))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 40, weight: .light))
+                            .foregroundStyle(.tertiary)
                         Text("Search for games, users, and more")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        Text("Type at least 2 characters to search")
                             .font(.subheadline)
-                            .foregroundColor(.secondary.opacity(0.7))
+                            .foregroundStyle(.secondary)
                         Spacer()
                     }
                 }
@@ -1461,5 +1485,7 @@ private struct SearchSheet: View {
         .onAppear {
             isSearchFocused = true
         }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
 }

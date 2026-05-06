@@ -7,55 +7,50 @@ struct RootView: View {
     @EnvironmentObject private var inlineAdminContext: InlineAdminContext
     @EnvironmentObject private var adminPresentationContext: AdminPresentationContext
 
+    private let shellAnimation = Animation.spring(response: 0.34, dampingFraction: 0.88)
+
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Tab content
-            TabView(selection: $selectedTab) {
-                NavigationStack {
-                    HomeView()
-                }
-                .tag(0)
-
-                NavigationStack {
-                    TrophyRoomView()
-                }
-                .tag(1)
-
-                NavigationStack {
-                    LibraryView()
-                }
-                .tag(2)
-
-                NavigationStack {
-                    BuylistView()
-                }
-                .tag(3)
-
-                NavigationStack {
-                    CollectionView()
-                }
-                .tag(4)
+        TabView(selection: $selectedTab) {
+            NavigationStack {
+                HomeView()
             }
-            .safeAreaInset(edge: .bottom) {
-                // Reserve space for floating tab bar
-                Color.clear.frame(height: 60)
-            }
+            .tag(0)
 
-            // Floating tab bar
-            FloatingTabBar(selectedTab: $selectedTab)
+            NavigationStack {
+                TrophyRoomView()
+            }
+            .tag(1)
+
+            NavigationStack {
+                LibraryView()
+            }
+            .tag(2)
+
+            NavigationStack {
+                BuylistView()
+            }
+            .tag(3)
+
+            NavigationStack {
+                CollectionView()
+            }
+            .tag(4)
+        }
+        .toolbar(.hidden, for: .tabBar)
+        .overlay(alignment: .bottom) {
+            GlassTabBar(selectedTab: $selectedTab)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
-
+                .animation(shellAnimation, value: selectedTab)
+        }
+        .overlay(alignment: .bottom) {
             // Floating admin toolbar overlay
             if inlineAdminContext.canAccessAdmin && inlineAdminContext.currentEntity != nil {
-                VStack {
+                HStack {
                     Spacer()
-                    HStack {
-                        Spacer()
-                        AdminInlineToolbar()
-                            .padding(.trailing, 16)
-                            .padding(.bottom, 90) // Above tab bar
-                    }
+                    AdminInlineToolbar()
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 90)
                 }
             }
         }
@@ -81,57 +76,71 @@ struct RootView: View {
     }
 }
 
-// MARK: - Floating Tab Bar
+// MARK: - Glass Tab Bar
 
-private struct FloatingTabBar: View {
+private struct GlassTabBar: View {
     @Binding var selectedTab: Int
+
+    private let glassBackground = Color.black.opacity(0.6)
+    private let glassBorder = Color.white.opacity(0.2)
 
     var body: some View {
         HStack(spacing: 0) {
-            FloatingTabItem(icon: "house.fill", title: "Home", isSelected: selectedTab == 0) {
+            GlassTabItem(icon: "house", selectedIcon: "house.fill", isSelected: selectedTab == 0) {
                 selectedTab = 0
             }
-            FloatingTabItem(icon: "trophy.fill", title: "Trophies", isSelected: selectedTab == 1) {
+            GlassTabItem(icon: "trophy", selectedIcon: "trophy.fill", isSelected: selectedTab == 1) {
                 selectedTab = 1
             }
-            FloatingTabItem(icon: "books.vertical.fill", title: "Library", isSelected: selectedTab == 2) {
+            GlassTabItem(icon: "books.vertical", selectedIcon: "books.vertical.fill", isSelected: selectedTab == 2) {
                 selectedTab = 2
             }
-            FloatingTabItem(icon: "cart.fill", title: "Buylist", isSelected: selectedTab == 3) {
+            GlassTabItem(icon: "cart", selectedIcon: "cart.fill", isSelected: selectedTab == 3) {
                 selectedTab = 3
             }
-            FloatingTabItem(icon: "square.grid.2x2.fill", title: "Collection", isSelected: selectedTab == 4) {
+            GlassTabItem(icon: "square.grid.2x2", selectedIcon: "square.grid.2x2.fill", isSelected: selectedTab == 4) {
                 selectedTab = 4
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-        )
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
+        .background {
+            if #available(iOS 26.0, *) {
+                Capsule()
+                    .fill(.clear)
+                    .glassEffect(.regular.interactive(), in: .capsule)
+            } else {
+                Capsule()
+                    .fill(glassBackground)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .overlay(Capsule().stroke(glassBorder, lineWidth: 1))
+                    .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 4)
+            }
+        }
     }
 }
 
-private struct FloatingTabItem: View {
+private struct GlassTabItem: View {
     let icon: String
-    let title: String
+    let selectedIcon: String
     let isSelected: Bool
     let action: () -> Void
 
+    private let buttonSize: CGFloat = 48
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
-                Image(systemName: isSelected ? icon : icon.replacingOccurrences(of: ".fill", with: ""))
-                    .font(.system(size: 20))
-                Text(title)
-                    .font(.caption2)
-                    .fontWeight(isSelected ? .semibold : .regular)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .foregroundColor(isSelected ? .accentColor : .secondary)
+            Image(systemName: isSelected ? selectedIcon : icon)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(isSelected ? Color.accentColor : Color.white.opacity(0.7))
+                .frame(width: buttonSize, height: buttonSize)
+                .background {
+                    if isSelected {
+                        Capsule()
+                            .fill(Color.white.opacity(0.15))
+                    }
+                }
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }
