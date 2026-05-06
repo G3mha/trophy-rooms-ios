@@ -7,6 +7,7 @@ struct BuylistView: View {
     @State private var showAuth = false
     @State private var showPurchasedSheet = false
     @State private var selectedItemForPurchase: BuylistItem?
+    @State private var showStats = true
 
     var body: some View {
         Group {
@@ -52,7 +53,7 @@ struct BuylistView: View {
                 VStack(spacing: 0) {
                     // Stats bar
                     if let stats = viewModel.stats {
-                        BuylistStatsBar(stats: stats)
+                        BuylistStatsBar(stats: stats, isExpanded: $showStats)
                     }
 
                     // Filter pills
@@ -192,49 +193,82 @@ struct BuylistView: View {
 
 private struct BuylistStatsBar: View {
     let stats: BuylistStats
+    @Binding var isExpanded: Bool
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 16) {
-                BuylistStatCard(
-                    title: "Total",
-                    value: "\(stats.totalItems)",
-                    icon: "cart.fill",
-                    color: .blue
-                )
-                BuylistStatCard(
-                    title: "Games",
-                    value: "\(stats.gameCount)",
-                    icon: "gamecontroller.fill",
-                    color: .blue
-                )
-                BuylistStatCard(
-                    title: "Bundles",
-                    value: "\(stats.bundleCount)",
-                    icon: "shippingbox.fill",
-                    color: .orange
-                )
-                BuylistStatCard(
-                    title: "DLCs",
-                    value: "\(stats.dlcCount)",
-                    icon: "puzzlepiece.extension.fill",
-                    color: .purple
-                )
-                BuylistStatCard(
-                    title: "High",
-                    value: "\(stats.highPriorityCount)",
-                    icon: "exclamationmark.circle.fill",
-                    color: .red
-                )
-                BuylistStatCard(
-                    title: "Est. Total",
-                    value: String(format: "$%.2f", stats.totalEstimatedCost),
-                    icon: "dollarsign.circle.fill",
-                    color: .green
-                )
+        VStack(spacing: 0) {
+            // Collapsed summary row
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack {
+                    Text("\(stats.totalItems) items")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Text("·")
+                        .foregroundColor(.secondary)
+                    Text(String(format: "$%.2f", stats.totalEstimatedCost))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.green)
+                    Spacer()
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
+            .buttonStyle(.plain)
+
+            // Expanded stat cards
+            if isExpanded {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        BuylistStatCard(
+                            title: "Total",
+                            value: "\(stats.totalItems)",
+                            icon: "cart.fill",
+                            color: .blue
+                        )
+                        BuylistStatCard(
+                            title: "Games",
+                            value: "\(stats.gameCount)",
+                            icon: "gamecontroller.fill",
+                            color: .blue
+                        )
+                        BuylistStatCard(
+                            title: "Bundles",
+                            value: "\(stats.bundleCount)",
+                            icon: "shippingbox.fill",
+                            color: .orange
+                        )
+                        BuylistStatCard(
+                            title: "DLCs",
+                            value: "\(stats.dlcCount)",
+                            icon: "puzzlepiece.extension.fill",
+                            color: .purple
+                        )
+                        BuylistStatCard(
+                            title: "High",
+                            value: "\(stats.highPriorityCount)",
+                            icon: "exclamationmark.circle.fill",
+                            color: .red
+                        )
+                        BuylistStatCard(
+                            title: "Est. Total",
+                            value: String(format: "$%.2f", stats.totalEstimatedCost),
+                            icon: "dollarsign.circle.fill",
+                            color: .green
+                        )
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                }
+            }
         }
         .background(Color(.secondarySystemBackground))
     }
