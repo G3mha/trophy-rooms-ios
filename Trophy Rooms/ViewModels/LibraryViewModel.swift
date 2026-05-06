@@ -7,6 +7,8 @@ class LibraryViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var selectedStatus: GameStatus?
     @Published var selectedPlatformId: String?
+    @Published var selectedSortOption: LibrarySortOption = .titleAsc
+    @Published var groupByPlatform: Bool = false
 
     var filteredItems: [LibraryItem] {
         var items = libraryItems
@@ -19,7 +21,57 @@ class LibraryViewModel: ObservableObject {
             items = items.filter { $0.platformId == platformId }
         }
 
-        return items
+        return sortItems(items)
+    }
+
+    private func sortItems(_ items: [LibraryItem]) -> [LibraryItem] {
+        switch selectedSortOption {
+        case .titleAsc:
+            return items.sorted { $0.gameTitle.localizedCaseInsensitiveCompare($1.gameTitle) == .orderedAscending }
+        case .titleDesc:
+            return items.sorted { $0.gameTitle.localizedCaseInsensitiveCompare($1.gameTitle) == .orderedDescending }
+        case .statusAsc:
+            return items.sorted { statusOrder($0.status) < statusOrder($1.status) }
+        case .statusDesc:
+            return items.sorted { statusOrder($0.status) > statusOrder($1.status) }
+        case .dateAddedDesc:
+            return items.sorted { $0.addedAt > $1.addedAt }
+        case .dateAddedAsc:
+            return items.sorted { $0.addedAt < $1.addedAt }
+        }
+    }
+
+    private func statusOrder(_ status: GameStatus) -> Int {
+        switch status {
+        case .BACKLOG: return 0
+        case .PLAYING: return 1
+        case .PAUSED: return 2
+        case .COMPLETED: return 3
+        case .DROPPED: return 4
+        }
+    }
+
+    /// Groups filtered items by platform
+    var groupedItems: [(platform: (id: String, name: String, slug: String?)?, items: [LibraryItem])] {
+        var groups: [String: (platform: (id: String, name: String, slug: String?)?, items: [LibraryItem])] = [:]
+
+        for item in filteredItems {
+            let key = item.platformId ?? "other"
+            if groups[key] != nil {
+                groups[key]!.items.append(item)
+            } else {
+                let platform: (id: String, name: String, slug: String?)? = item.platformId != nil
+                    ? (id: item.platformId!, name: item.platformName ?? "Unknown", slug: item.platformSlug)
+                    : nil
+                groups[key] = (platform: platform, items: [item])
+            }
+        }
+
+        return groups.values.sorted { lhs, rhs in
+            if lhs.platform == nil { return false }
+            if rhs.platform == nil { return true }
+            return (lhs.platform?.name ?? "") < (rhs.platform?.name ?? "")
+        }
     }
 
     // Get unique platforms from library items
