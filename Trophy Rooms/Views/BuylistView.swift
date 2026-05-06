@@ -60,31 +60,70 @@ struct BuylistView: View {
                         selectedPriority: $viewModel.selectedPriority,
                         priorityCounts: viewModel.priorityCounts,
                         selectedItemType: $viewModel.selectedItemType,
-                        itemTypeCounts: viewModel.itemTypeCounts
+                        itemTypeCounts: viewModel.itemTypeCounts,
+                        selectedSortOption: $viewModel.selectedSortOption,
+                        groupByPlatform: $viewModel.groupByPlatform,
+                        onSortChanged: {
+                            Task {
+                                await viewModel.fetchBuylist()
+                            }
+                        }
                     )
 
                     // Items list
                     List {
-                        ForEach(viewModel.filteredItems) { item in
-                            NavigationLink(destination: destinationView(for: item)) {
-                                BuylistItemRow(item: item)
-                            }
-                            .swipeActions(edge: .leading) {
-                                Button {
-                                    selectedItemForPurchase = item
-                                    showPurchasedSheet = true
-                                } label: {
-                                    Label("Purchased", systemImage: "checkmark")
-                                }
-                                .tint(.green)
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    Task {
-                                        await viewModel.removeFromBuylist(id: item.id)
+                        if viewModel.groupByPlatform {
+                            ForEach(Array(viewModel.groupedItems.enumerated()), id: \.offset) { _, group in
+                                Section {
+                                    ForEach(group.items) { item in
+                                        NavigationLink(destination: destinationView(for: item)) {
+                                            BuylistItemRow(item: item, showPlatform: false)
+                                        }
+                                        .swipeActions(edge: .leading) {
+                                            Button {
+                                                selectedItemForPurchase = item
+                                                showPurchasedSheet = true
+                                            } label: {
+                                                Label("Purchased", systemImage: "checkmark")
+                                            }
+                                            .tint(.green)
+                                        }
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                            Button(role: .destructive) {
+                                                Task {
+                                                    await viewModel.removeFromBuylist(id: item.id)
+                                                }
+                                            } label: {
+                                                Label("Remove", systemImage: "trash")
+                                            }
+                                        }
                                     }
-                                } label: {
-                                    Label("Remove", systemImage: "trash")
+                                } header: {
+                                    PlatformSectionHeader(platform: group.platform, count: group.items.count)
+                                }
+                            }
+                        } else {
+                            ForEach(viewModel.filteredItems) { item in
+                                NavigationLink(destination: destinationView(for: item)) {
+                                    BuylistItemRow(item: item, showPlatform: true)
+                                }
+                                .swipeActions(edge: .leading) {
+                                    Button {
+                                        selectedItemForPurchase = item
+                                        showPurchasedSheet = true
+                                    } label: {
+                                        Label("Purchased", systemImage: "checkmark")
+                                    }
+                                    .tint(.green)
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        Task {
+                                            await viewModel.removeFromBuylist(id: item.id)
+                                        }
+                                    } label: {
+                                        Label("Remove", systemImage: "trash")
+                                    }
                                 }
                             }
                         }
@@ -242,55 +281,112 @@ private struct BuylistFilterView: View {
     let priorityCounts: [BuylistPriority: Int]
     @Binding var selectedItemType: BuylistItemType?
     let itemTypeCounts: [BuylistItemType: Int]
+    @Binding var selectedSortOption: BuylistSortOption
+    @Binding var groupByPlatform: Bool
+    let onSortChanged: () -> Void
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // All filter
-                FilterPill(
-                    title: "All",
-                    count: priorityCounts.values.reduce(0, +),
-                    isSelected: selectedPriority == nil && selectedItemType == nil,
-                    color: .primary
-                ) {
-                    selectedPriority = nil
-                    selectedItemType = nil
-                }
-
-                // Priority filters
-                ForEach(BuylistPriority.allCases, id: \.self) { priority in
-                    let count = priorityCounts[priority] ?? 0
-                    if count > 0 {
-                        FilterPill(
-                            title: priority.displayName,
-                            count: count,
-                            isSelected: selectedPriority == priority,
-                            color: priorityColor(for: priority)
-                        ) {
-                            selectedPriority = priority
+        VStack(spacing: 0) {
+            // Sort and group controls
+            HStack {
+                // Sort menu
+                Menu {
+                    ForEach(BuylistSortOption.allCases) { option in
+                        Button {
+                            selectedSortOption = option
+                            onSortChanged()
+                        } label: {
+                            HStack {
+                                Text(option.title)
+                                if selectedSortOption == option {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
                         }
                     }
-                }
-
-                Divider().frame(height: 24)
-
-                // Item type filters
-                ForEach(BuylistItemType.allCases, id: \.self) { itemType in
-                    let count = itemTypeCounts[itemType] ?? 0
-                    if count > 0 {
-                        FilterPill(
-                            title: itemType.displayName,
-                            count: count,
-                            isSelected: selectedItemType == itemType,
-                            color: itemTypeColor(for: itemType)
-                        ) {
-                            selectedItemType = itemType
-                        }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.arrow.down")
+                        Text(selectedSortOption.shortTitle)
+                            .font(.subheadline)
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(16)
                 }
+
+                Spacer()
+
+                // Group by platform toggle
+                Button {
+                    groupByPlatform.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: groupByPlatform ? "rectangle.3.group.fill" : "rectangle.3.group")
+                        Text("Group")
+                            .font(.subheadline)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(groupByPlatform ? Color.blue : Color(.secondarySystemBackground))
+                    .foregroundColor(groupByPlatform ? .white : .primary)
+                    .cornerRadius(16)
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
+
+            // Filter pills
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    // All filter
+                    FilterPill(
+                        title: "All",
+                        count: priorityCounts.values.reduce(0, +),
+                        isSelected: selectedPriority == nil && selectedItemType == nil,
+                        color: .primary
+                    ) {
+                        selectedPriority = nil
+                        selectedItemType = nil
+                    }
+
+                    // Priority filters
+                    ForEach(BuylistPriority.allCases, id: \.self) { priority in
+                        let count = priorityCounts[priority] ?? 0
+                        if count > 0 {
+                            FilterPill(
+                                title: priority.displayName,
+                                count: count,
+                                isSelected: selectedPriority == priority,
+                                color: priorityColor(for: priority)
+                            ) {
+                                selectedPriority = priority
+                            }
+                        }
+                    }
+
+                    Divider().frame(height: 24)
+
+                    // Item type filters
+                    ForEach(BuylistItemType.allCases, id: \.self) { itemType in
+                        let count = itemTypeCounts[itemType] ?? 0
+                        if count > 0 {
+                            FilterPill(
+                                title: itemType.displayName,
+                                count: count,
+                                isSelected: selectedItemType == itemType,
+                                color: itemTypeColor(for: itemType)
+                            ) {
+                                selectedItemType = itemType
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+            }
         }
         .background(Color(.systemBackground))
     }
@@ -344,8 +440,32 @@ private struct FilterPill: View {
 
 // MARK: - Item Row
 
+// MARK: - Platform Section Header
+
+private struct PlatformSectionHeader: View {
+    let platform: BuylistPlatform?
+    let count: Int
+
+    var body: some View {
+        HStack {
+            if let platform = platform {
+                Text(platform.name)
+                    .font(.headline)
+            } else {
+                Text("Other")
+                    .font(.headline)
+            }
+            Spacer()
+            Text("\(count)")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
 private struct BuylistItemRow: View {
     let item: BuylistItem
+    var showPlatform: Bool = true
 
     var body: some View {
         HStack(spacing: 12) {
@@ -364,6 +484,9 @@ private struct BuylistItemRow: View {
                 HStack(spacing: 6) {
                     PriorityBadge(priority: item.priority)
                     ItemTypeBadge(itemType: item.itemType)
+                    if showPlatform, let platform = item.displayPlatform {
+                        PlatformBadge(name: platform.name)
+                    }
                 }
 
                 if let price = item.estimatedPrice {
