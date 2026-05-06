@@ -104,7 +104,11 @@ struct BuylistView: View {
                                         }
                                     }
                                 } header: {
-                                    PlatformSectionHeader(platform: group.platform, count: group.items.count)
+                                    PlatformSectionHeader(
+                                        name: group.platform?.name,
+                                        slug: group.platform?.slug,
+                                        count: group.items.count
+                                    )
                                 }
                             }
                         } else {
@@ -218,55 +222,11 @@ private struct BuylistFilterView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Sort and group controls
-            HStack {
-                // Sort menu
-                Menu {
-                    ForEach(BuylistSortOption.allCases) { option in
-                        Button {
-                            selectedSortOption = option
-                            onSortChanged()
-                        } label: {
-                            HStack {
-                                Text(option.title)
-                                if selectedSortOption == option {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.up.arrow.down")
-                        Text(selectedSortOption.shortTitle)
-                            .font(.subheadline)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(16)
-                }
-
-                Spacer()
-
-                // Group by platform toggle
-                Button {
-                    groupByPlatform.toggle()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: groupByPlatform ? "rectangle.3.group.fill" : "rectangle.3.group")
-                        Text("Group")
-                            .font(.subheadline)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(groupByPlatform ? Color.blue : Color(.secondarySystemBackground))
-                    .foregroundColor(groupByPlatform ? .white : .primary)
-                    .cornerRadius(16)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
+            SortGroupControls(
+                selectedSortOption: $selectedSortOption,
+                groupByPlatform: $groupByPlatform,
+                onSortChanged: onSortChanged
+            )
 
             // Filter pills
             ScrollView(.horizontal, showsIndicators: false) {
@@ -369,29 +329,6 @@ private struct FilterPill: View {
 }
 
 // MARK: - Item Row
-
-// MARK: - Platform Section Header
-
-private struct PlatformSectionHeader: View {
-    let platform: BuylistPlatform?
-    let count: Int
-
-    var body: some View {
-        HStack {
-            if let platform = platform {
-                Text(platform.name)
-                    .font(.headline)
-            } else {
-                Text("Other")
-                    .font(.headline)
-            }
-            Spacer()
-            Text("\(count)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-    }
-}
 
 private struct BuylistItemRow: View {
     let item: BuylistItem
