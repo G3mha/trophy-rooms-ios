@@ -386,18 +386,22 @@ struct PriorityBadge: View {
     let priority: BuylistPriority
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: priority.iconName)
-                .font(.caption2)
-            Text(priority.displayName)
-                .font(.caption)
-                .fontWeight(.medium)
+        Text(priorityMarker)
+            .font(.caption)
+            .fontWeight(.bold)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(priorityColor.opacity(0.15))
+            .foregroundColor(priorityColor)
+            .cornerRadius(8)
+    }
+
+    var priorityMarker: String {
+        switch priority {
+        case .HIGH: return "!!!"
+        case .MEDIUM: return "!!"
+        case .LOW: return "!"
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(priorityColor.opacity(0.15))
-        .foregroundColor(priorityColor)
-        .cornerRadius(8)
     }
 
     var priorityColor: Color {

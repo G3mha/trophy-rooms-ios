@@ -18,7 +18,8 @@ struct AddToBuylistSheet: View {
                     Picker("Priority", selection: $viewModel.priority) {
                         ForEach(BuylistPriority.allCases, id: \.self) { priority in
                             HStack {
-                                Image(systemName: priority.iconName)
+                                Text(priorityMarker(for: priority))
+                                    .fontWeight(.bold)
                                     .foregroundColor(priorityColor(for: priority))
                                 Text(priority.displayName)
                             }
@@ -106,6 +107,14 @@ struct AddToBuylistSheet: View {
         case .HIGH: return .red
         case .MEDIUM: return .orange
         case .LOW: return .green
+        }
+    }
+
+    func priorityMarker(for priority: BuylistPriority) -> String {
+        switch priority {
+        case .HIGH: return "!!!"
+        case .MEDIUM: return "!!"
+        case .LOW: return "!"
         }
     }
 }
