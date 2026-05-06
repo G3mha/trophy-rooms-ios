@@ -4,6 +4,7 @@ import ClerkKit
 struct LibraryView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = LibraryViewModel()
+    @StateObject private var expandedSections = ExpandedSectionsState()
     @State private var showAuth = false
     @State private var editingItem: LibraryItem?
     @State private var showStatusPicker = false
@@ -78,27 +79,30 @@ struct LibraryView: View {
                     List {
                         if viewModel.groupByPlatform {
                             ForEach(Array(viewModel.groupedItems.enumerated()), id: \.offset) { _, group in
+                                let sectionId = group.platform?.id ?? "other"
                                 Section {
-                                    ForEach(group.items) { item in
-                                        NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
-                                            LibraryItemRow(item: item)
-                                        }
-                                        .swipeActions(edge: .leading) {
-                                            Button {
-                                                editingItem = item
-                                                showStatusPicker = true
-                                            } label: {
-                                                Label("Edit", systemImage: "pencil")
+                                    if expandedSections.isExpanded(sectionId) {
+                                        ForEach(group.items) { item in
+                                            NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
+                                                LibraryItemRow(item: item)
                                             }
-                                            .tint(.blue)
-                                        }
-                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                            Button(role: .destructive) {
-                                                Task {
-                                                    await viewModel.clearGameStatus(gameId: item.gameId)
+                                            .swipeActions(edge: .leading) {
+                                                Button {
+                                                    editingItem = item
+                                                    showStatusPicker = true
+                                                } label: {
+                                                    Label("Edit", systemImage: "pencil")
                                                 }
-                                            } label: {
-                                                Label("Delete", systemImage: "trash")
+                                                .tint(.blue)
+                                            }
+                                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                                Button(role: .destructive) {
+                                                    Task {
+                                                        await viewModel.clearGameStatus(gameId: item.gameId)
+                                                    }
+                                                } label: {
+                                                    Label("Delete", systemImage: "trash")
+                                                }
                                             }
                                         }
                                     }
@@ -106,9 +110,15 @@ struct LibraryView: View {
                                     PlatformSectionHeader(
                                         name: group.platform?.name,
                                         slug: group.platform?.slug,
-                                        count: group.items.count
+                                        count: group.items.count,
+                                        isExpanded: expandedSections.isExpanded(sectionId),
+                                        onToggle: { expandedSections.toggle(sectionId) }
                                     )
                                 }
+                            }
+                            .onAppear {
+                                let ids = viewModel.groupedItems.map { $0.platform?.id ?? "other" }
+                                expandedSections.expandAll(ids)
                             }
                         } else {
                             ForEach(viewModel.filteredItems) { item in

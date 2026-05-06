@@ -4,6 +4,7 @@ import ClerkKit
 struct CollectionView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = CollectionViewModel()
+    @StateObject private var expandedSections = ExpandedSectionsState()
     @State private var showAuth = false
     @State private var showFilters = false
     @State private var editingItem: CollectionItem?
@@ -82,29 +83,32 @@ struct CollectionView: View {
                     List {
                         if viewModel.groupByPlatform {
                             ForEach(Array(viewModel.groupedItems.enumerated()), id: \.offset) { _, group in
+                                let sectionId = group.platform?.id ?? "other"
                                 Section {
-                                    ForEach(group.items) { item in
-                                        NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
-                                            CollectionItemRow(item: item)
-                                        }
-                                        .swipeActions(edge: .leading) {
-                                            Button {
-                                                editingItem = item
-                                                Task {
-                                                    await fetchVersionsForGame(gameId: item.gameId)
-                                                    showEditSheet = true
-                                                }
-                                            } label: {
-                                                Label("Edit", systemImage: "pencil")
+                                    if expandedSections.isExpanded(sectionId) {
+                                        ForEach(group.items) { item in
+                                            NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
+                                                CollectionItemRow(item: item)
                                             }
-                                            .tint(.blue)
+                                            .swipeActions(edge: .leading) {
+                                                Button {
+                                                    editingItem = item
+                                                    Task {
+                                                        await fetchVersionsForGame(gameId: item.gameId)
+                                                        showEditSheet = true
+                                                    }
+                                                } label: {
+                                                    Label("Edit", systemImage: "pencil")
+                                                }
+                                                .tint(.blue)
+                                            }
                                         }
-                                    }
-                                    .onDelete { indexSet in
-                                        for index in indexSet {
-                                            let item = group.items[index]
-                                            Task {
-                                                await viewModel.removeFromCollection(id: item.id)
+                                        .onDelete { indexSet in
+                                            for index in indexSet {
+                                                let item = group.items[index]
+                                                Task {
+                                                    await viewModel.removeFromCollection(id: item.id)
+                                                }
                                             }
                                         }
                                     }
@@ -112,9 +116,15 @@ struct CollectionView: View {
                                     PlatformSectionHeader(
                                         name: group.platform?.name,
                                         slug: group.platform?.slug,
-                                        count: group.items.count
+                                        count: group.items.count,
+                                        isExpanded: expandedSections.isExpanded(sectionId),
+                                        onToggle: { expandedSections.toggle(sectionId) }
                                     )
                                 }
+                            }
+                            .onAppear {
+                                let ids = viewModel.groupedItems.map { $0.platform?.id ?? "other" }
+                                expandedSections.expandAll(ids)
                             }
                         } else {
                             ForEach(viewModel.filteredItems) { item in

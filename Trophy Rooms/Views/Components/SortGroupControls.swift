@@ -13,19 +13,49 @@ struct PlatformSectionHeader: View {
     let name: String?
     let slug: String?
     let count: Int
+    let isExpanded: Bool
+    let onToggle: () -> Void
 
     var body: some View {
-        HStack {
-            if let slug = slug {
-                PlatformIcon(slug: slug, size: 16)
+        Button(action: onToggle) {
+            HStack {
+                if let slug = slug {
+                    PlatformIcon(slug: slug, size: 16)
+                }
+                Text(name ?? "Other")
+                    .font(.headline)
+                Spacer()
+                Text("\(count)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            Text(name ?? "Other")
-                .font(.headline)
-            Spacer()
-            Text("\(count)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+    }
+}
+
+// Helper for tracking expanded state
+class ExpandedSectionsState: ObservableObject {
+    @Published var expandedSections: Set<String> = []
+
+    func isExpanded(_ id: String) -> Bool {
+        expandedSections.contains(id)
+    }
+
+    func toggle(_ id: String) {
+        if expandedSections.contains(id) {
+            expandedSections.remove(id)
+        } else {
+            expandedSections.insert(id)
+        }
+    }
+
+    func expandAll(_ ids: [String]) {
+        expandedSections = Set(ids)
     }
 }
 

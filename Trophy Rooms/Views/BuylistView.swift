@@ -4,6 +4,7 @@ import ClerkKit
 struct BuylistView: View {
     @Environment(Clerk.self) private var clerk
     @StateObject private var viewModel = BuylistViewModel()
+    @StateObject private var expandedSections = ExpandedSectionsState()
     @State private var showAuth = false
     @State private var showPurchasedSheet = false
     @State private var selectedItemForPurchase: BuylistItem?
@@ -79,27 +80,30 @@ struct BuylistView: View {
                     List {
                         if viewModel.groupByPlatform {
                             ForEach(Array(viewModel.groupedItems.enumerated()), id: \.offset) { _, group in
+                                let sectionId = group.platform?.id ?? "other"
                                 Section {
-                                    ForEach(group.items) { item in
-                                        NavigationLink(destination: destinationView(for: item)) {
-                                            BuylistItemRow(item: item, showPlatform: false)
-                                        }
-                                        .swipeActions(edge: .leading) {
-                                            Button {
-                                                selectedItemForPurchase = item
-                                                showPurchasedSheet = true
-                                            } label: {
-                                                Label("Purchased", systemImage: "checkmark")
+                                    if expandedSections.isExpanded(sectionId) {
+                                        ForEach(group.items) { item in
+                                            NavigationLink(destination: destinationView(for: item)) {
+                                                BuylistItemRow(item: item, showPlatform: false)
                                             }
-                                            .tint(.green)
-                                        }
-                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                            Button(role: .destructive) {
-                                                Task {
-                                                    await viewModel.removeFromBuylist(id: item.id)
+                                            .swipeActions(edge: .leading) {
+                                                Button {
+                                                    selectedItemForPurchase = item
+                                                    showPurchasedSheet = true
+                                                } label: {
+                                                    Label("Purchased", systemImage: "checkmark")
                                                 }
-                                            } label: {
-                                                Label("Remove", systemImage: "trash")
+                                                .tint(.green)
+                                            }
+                                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                                Button(role: .destructive) {
+                                                    Task {
+                                                        await viewModel.removeFromBuylist(id: item.id)
+                                                    }
+                                                } label: {
+                                                    Label("Remove", systemImage: "trash")
+                                                }
                                             }
                                         }
                                     }
@@ -107,9 +111,16 @@ struct BuylistView: View {
                                     PlatformSectionHeader(
                                         name: group.platform?.name,
                                         slug: group.platform?.slug,
-                                        count: group.items.count
+                                        count: group.items.count,
+                                        isExpanded: expandedSections.isExpanded(sectionId),
+                                        onToggle: { expandedSections.toggle(sectionId) }
                                     )
                                 }
+                            }
+                            .onAppear {
+                                // Expand all sections by default
+                                let ids = viewModel.groupedItems.map { $0.platform?.id ?? "other" }
+                                expandedSections.expandAll(ids)
                             }
                         } else {
                             ForEach(viewModel.filteredItems) { item in
