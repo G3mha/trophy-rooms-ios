@@ -53,7 +53,11 @@ struct BuylistView: View {
                 VStack(spacing: 0) {
                     // Stats bar
                     if let stats = viewModel.stats {
-                        BuylistStatsBar(stats: stats, isExpanded: $showStats)
+                        CollapsibleStatsBar(
+                            stats: buylistStatItems(from: stats),
+                            collapsedSummary: "\(stats.totalItems) items · \(String(format: "$%.2f", stats.totalEstimatedCost))",
+                            isExpanded: $showStats
+                        )
                     }
 
                     // Filter pills
@@ -166,6 +170,17 @@ struct BuylistView: View {
         }
     }
 
+    private func buylistStatItems(from stats: BuylistStats) -> [StatItem] {
+        [
+            StatItem(title: "Total", value: "\(stats.totalItems)", icon: "cart.fill", color: .blue),
+            StatItem(title: "Games", value: "\(stats.gameCount)", icon: "gamecontroller.fill", color: .blue),
+            StatItem(title: "Bundles", value: "\(stats.bundleCount)", icon: "shippingbox.fill", color: .orange),
+            StatItem(title: "DLCs", value: "\(stats.dlcCount)", icon: "puzzlepiece.extension.fill", color: .purple),
+            StatItem(title: "High", value: "\(stats.highPriorityCount)", icon: "exclamationmark.circle.fill", color: .red),
+            StatItem(title: "Est. Total", value: String(format: "$%.2f", stats.totalEstimatedCost), icon: "dollarsign.circle.fill", color: .green),
+        ]
+    }
+
     @ViewBuilder
     private func destinationView(for item: BuylistItem) -> some View {
         switch item.itemType {
@@ -187,125 +202,6 @@ struct BuylistView: View {
         }
     }
 
-}
-
-// MARK: - Stats Bar
-
-private struct BuylistStatsBar: View {
-    let stats: BuylistStats
-    @Binding var isExpanded: Bool
-
-    var body: some View {
-        VStack(spacing: 0) {
-            // Collapsed summary row
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded.toggle()
-                }
-            } label: {
-                HStack {
-                    Text("\(stats.totalItems) items")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    Text("·")
-                        .foregroundColor(.secondary)
-                    Text(String(format: "$%.2f", stats.totalEstimatedCost))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.green)
-                    Spacer()
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            // Expanded stat cards
-            if isExpanded {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 16) {
-                        BuylistStatCard(
-                            title: "Total",
-                            value: "\(stats.totalItems)",
-                            icon: "cart.fill",
-                            color: .blue
-                        )
-                        BuylistStatCard(
-                            title: "Games",
-                            value: "\(stats.gameCount)",
-                            icon: "gamecontroller.fill",
-                            color: .blue
-                        )
-                        BuylistStatCard(
-                            title: "Bundles",
-                            value: "\(stats.bundleCount)",
-                            icon: "shippingbox.fill",
-                            color: .orange
-                        )
-                        BuylistStatCard(
-                            title: "DLCs",
-                            value: "\(stats.dlcCount)",
-                            icon: "puzzlepiece.extension.fill",
-                            color: .purple
-                        )
-                        BuylistStatCard(
-                            title: "High",
-                            value: "\(stats.highPriorityCount)",
-                            icon: "exclamationmark.circle.fill",
-                            color: .red
-                        )
-                        BuylistStatCard(
-                            title: "Est. Total",
-                            value: String(format: "$%.2f", stats.totalEstimatedCost),
-                            icon: "dollarsign.circle.fill",
-                            color: .green
-                        )
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 12)
-                }
-            }
-        }
-        .background(Color(.secondarySystemBackground))
-    }
-}
-
-private struct BuylistStatCard: View {
-    let value: String
-    let label: String
-    let icon: String
-    let color: Color
-
-    init(title: String, value: String, icon: String, color: Color) {
-        self.label = title
-        self.value = value
-        self.icon = icon
-        self.color = color
-    }
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(width: 76)
-        .padding(.vertical, 8)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-    }
 }
 
 // MARK: - Filter View
