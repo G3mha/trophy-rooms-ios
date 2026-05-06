@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class GameFamilyViewModel: ObservableObject {
     @Published var games: [GameSummary] = []
     @Published var isLoading = false
@@ -23,10 +24,8 @@ class GameFamilyViewModel: ObservableObject {
     }
 
     func fetchGamesByTitle(_ title: String) async {
-        DispatchQueue.main.async {
-            self.isLoading = true
-            self.errorMessage = nil
-        }
+        self.isLoading = true
+        self.errorMessage = nil
 
         let query = """
         query GetGamesByTitle($title: String!) {
@@ -50,15 +49,13 @@ class GameFamilyViewModel: ObservableObject {
 
         do {
             let response: GamesByTitleResponse = try await NetworkService.shared.fetch(query: query, variables: variables)
-            DispatchQueue.main.async {
-                self.games = response.gamesByTitle
-                self.isLoading = false
-            }
+            self.games = response.gamesByTitle
+            self.isLoading = false
+        } catch is CancellationError {
+            self.isLoading = false
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
-            }
+            self.errorMessage = error.localizedDescription
+            self.isLoading = false
             print("Error fetching games by title: \(error)")
         }
     }
