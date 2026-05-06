@@ -16,6 +16,7 @@ struct HomeView: View {
     @State private var gameTypeFilter: GameTypeFilter = .all
     @State private var selectedPageSize = 25
     @State private var showFilters = false
+    @State private var selectedTab = 0
 
     var activeFilterCount: Int {
         var count = 0
@@ -43,117 +44,57 @@ struct HomeView: View {
             if isSearching {
                 // MARK: - Global Search Results
                 GlobalSearchResultsView(viewModel: globalSearchViewModel)
-            } else if gameListViewModel.isLoading && gameListViewModel.games.isEmpty {
-                ProgressView("Loading games...")
-            } else if let error = gameListViewModel.errorMessage {
-                Text("Error: \(error)")
-                    .foregroundColor(.red)
             } else {
-                List {
-                    // MARK: - Games List Section
-                    Section {
-                        ForEach(filteredGameGroups) { group in
-                            if group.isSingleGame, let game = group.games.first {
-                                NavigationLink(destination: GameDetailView(gameId: game.id)) {
-                                    GameRowView(game: game)
-                                }
-                            } else {
-                                NavigationLink(destination: GameFamilyView(title: group.title)) {
-                                    GroupedGameRowView(group: group)
-                                }
-                            }
-                        }
-                    } header: {
-                        if gameListViewModel.totalCount > 0 {
-                            Text("\(filteredGameGroups.count) titles (\(gameListViewModel.totalCount) versions)")
-                        }
-                    }
+                // MARK: - Tabbed Content
+                VStack(spacing: 0) {
+                    // Tab picker
+                    HomeTabPicker(selectedTab: $selectedTab)
 
-                    // MARK: - Leaderboard Section
-                    Section {
-                        LeaderboardSectionContent(viewModel: leaderboardViewModel)
-                    } header: {
-                        HStack {
-                            Image(systemName: "chart.bar.fill")
-                                .foregroundColor(.blue)
-                            Text("Leaderboards")
-                        }
-                    }
-
-                    // MARK: - Activity Section
-                    Section {
-                        ActivitySectionContent(viewModel: activityViewModel)
-                    } header: {
-                        HStack {
-                            Image(systemName: "clock.fill")
-                                .foregroundColor(.orange)
-                            Text("Recent Activity")
-                        }
-                    }
-                }
-                .listStyle(.insetGrouped)
-                .safeAreaInset(edge: .bottom) {
-                    if gameListViewModel.totalPages > 1 {
-                        PaginationControls(
-                            currentPage: gameListViewModel.currentPage,
-                            totalPages: gameListViewModel.totalPages,
-                            isLoading: gameListViewModel.isLoading,
-                            onPrevious: {
-                                Task {
-                                    await gameListViewModel.goToPreviousPage(
-                                        search: searchText,
-                                        platformId: selectedPlatformId,
-                                        hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue,
-                                        type: gameTypeFilter.graphqlValue
-                                    )
-                                }
-                            },
-                            onNext: {
-                                Task {
-                                    await gameListViewModel.goToNextPage(
-                                        search: searchText,
-                                        platformId: selectedPlatformId,
-                                        hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue,
-                                        type: gameTypeFilter.graphqlValue
-                                    )
-                                }
-                            },
-                            onGoToPage: { page in
-                                Task {
-                                    await gameListViewModel.goToPage(
-                                        page,
-                                        search: searchText,
-                                        platformId: selectedPlatformId,
-                                        hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue,
-                                        type: gameTypeFilter.graphqlValue
-                                    )
-                                }
-                            }
+                    // Tab content
+                    TabView(selection: $selectedTab) {
+                        // MARK: - Games Tab
+                        GamesGridTab(
+                            viewModel: gameListViewModel,
+                            filteredGameGroups: filteredGameGroups,
+                            searchText: searchText,
+                            selectedPlatformId: selectedPlatformId,
+                            achievementFilter: achievementFilter,
+                            sortOption: sortOption,
+                            gameTypeFilter: gameTypeFilter
                         )
+                        .tag(0)
+
+                        // MARK: - Leaderboard Tab
+                        LeaderboardTab(viewModel: leaderboardViewModel)
+                            .tag(1)
+
+                        // MARK: - Activity Tab
+                        ActivityTab(viewModel: activityViewModel)
+                            .tag(2)
                     }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
                 }
             }
         }
         .navigationBar(title: "Home", showAuth: $showAuth)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    showFilters = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                        if activeFilterCount > 0 {
-                            Text("\(activeFilterCount)")
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.accentColor)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
+                if selectedTab == 0 {
+                    Button {
+                        showFilters = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                            if activeFilterCount > 0 {
+                                Text("\(activeFilterCount)")
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.accentColor)
+                                    .foregroundColor(.white)
+                                    .clipShape(Capsule())
+                            }
                         }
                     }
                 }
@@ -255,6 +196,274 @@ struct HomeView: View {
             )
             await leaderboardViewModel.fetchLeaderboard()
             await activityViewModel.fetchActivity()
+        }
+    }
+}
+
+// MARK: - Home Tab Picker
+
+private struct HomeTabPicker: View {
+    @Binding var selectedTab: Int
+
+    var body: some View {
+        HStack(spacing: 0) {
+            TabButton(title: "Games", icon: "gamecontroller.fill", isSelected: selectedTab == 0) {
+                selectedTab = 0
+            }
+            TabButton(title: "Leaderboard", icon: "chart.bar.fill", isSelected: selectedTab == 1) {
+                selectedTab = 1
+            }
+            TabButton(title: "Activity", icon: "clock.fill", isSelected: selectedTab == 2) {
+                selectedTab = 2
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(.systemBackground))
+    }
+}
+
+private struct TabButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(isSelected ? .semibold : .regular)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+            .foregroundColor(isSelected ? .accentColor : .secondary)
+            .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Games Grid Tab
+
+private struct GamesGridTab: View {
+    @ObservedObject var viewModel: GameListViewModel
+    let filteredGameGroups: [GameGroup]
+    let searchText: String
+    let selectedPlatformId: String
+    let achievementFilter: AchievementFilter
+    let sortOption: SortOption
+    let gameTypeFilter: GameTypeFilter
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+
+    var body: some View {
+        if viewModel.isLoading && viewModel.games.isEmpty {
+            VStack {
+                Spacer()
+                ProgressView("Loading games...")
+                Spacer()
+            }
+        } else if let error = viewModel.errorMessage {
+            VStack {
+                Spacer()
+                Text("Error: \(error)")
+                    .foregroundColor(.red)
+                Spacer()
+            }
+        } else {
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Game count header
+                    if viewModel.totalCount > 0 {
+                        HStack {
+                            Text("\(filteredGameGroups.count) titles")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                    }
+
+                    // Cover grid
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(filteredGameGroups) { group in
+                            if group.isSingleGame, let game = group.games.first {
+                                NavigationLink(destination: GameDetailView(gameId: game.id)) {
+                                    GameCoverCell(coverUrl: game.coverUrl, title: game.title)
+                                }
+                            } else {
+                                NavigationLink(destination: GameFamilyView(title: group.title)) {
+                                    GameCoverCell(coverUrl: group.coverUrl, title: group.title, isGroup: true)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+
+                    // Pagination
+                    if viewModel.totalPages > 1 {
+                        PaginationControls(
+                            currentPage: viewModel.currentPage,
+                            totalPages: viewModel.totalPages,
+                            isLoading: viewModel.isLoading,
+                            onPrevious: {
+                                Task {
+                                    await viewModel.goToPreviousPage(
+                                        search: searchText,
+                                        platformId: selectedPlatformId,
+                                        hasAchievements: achievementFilter.boolValue,
+                                        orderBy: sortOption.graphqlValue,
+                                        type: gameTypeFilter.graphqlValue
+                                    )
+                                }
+                            },
+                            onNext: {
+                                Task {
+                                    await viewModel.goToNextPage(
+                                        search: searchText,
+                                        platformId: selectedPlatformId,
+                                        hasAchievements: achievementFilter.boolValue,
+                                        orderBy: sortOption.graphqlValue,
+                                        type: gameTypeFilter.graphqlValue
+                                    )
+                                }
+                            },
+                            onGoToPage: { page in
+                                Task {
+                                    await viewModel.goToPage(
+                                        page,
+                                        search: searchText,
+                                        platformId: selectedPlatformId,
+                                        hasAchievements: achievementFilter.boolValue,
+                                        orderBy: sortOption.graphqlValue,
+                                        type: gameTypeFilter.graphqlValue
+                                    )
+                                }
+                            }
+                        )
+                        .padding(.bottom)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Game Cover Cell
+
+private struct GameCoverCell: View {
+    let coverUrl: String?
+    let title: String
+    var isGroup: Bool = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if let coverUrl = coverUrl, let url = URL(string: coverUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.2))
+                            .overlay(ProgressView())
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(3/4, contentMode: .fill)
+                    case .failure:
+                        CoverPlaceholder(title: title)
+                    @unknown default:
+                        CoverPlaceholder(title: title)
+                    }
+                }
+            } else {
+                CoverPlaceholder(title: title)
+            }
+        }
+        .aspectRatio(3/4, contentMode: .fit)
+        .cornerRadius(8)
+        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .overlay(
+            // Group indicator
+            Group {
+                if isGroup {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "square.stack.fill")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                                .padding(4)
+                                .background(Color.black.opacity(0.6))
+                                .cornerRadius(4)
+                                .padding(4)
+                        }
+                        Spacer()
+                    }
+                }
+            }
+        )
+    }
+}
+
+private struct CoverPlaceholder: View {
+    let title: String
+
+    var body: some View {
+        Rectangle()
+            .fill(Color.gray.opacity(0.3))
+            .overlay(
+                VStack(spacing: 4) {
+                    Image(systemName: "gamecontroller")
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                    Text(title)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .padding(.horizontal, 4)
+                }
+            )
+    }
+}
+
+// MARK: - Leaderboard Tab
+
+private struct LeaderboardTab: View {
+    @ObservedObject var viewModel: LeaderboardViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                LeaderboardSectionContent(viewModel: viewModel)
+            }
+            .padding()
+        }
+    }
+}
+
+// MARK: - Activity Tab
+
+private struct ActivityTab: View {
+    @ObservedObject var viewModel: ActivityViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                ActivitySectionContent(viewModel: viewModel)
+            }
+            .padding()
         }
     }
 }
