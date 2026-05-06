@@ -12,6 +12,8 @@ class CollectionViewModel: ObservableObject {
     @Published var selectedPlatformId: String?
     @Published var showSealedOnly = false
     @Published var showCompleteOnly = false
+    @Published var selectedSortOption: CollectionSortOption = .titleAsc
+    @Published var groupByPlatform: Bool = false
 
     var filteredItems: [CollectionItem] {
         var items = collectionItems
@@ -32,7 +34,51 @@ class CollectionViewModel: ObservableObject {
             items = items.filter { $0.isComplete }
         }
 
-        return items
+        return sortItems(items)
+    }
+
+    private func sortItems(_ items: [CollectionItem]) -> [CollectionItem] {
+        switch selectedSortOption {
+        case .titleAsc:
+            return items.sorted { $0.game.title.localizedCaseInsensitiveCompare($1.game.title) == .orderedAscending }
+        case .titleDesc:
+            return items.sorted { $0.game.title.localizedCaseInsensitiveCompare($1.game.title) == .orderedDescending }
+        case .dateAddedDesc:
+            return items.sorted { $0.createdAt > $1.createdAt }
+        case .dateAddedAsc:
+            return items.sorted { $0.createdAt < $1.createdAt }
+        case .regionAsc:
+            return items.sorted { regionOrder($0.region) < regionOrder($1.region) }
+        }
+    }
+
+    private func regionOrder(_ region: GameRegion) -> Int {
+        switch region {
+        case .NTSC_U: return 0
+        case .PAL: return 1
+        case .NTSC_J: return 2
+        case .OTHER: return 3
+        }
+    }
+
+    /// Groups filtered items by platform
+    var groupedItems: [(platform: Platform?, items: [CollectionItem])] {
+        var groups: [String: (platform: Platform?, items: [CollectionItem])] = [:]
+
+        for item in filteredItems {
+            let key = item.platform?.id ?? "other"
+            if groups[key] != nil {
+                groups[key]!.items.append(item)
+            } else {
+                groups[key] = (platform: item.platform, items: [item])
+            }
+        }
+
+        return groups.values.sorted { lhs, rhs in
+            if lhs.platform == nil { return false }
+            if rhs.platform == nil { return true }
+            return (lhs.platform?.name ?? "") < (rhs.platform?.name ?? "")
+        }
     }
 
     // Get unique platforms from collection items
