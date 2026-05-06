@@ -311,11 +311,6 @@ private struct LibraryItemRow: View {
                     if let versionName = item.gameVersionName {
                         VersionBadge(name: versionName)
                     }
-                    if let platformSlug = item.platformSlug, let platformName = item.platformName {
-                        PlatformBadgeWithIcon(slug: platformSlug, name: platformName)
-                    } else if let platformName = item.platformName {
-                        PlatformBadge(name: platformName)
-                    }
                 }
 
                 Text("\(item.achievementCount) achievements")
@@ -324,6 +319,12 @@ private struct LibraryItemRow: View {
             }
 
             Spacer()
+
+            // Platform icon on the right
+            if let platformSlug = item.platformSlug {
+                PlatformIcon(slug: platformSlug, size: 24)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(.vertical, 4)
     }
