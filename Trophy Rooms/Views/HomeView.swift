@@ -17,7 +17,6 @@ struct HomeView: View {
     @State private var selectedPageSize = 25
     @State private var showFilters = false
     @State private var selectedTab = 0
-    @State private var showSearch = false
 
     var activeFilterCount: Int {
         var count = 0
@@ -41,52 +40,40 @@ struct HomeView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // Main content
-            Group {
-                if isSearching {
-                    // MARK: - Global Search Results
-                    GlobalSearchResultsView(viewModel: globalSearchViewModel)
-                } else {
-                    // MARK: - Tabbed Content
-                    VStack(spacing: 0) {
-                        // Tab picker
-                        HomeTabPicker(selectedTab: $selectedTab)
+        Group {
+            if isSearching {
+                // MARK: - Global Search Results
+                GlobalSearchResultsView(viewModel: globalSearchViewModel)
+            } else {
+                // MARK: - Tabbed Content
+                VStack(spacing: 0) {
+                    // Tab picker
+                    HomeTabPicker(selectedTab: $selectedTab)
 
-                        // Tab content
-                        TabView(selection: $selectedTab) {
-                            // MARK: - Games Tab
-                            GamesGridTab(
-                                viewModel: gameListViewModel,
-                                filteredGameGroups: filteredGameGroups,
-                                searchText: searchText,
-                                selectedPlatformId: selectedPlatformId,
-                                achievementFilter: achievementFilter,
-                                sortOption: sortOption,
-                                gameTypeFilter: gameTypeFilter
-                            )
-                            .tag(0)
+                    // Tab content
+                    TabView(selection: $selectedTab) {
+                        // MARK: - Games Tab
+                        GamesGridTab(
+                            viewModel: gameListViewModel,
+                            filteredGameGroups: filteredGameGroups,
+                            searchText: searchText,
+                            selectedPlatformId: selectedPlatformId,
+                            achievementFilter: achievementFilter,
+                            sortOption: sortOption,
+                            gameTypeFilter: gameTypeFilter
+                        )
+                        .tag(0)
 
-                            // MARK: - Leaderboard Tab
-                            LeaderboardTab(viewModel: leaderboardViewModel)
-                                .tag(1)
+                        // MARK: - Leaderboard Tab
+                        LeaderboardTab(viewModel: leaderboardViewModel)
+                            .tag(1)
 
-                            // MARK: - Activity Tab
-                            ActivityTab(viewModel: activityViewModel)
-                                .tag(2)
-                        }
-                        .tabViewStyle(.page(indexDisplayMode: .never))
+                        // MARK: - Activity Tab
+                        ActivityTab(viewModel: activityViewModel)
+                            .tag(2)
                     }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
                 }
-            }
-
-            // Floating search button
-            if !isSearching {
-                GlassSearchButton {
-                    showSearch = true
-                }
-                .padding(.top, 60)
-                .padding(.trailing, 16)
             }
         }
         .navigationBar(title: "Home", showAuth: $showAuth)
@@ -125,17 +112,6 @@ struct HomeView: View {
                 minAchievementCount: $minAchievementCount,
                 gameTypeFilter: $gameTypeFilter,
                 selectedPageSize: $selectedPageSize
-            )
-        }
-        .sheet(isPresented: $showSearch) {
-            SearchSheet(
-                searchText: $searchText,
-                viewModel: globalSearchViewModel,
-                onDismiss: {
-                    showSearch = false
-                    searchText = ""
-                    globalSearchViewModel.clearResults()
-                }
             )
         }
         .onChange(of: searchText) {
@@ -1370,122 +1346,3 @@ private struct GameFiltersSheet: View {
     }
 }
 
-// MARK: - Glass Search Button
-
-private struct GlassSearchButton: View {
-    let action: () -> Void
-
-    private let buttonSize: CGFloat = 44
-    private let glassBackground = Color.black.opacity(0.6)
-    private let glassBorder = Color.white.opacity(0.2)
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(0.9))
-                .frame(width: buttonSize, height: buttonSize)
-                .background {
-                    if #available(iOS 26.0, *) {
-                        Circle()
-                            .fill(.clear)
-                            .glassEffect(.regular.interactive(), in: .circle)
-                    } else {
-                        Circle()
-                            .fill(glassBackground)
-                            .background(.ultraThinMaterial, in: Circle())
-                            .overlay(Circle().stroke(glassBorder, lineWidth: 1))
-                            .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 4)
-                    }
-                }
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Search Sheet
-
-private struct SearchSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var searchText: String
-    @ObservedObject var viewModel: GlobalSearchViewModel
-    let onDismiss: () -> Void
-    @FocusState private var isSearchFocused: Bool
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Search field
-                HStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.secondary)
-
-                    TextField("Search games, users, platforms...", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .focused($isSearchFocused)
-                        .submitLabel(.search)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    if !searchText.isEmpty {
-                        Button {
-                            searchText = ""
-                            viewModel.clearResults()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 18))
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .padding(.horizontal)
-                .padding(.top, 8)
-
-                // Results
-                if searchText.trimmingCharacters(in: .whitespaces).count >= 2 {
-                    GlobalSearchResultsView(viewModel: viewModel)
-                } else {
-                    VStack(spacing: 12) {
-                        Spacer()
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 40, weight: .light))
-                            .foregroundStyle(.tertiary)
-                        Text("Search for games, users, and more")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                    }
-                }
-            }
-            .navigationTitle("Search")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        onDismiss()
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .onChange(of: searchText) {
-            Task {
-                if searchText.trimmingCharacters(in: .whitespaces).count >= 2 {
-                    await viewModel.search(query: searchText)
-                } else {
-                    viewModel.clearResults()
-                }
-            }
-        }
-        .onAppear {
-            isSearchFocused = true
-        }
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
-    }
-}
