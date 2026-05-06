@@ -62,6 +62,13 @@ struct CollectionView: View {
                         )
                     }
 
+                    // Sort and group controls
+                    SortGroupControls(
+                        selectedSortOption: $viewModel.selectedSortOption,
+                        groupByPlatform: $viewModel.groupByPlatform,
+                        onSortChanged: {}
+                    )
+
                     // Filter bar
                     CollectionFilterBar(
                         selectedRegion: $viewModel.selectedRegion,
@@ -73,28 +80,66 @@ struct CollectionView: View {
 
                     // Collection list
                     List {
-                        ForEach(viewModel.filteredItems) { item in
-                            NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
-                                CollectionItemRow(item: item)
-                            }
-                            .swipeActions(edge: .leading) {
-                                Button {
-                                    editingItem = item
-                                    Task {
-                                        await fetchVersionsForGame(gameId: item.gameId)
-                                        showEditSheet = true
+                        if viewModel.groupByPlatform {
+                            ForEach(Array(viewModel.groupedItems.enumerated()), id: \.offset) { _, group in
+                                Section {
+                                    ForEach(group.items) { item in
+                                        NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
+                                            CollectionItemRow(item: item)
+                                        }
+                                        .swipeActions(edge: .leading) {
+                                            Button {
+                                                editingItem = item
+                                                Task {
+                                                    await fetchVersionsForGame(gameId: item.gameId)
+                                                    showEditSheet = true
+                                                }
+                                            } label: {
+                                                Label("Edit", systemImage: "pencil")
+                                            }
+                                            .tint(.blue)
+                                        }
                                     }
-                                } label: {
-                                    Label("Edit", systemImage: "pencil")
+                                    .onDelete { indexSet in
+                                        for index in indexSet {
+                                            let item = group.items[index]
+                                            Task {
+                                                await viewModel.removeFromCollection(id: item.id)
+                                            }
+                                        }
+                                    }
+                                } header: {
+                                    PlatformSectionHeader(
+                                        name: group.platform?.name,
+                                        slug: group.platform?.slug,
+                                        count: group.items.count
+                                    )
                                 }
-                                .tint(.blue)
                             }
-                        }
-                        .onDelete { indexSet in
-                            for index in indexSet {
-                                let item = viewModel.filteredItems[index]
-                                Task {
-                                    await viewModel.removeFromCollection(id: item.id)
+                        } else {
+                            ForEach(viewModel.filteredItems) { item in
+                                NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
+                                    CollectionItemRow(item: item)
+                                }
+                                .swipeActions(edge: .leading) {
+                                    Button {
+                                        editingItem = item
+                                        Task {
+                                            await fetchVersionsForGame(gameId: item.gameId)
+                                            showEditSheet = true
+                                        }
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.blue)
+                                }
+                            }
+                            .onDelete { indexSet in
+                                for index in indexSet {
+                                    let item = viewModel.filteredItems[index]
+                                    Task {
+                                        await viewModel.removeFromCollection(id: item.id)
+                                    }
                                 }
                             }
                         }
