@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class GameDetailViewModel: ObservableObject {
     @Published var game: GameDetail?
     @Published var isLoading = false
@@ -18,10 +19,8 @@ class GameDetailViewModel: ObservableObject {
     @Published var isDlcOwnershipLoading: Set<String> = []
 
     func fetchGame(id: String) async {
-        DispatchQueue.main.async {
-            self.isLoading = true
-            self.errorMessage = nil
-        }
+        self.isLoading = true
+        self.errorMessage = nil
 
         let query = """
         query GetGame($id: ID!) {
@@ -61,17 +60,6 @@ class GameDetailViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
-                    games {
-                        id
-                        title
-                        platform { id name slug }
-                    }
-                    dlcs {
-                        id
-                        name
-                        slug
-                        type
-                    }
                     dlcCount
                 }
                 versionCount
@@ -83,12 +71,6 @@ class GameDetailViewModel: ObservableObject {
                     coverUrl
                     effectiveCoverUrl
                     isDefault
-                    dlcs {
-                        id
-                        name
-                        slug
-                        type
-                    }
                     dlcCount
                 }
                 dlcs {
@@ -150,23 +132,27 @@ class GameDetailViewModel: ObservableObject {
 
         do {
             let response: GameDetailResponse = try await NetworkService.shared.fetch(query: query, variables: ["id": id])
-            DispatchQueue.main.async {
-                self.game = response.game
-                self.isLoading = false
-            }
+            self.game = response.game
+            self.isLoading = false
+        } catch is CancellationError {
+            self.isLoading = false
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
-            }
+            self.errorMessage = error.localizedDescription
+            self.isLoading = false
         }
     }
 
     func toggleAchievement(_ achievement: Achievement) async {
         let achievementId = achievement.id
+        let shouldMarkComplete = achievement.isCompleted != true
+        let previousGame = game
 
-        let mutationName = achievement.isCompleted == true ? "UnmarkAchievementComplete" : "MarkAchievementComplete"
-        let mutationField = achievement.isCompleted == true ? "unmarkAchievementComplete" : "markAchievementComplete"
+        if let currentGame = game {
+            game = currentGame.replacingAchievement(achievement.withCompletionState(shouldMarkComplete))
+        }
+
+        let mutationName = shouldMarkComplete ? "MarkAchievementComplete" : "UnmarkAchievementComplete"
+        let mutationField = shouldMarkComplete ? "markAchievementComplete" : "unmarkAchievementComplete"
 
         let mutation = """
         mutation \(mutationName)($achievementId: ID!) {
@@ -178,13 +164,9 @@ class GameDetailViewModel: ObservableObject {
 
         do {
             let _: SimpleMutationResponse = try await NetworkService.shared.fetch(query: mutation, variables: ["achievementId": achievementId])
-            if let gameId = game?.id {
-                await fetchGame(id: gameId)
-            }
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            game = previousGame
+            self.errorMessage = error.localizedDescription
         }
     }
 
