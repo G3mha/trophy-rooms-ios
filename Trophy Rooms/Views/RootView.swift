@@ -5,7 +5,6 @@ enum AppTab: Hashable {
     case home
     case trophies
     case library
-    case buylist
     case collection
     case search
 }
@@ -33,12 +32,6 @@ struct RootView: View {
             Tab("Library", systemImage: "books.vertical.fill", value: .library) {
                 NavigationStack {
                     LibraryView()
-                }
-            }
-
-            Tab("Buylist", systemImage: "cart.fill", value: .buylist) {
-                NavigationStack {
-                    BuylistView()
                 }
             }
 
