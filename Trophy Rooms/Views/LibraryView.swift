@@ -59,6 +59,13 @@ struct LibraryView: View {
                         isExpanded: $showStats
                     )
 
+                    // Sort and group controls
+                    SortGroupControls(
+                        selectedSortOption: $viewModel.selectedSortOption,
+                        groupByPlatform: $viewModel.groupByPlatform,
+                        onSortChanged: {}
+                    )
+
                     // Status and platform filter pills
                     LibraryFilterView(
                         selectedStatus: $viewModel.selectedStatus,
@@ -69,26 +76,62 @@ struct LibraryView: View {
 
                     // Game list
                     List {
-                        ForEach(viewModel.filteredItems) { item in
-                            NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
-                                LibraryItemRow(item: item)
-                            }
-                            .swipeActions(edge: .leading) {
-                                Button {
-                                    editingItem = item
-                                    showStatusPicker = true
-                                } label: {
-                                    Label("Edit", systemImage: "pencil")
-                                }
-                                .tint(.blue)
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    Task {
-                                        await viewModel.clearGameStatus(gameId: item.gameId)
+                        if viewModel.groupByPlatform {
+                            ForEach(Array(viewModel.groupedItems.enumerated()), id: \.offset) { _, group in
+                                Section {
+                                    ForEach(group.items) { item in
+                                        NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
+                                            LibraryItemRow(item: item)
+                                        }
+                                        .swipeActions(edge: .leading) {
+                                            Button {
+                                                editingItem = item
+                                                showStatusPicker = true
+                                            } label: {
+                                                Label("Edit", systemImage: "pencil")
+                                            }
+                                            .tint(.blue)
+                                        }
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                            Button(role: .destructive) {
+                                                Task {
+                                                    await viewModel.clearGameStatus(gameId: item.gameId)
+                                                }
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                        }
                                     }
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
+                                } header: {
+                                    PlatformSectionHeader(
+                                        name: group.platform?.name,
+                                        slug: group.platform?.slug,
+                                        count: group.items.count
+                                    )
+                                }
+                            }
+                        } else {
+                            ForEach(viewModel.filteredItems) { item in
+                                NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
+                                    LibraryItemRow(item: item)
+                                }
+                                .swipeActions(edge: .leading) {
+                                    Button {
+                                        editingItem = item
+                                        showStatusPicker = true
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.blue)
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        Task {
+                                            await viewModel.clearGameStatus(gameId: item.gameId)
+                                        }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
                                 }
                             }
                         }
