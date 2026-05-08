@@ -128,10 +128,11 @@ struct AdminBundleRow: View {
                     .font(.headline)
                     .lineLimit(1)
                 HStack(spacing: 8) {
-                    if let platform = bundle.platform {
-                        Text(platform.name)
+                    if !bundle.platforms.isEmpty {
+                        Text(bundle.platforms.map { $0.name }.joined(separator: ", "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                     if bundle.gameFamilyCount > 0 {
                         Text("\(bundle.gameFamilyCount) games")

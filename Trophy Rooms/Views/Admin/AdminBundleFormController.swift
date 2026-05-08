@@ -26,7 +26,7 @@ struct AdminBundleFormController {
                 description: draft.normalizedDescription,
                 coverUrl: draft.normalizedCoverUrl,
                 price: draft.normalizedPrice,
-                platformId: draft.selectedPlatformIds.first
+                platformIds: Array(draft.selectedPlatformIds)
             )
         }
 
@@ -37,7 +37,7 @@ struct AdminBundleFormController {
             description: draft.normalizedDescription,
             coverUrl: draft.normalizedCoverUrl,
             price: draft.normalizedPrice,
-            platformId: draft.selectedPlatformIds.first
+            platformIds: Array(draft.selectedPlatformIds)
         )
     }
 }

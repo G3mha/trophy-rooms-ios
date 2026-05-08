@@ -14,7 +14,7 @@ final class AdminBundleFormDraft: ObservableObject {
         self.name = bundle?.name ?? ""
         self.slug = bundle?.slug ?? ""
         self.type = bundle?.type ?? .BUNDLE
-        self.selectedPlatformIds = bundle?.platformId.map { [$0] } ?? []
+        self.selectedPlatformIds = Set(bundle?.platforms.map { $0.id } ?? [])
         self.bundleDescription = bundle?.description ?? ""
         self.coverUrl = bundle?.coverUrl ?? ""
         if let price = bundle?.price {
