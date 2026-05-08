@@ -47,7 +47,14 @@ struct GameFamilyRouter: View {
                 id
                 gameFamilyId
                 title
+                description
+                coverUrl
+                type
+                baseGameFamilyIds
                 platform { id name slug }
+                achievementSetCount
+                achievementCount
+                trophyCount
             }
         }
         """
