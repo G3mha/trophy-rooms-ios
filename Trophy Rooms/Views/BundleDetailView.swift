@@ -6,6 +6,7 @@ struct BundleDetailView: View {
     @StateObject private var viewModel = BundleDetailViewModel()
     @StateObject private var platformsViewModel = PlatformsViewModel.shared
     @State private var showingPlatformPicker = false
+    @State private var showingBuylistSheet = false
     let bundleId: String
 
     var body: some View {
@@ -40,6 +41,11 @@ struct BundleDetailView: View {
                                     }
                                 }
                             )
+
+                            // Buylist button
+                            BundleBuylistSection(onAddToBuylist: {
+                                showingBuylistSheet = true
+                            })
                         }
 
                         // Description
@@ -102,6 +108,17 @@ struct BundleDetailView: View {
                     }
                 }
             )
+        }
+        .sheet(isPresented: $showingBuylistSheet) {
+            if let bundle = viewModel.bundle {
+                AddBundleToBuylistSheet(
+                    bundleId: bundle.id,
+                    bundleName: bundle.name,
+                    onSave: {
+                        // Optionally refresh or show confirmation
+                    }
+                )
+            }
         }
     }
 }
@@ -212,6 +229,32 @@ private struct BundlePlatformsSection: View {
                     .cornerRadius(8)
                 }
             }
+        }
+    }
+}
+
+private struct BundleBuylistSection: View {
+    let onAddToBuylist: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Buylist")
+                .font(.headline)
+
+            Button(action: onAddToBuylist) {
+                HStack {
+                    Image(systemName: "cart.badge.plus")
+                    Text("Add to Buylist")
+                        .fontWeight(.medium)
+                    Spacer()
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color(.secondarySystemBackground))
+                .foregroundColor(.primary)
+                .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
         }
     }
 }
