@@ -21,6 +21,11 @@ struct BundleDetailView: View {
                         // Header
                         BundleHeader(bundle: bundle, isAuthenticated: clerk.user != nil)
 
+                        // Available platforms section
+                        if !bundle.platforms.isEmpty {
+                            BundlePlatformsSection(platforms: bundle.platforms)
+                        }
+
                         // Ownership section (authenticated only)
                         if clerk.user != nil {
                             BundleOwnershipSection(
@@ -182,6 +187,31 @@ private struct BundleTypeBadgeLarge: View {
             return .orange
         case .SUBSCRIPTION:
             return .green
+        }
+    }
+}
+
+private struct BundlePlatformsSection: View {
+    let platforms: [Platform]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Available On")
+                .font(.headline)
+
+            FlowLayout(spacing: 8) {
+                ForEach(platforms) { platform in
+                    HStack(spacing: 6) {
+                        PlatformIcon(slug: platform.slug ?? "", size: 20)
+                        Text(platform.name)
+                            .font(.subheadline)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                }
+            }
         }
     }
 }
