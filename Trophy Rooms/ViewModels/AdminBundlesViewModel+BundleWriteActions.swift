@@ -8,7 +8,7 @@ extension AdminBundlesViewModel {
         description: String?,
         coverUrl: String?,
         price: Double?,
-        platformId: String?
+        platformIds: [String]
     ) async -> Bool {
         await performBundleMutation(fallback: false) {
             let response = try await api.createBundle(
@@ -18,7 +18,7 @@ extension AdminBundlesViewModel {
                 description: description,
                 coverUrl: coverUrl,
                 price: price,
-                platformId: platformId
+                platformIds: platformIds
             )
             if response.createBundle.success {
                 await fetchBundles()
@@ -39,7 +39,7 @@ extension AdminBundlesViewModel {
         description: String?,
         coverUrl: String?,
         price: Double?,
-        platformId: String?
+        platformIds: [String]
     ) async -> Bool {
         await performBundleMutation(fallback: false) {
             let response = try await api.updateBundle(
@@ -50,7 +50,7 @@ extension AdminBundlesViewModel {
                 description: description,
                 coverUrl: coverUrl,
                 price: price,
-                platformId: platformId
+                platformIds: platformIds
             )
             if response.updateBundle.success {
                 await fetchBundles()
