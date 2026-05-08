@@ -35,6 +35,12 @@ class BundlesViewModel: ObservableObject {
                 type
                 description
                 coverUrl
+                platforms {
+                    id
+                    name
+                    slug
+                }
+                platformCount
                 gameFamilyCount
                 dlcCount
                 gameFamilies {

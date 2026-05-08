@@ -8,7 +8,7 @@ extension AdminBundlesAPI {
         description: String?,
         coverUrl: String?,
         price: Double?,
-        platformId: String?
+        platformIds: [String]
     ) async throws -> CreateBundleResponse {
         let mutation = """
         mutation CreateBundle($input: CreateBundleInput!) {
@@ -22,8 +22,8 @@ extension AdminBundlesAPI {
                     description
                     coverUrl
                     price
-                    platform { id name slug }
-                    platformId
+                    platforms { id name slug }
+                    platformCount
                     gameFamilyCount
                     dlcCount
                 }
@@ -46,8 +46,8 @@ extension AdminBundlesAPI {
         if let price {
             input["price"] = price
         }
-        if let platformId, !platformId.isEmpty {
-            input["platformId"] = platformId
+        if !platformIds.isEmpty {
+            input["platformIds"] = platformIds
         }
 
         return try await networkService.fetch(query: mutation, variables: ["input": input])
@@ -61,7 +61,7 @@ extension AdminBundlesAPI {
         description: String?,
         coverUrl: String?,
         price: Double?,
-        platformId: String?
+        platformIds: [String]
     ) async throws -> UpdateBundleResponse {
         let mutation = """
         mutation UpdateBundle($id: ID!, $input: UpdateBundleInput!) {
@@ -75,8 +75,8 @@ extension AdminBundlesAPI {
                     description
                     coverUrl
                     price
-                    platform { id name slug }
-                    platformId
+                    platforms { id name slug }
+                    platformCount
                     gameFamilyCount
                     dlcCount
                 }
@@ -87,7 +87,8 @@ extension AdminBundlesAPI {
         var input: [String: Any] = [
             "name": name,
             "slug": slug,
-            "type": type.rawValue
+            "type": type.rawValue,
+            "platformIds": platformIds
         ]
 
         if let description {
@@ -98,9 +99,6 @@ extension AdminBundlesAPI {
         }
         if let price {
             input["price"] = price
-        }
-        if let platformId {
-            input["platformId"] = platformId
         }
 
         return try await networkService.fetch(

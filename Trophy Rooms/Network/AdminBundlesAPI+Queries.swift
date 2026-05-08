@@ -13,12 +13,12 @@ extension AdminBundlesAPI {
                 coverUrl
                 releaseDate
                 price
-                platform {
+                platforms {
                     id
                     name
                     slug
                 }
-                platformId
+                platformCount
                 gameFamilyCount
                 dlcCount
                 gameFamilies {
