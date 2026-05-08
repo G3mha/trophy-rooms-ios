@@ -1110,7 +1110,7 @@ private struct GlobalSearchResultsView: View {
                     if viewModel.gameCount > 0 {
                         Section {
                             ForEach(viewModel.items.filter { $0.type == .GAME }) { item in
-                                NavigationLink(destination: GameFamilyView(title: item.title)) {
+                                NavigationLink(destination: GameFamilyRouter(title: item.title)) {
                                     SearchResultRow(item: item)
                                 }
                             }

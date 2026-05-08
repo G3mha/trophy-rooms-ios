@@ -204,7 +204,7 @@ private struct SearchResultsView: View {
                     if !gameItems.isEmpty {
                         Section("Games") {
                             ForEach(gameItems) { item in
-                                NavigationLink(destination: GameFamilyView(title: item.title)) {
+                                NavigationLink(destination: GameFamilyRouter(title: item.title)) {
                                     SearchItemRow(item: item)
                                 }
                             }

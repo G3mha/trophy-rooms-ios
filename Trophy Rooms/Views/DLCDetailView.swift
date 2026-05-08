@@ -48,7 +48,7 @@ struct DLCDetailView: View {
                                     .font(.headline)
 
                                 NavigationLink {
-                                    GameFamilyView(title: gameFamily.title)
+                                    GameFamilyRouter(title: gameFamily.title)
                                 } label: {
                                     DLCParentGameRow(gameFamily: gameFamily)
                                 }

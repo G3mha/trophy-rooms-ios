@@ -1074,7 +1074,7 @@ private struct BaseGameFamilyRow: View {
     let gameType: GameType?
 
     var body: some View {
-        NavigationLink(destination: GameFamilyView(title: gameFamily.title)) {
+        NavigationLink(destination: GameFamilyRouter(title: gameFamily.title)) {
             HStack(spacing: 12) {
                 if let coverUrl = gameFamily.coverUrl, let url = URL(string: coverUrl) {
                     AsyncImage(url: url) { image in
@@ -1123,7 +1123,7 @@ private struct DerivedGameFamilyRow: View {
     let gameFamily: GameFamilyRef
 
     var body: some View {
-        NavigationLink(destination: GameFamilyView(title: gameFamily.title)) {
+        NavigationLink(destination: GameFamilyRouter(title: gameFamily.title)) {
             HStack(spacing: 12) {
                 if let coverUrl = gameFamily.coverUrl, let url = URL(string: coverUrl) {
                     AsyncImage(url: url) { image in
