@@ -4,6 +4,7 @@ import Combine
 @MainActor
 class CollectionViewModel: ObservableObject {
     @Published var collectionItems: [CollectionItem] = []
+    @Published var ownedBundles: [AppBundle] = []
     @Published var stats: CollectionStats?
     @Published var isLoading = false
     @Published var hasLoadedOnce = false
@@ -144,6 +145,17 @@ class CollectionViewModel: ObservableObject {
                     count
                 }
             }
+            myOwnedBundles {
+                id
+                name
+                slug
+                type
+                coverUrl
+                platforms { id name slug }
+                platformCount
+                gameFamilyCount
+                dlcCount
+            }
         }
         """
 
@@ -151,6 +163,7 @@ class CollectionViewModel: ObservableObject {
             let response: CollectionWithStatsResponse = try await NetworkService.shared.fetch(query: query)
             collectionItems = response.myCollection
             stats = response.collectionStats
+            ownedBundles = response.myOwnedBundles ?? []
             isLoading = false
             hasLoadedOnce = true
         } catch is CancellationError {
@@ -205,4 +218,5 @@ class CollectionViewModel: ObservableObject {
 struct CollectionWithStatsResponse: Decodable {
     let myCollection: [CollectionItem]
     let collectionStats: CollectionStats
+    let myOwnedBundles: [AppBundle]?
 }
