@@ -129,14 +129,14 @@ struct CollectionView: View {
                     }
                 }
             }
-        } else if collectionViewModel.collectionItems.isEmpty {
+        } else if collectionViewModel.collectionItems.isEmpty && collectionViewModel.ownedBundles.isEmpty {
             VStack(spacing: 16) {
                 Image(systemName: "archivebox")
                     .font(.system(size: 48))
                     .foregroundColor(.secondary)
                 Text("Your collection is empty")
                     .font(.headline)
-                Text("Add physical games to track your collection")
+                Text("Add physical games and bundles to track your collection")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -171,6 +171,24 @@ struct CollectionView: View {
 
                 // Collection list
                 List {
+                    // Owned Bundles section
+                    if !collectionViewModel.ownedBundles.isEmpty {
+                        Section {
+                            ForEach(collectionViewModel.ownedBundles) { bundle in
+                                NavigationLink(destination: BundleDetailView(bundleId: bundle.id)) {
+                                    OwnedBundleRow(bundle: bundle)
+                                }
+                            }
+                        } header: {
+                            HStack {
+                                Image(systemName: "shippingbox.fill")
+                                Text("Bundles (\(collectionViewModel.ownedBundles.count))")
+                            }
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        }
+                    }
+
                     if collectionViewModel.groupByPlatform {
                         ForEach(Array(collectionViewModel.groupedItems.enumerated()), id: \.offset) { _, group in
                             let sectionId = group.platform?.id ?? "other"
@@ -740,3 +758,70 @@ private struct Badge: View {
             .cornerRadius(4)
     }
 }
+
+// MARK: - Owned Bundle Row
+
+private struct OwnedBundleRow: View {
+    let bundle: AppBundle
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Cover image
+            if let coverUrl = bundle.coverUrl, let url = URL(string: coverUrl) {
+                AsyncImage(url: url) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color.gray.opacity(0.3)
+                }
+                .frame(width: 60, height: 60)
+                .cornerRadius(8)
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 60, height: 60)
+                    .overlay {
+                        Image(systemName: "shippingbox")
+                            .font(.title2)
+                            .foregroundStyle(.gray)
+                    }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(bundle.name)
+                    .font(.headline)
+                    .lineLimit(2)
+
+                HStack(spacing: 6) {
+                    BundleTypeBadge(type: bundle.type)
+
+                    if bundle.gameFamilyCount > 0 {
+                        Text("\(bundle.gameFamilyCount) games")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                // Platform icons
+                if !bundle.platforms.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(bundle.platforms.prefix(4)) { platform in
+                            PlatformIcon(slug: platform.slug ?? "", size: 16)
+                        }
+                        if bundle.platforms.count > 4 {
+                            Text("+\(bundle.platforms.count - 4)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
