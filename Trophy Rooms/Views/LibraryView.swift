@@ -75,78 +75,35 @@ struct LibraryView: View {
                         availablePlatforms: viewModel.availablePlatforms
                     )
 
-                    // Game list
-                    List {
-                        if viewModel.groupByPlatform {
-                            ForEach(Array(viewModel.groupedItems.enumerated()), id: \.offset) { _, group in
-                                let sectionId = group.platform?.id ?? "other"
-                                Section {
-                                    if expandedSections.isExpanded(sectionId) {
-                                        ForEach(group.items) { item in
-                                            NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
-                                                LibraryItemRow(item: item)
-                                            }
-                                            .swipeActions(edge: .leading) {
-                                                Button {
-                                                    editingItem = item
-                                                    showStatusPicker = true
-                                                } label: {
-                                                    Label("Edit", systemImage: "pencil")
-                                                }
-                                                .tint(.blue)
-                                            }
-                                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                                Button(role: .destructive) {
-                                                    Task {
-                                                        await viewModel.clearGameStatus(gameId: item.gameId)
-                                                    }
-                                                } label: {
-                                                    Label("Delete", systemImage: "trash")
-                                                }
-                                            }
-                                        }
-                                    }
-                                } header: {
-                                    PlatformSectionHeader(
-                                        name: group.platform?.name,
-                                        slug: group.platform?.slug,
-                                        count: group.items.count,
-                                        isExpanded: expandedSections.isExpanded(sectionId),
-                                        onToggle: { expandedSections.toggle(sectionId) }
-                                    )
+                    // Game grid
+                    if viewModel.groupByPlatform {
+                        LibraryGroupedGrid(
+                            groups: viewModel.groupedItems,
+                            expandedSections: expandedSections,
+                            onEdit: { item in
+                                editingItem = item
+                                showStatusPicker = true
+                            },
+                            onDelete: { item in
+                                Task {
+                                    await viewModel.clearGameStatus(gameId: item.gameId)
                                 }
                             }
-                            .onAppear {
-                                let ids = viewModel.groupedItems.map { $0.platform?.id ?? "other" }
-                                expandedSections.expandAll(ids)
-                            }
-                        } else {
-                            ForEach(viewModel.filteredItems) { item in
-                                NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
-                                    LibraryItemRow(item: item)
-                                }
-                                .swipeActions(edge: .leading) {
-                                    Button {
-                                        editingItem = item
-                                        showStatusPicker = true
-                                    } label: {
-                                        Label("Edit", systemImage: "pencil")
-                                    }
-                                    .tint(.blue)
-                                }
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        Task {
-                                            await viewModel.clearGameStatus(gameId: item.gameId)
-                                        }
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
+                        )
+                    } else {
+                        LibraryFlatGrid(
+                            items: viewModel.filteredItems,
+                            onEdit: { item in
+                                editingItem = item
+                                showStatusPicker = true
+                            },
+                            onDelete: { item in
+                                Task {
+                                    await viewModel.clearGameStatus(gameId: item.gameId)
                                 }
                             }
-                        }
+                        )
                     }
-                    .listStyle(.plain)
                 }
             }
         }
@@ -397,5 +354,108 @@ struct VersionBadge: View {
         .background(Color.indigo.opacity(0.15))
         .foregroundColor(.indigo)
         .cornerRadius(8)
+    }
+}
+
+// MARK: - Library Grid Components
+
+private struct LibraryGroupedGrid: View {
+    let groups: [(platform: Platform?, items: [LibraryItem])]
+    let expandedSections: ExpandedSectionsState
+    let onEdit: (LibraryItem) -> Void
+    let onDelete: (LibraryItem) -> Void
+
+    private let columns = GameCoverGridLayout.columns(count: 3)
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                    let sectionId = group.platform?.id ?? "other"
+
+                    Section {
+                        if expandedSections.isExpanded(sectionId) {
+                            LazyVGrid(columns: columns, spacing: 12) {
+                                ForEach(group.items) { item in
+                                    LibraryGridCell(
+                                        item: item,
+                                        onEdit: { onEdit(item) },
+                                        onDelete: { onDelete(item) }
+                                    )
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 8)
+                        }
+                    } header: {
+                        PlatformGridSectionHeader(
+                            name: group.platform?.name,
+                            slug: group.platform?.slug,
+                            count: group.items.count,
+                            isExpanded: expandedSections.isExpanded(sectionId),
+                            onToggle: { expandedSections.toggle(sectionId) }
+                        )
+                    }
+                }
+            }
+        }
+        .onAppear {
+            let ids = groups.map { $0.platform?.id ?? "other" }
+            expandedSections.expandAll(ids)
+        }
+    }
+}
+
+private struct LibraryFlatGrid: View {
+    let items: [LibraryItem]
+    let onEdit: (LibraryItem) -> Void
+    let onDelete: (LibraryItem) -> Void
+
+    private let columns = GameCoverGridLayout.columns(count: 3)
+
+    var body: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(items) { item in
+                    LibraryGridCell(
+                        item: item,
+                        onEdit: { onEdit(item) },
+                        onDelete: { onDelete(item) }
+                    )
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+        }
+    }
+}
+
+private struct LibraryGridCell: View {
+    let item: LibraryItem
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
+            GameCoverCell(coverUrl: item.gameCoverUrl, title: item.gameTitle) {
+                StatusOverlayBadge(status: item.status)
+            }
+            .contentShape(Rectangle())
+            .contextMenu {
+                Button {
+                    onEdit()
+                } label: {
+                    Label("Change Status", systemImage: "pencil")
+                }
+
+                Divider()
+
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label("Remove from Library", systemImage: "trash")
+                }
+            }
+        }
     }
 }
