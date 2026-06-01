@@ -207,6 +207,166 @@ struct CollectionConditionOverlay: View {
     }
 }
 
+/// Priority overlay badge for buylist items (top-right corner)
+struct PriorityOverlayBadge: View {
+    let priority: BuylistPriority
+
+    var body: some View {
+        VStack {
+            HStack {
+                Spacer()
+                Text(priorityMarker)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .background(priorityColor)
+                    .cornerRadius(4)
+                    .padding(4)
+            }
+            Spacer()
+        }
+    }
+
+    var priorityMarker: String {
+        switch priority {
+        case .HIGH: return "!!!"
+        case .MEDIUM: return "!!"
+        case .LOW: return "!"
+        }
+    }
+
+    var priorityColor: Color {
+        switch priority {
+        case .HIGH: return .red
+        case .MEDIUM: return .orange
+        case .LOW: return .green
+        }
+    }
+}
+
+/// Item type overlay badge for buylist items (top-left corner)
+struct ItemTypeOverlayBadge: View {
+    let itemType: BuylistItemType
+
+    var body: some View {
+        VStack {
+            HStack {
+                Image(systemName: itemType.iconName)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(5)
+                    .background(itemTypeColor)
+                    .cornerRadius(4)
+                    .padding(4)
+                Spacer()
+            }
+            Spacer()
+        }
+    }
+
+    var itemTypeColor: Color {
+        switch itemType {
+        case .GAME: return .blue
+        case .DLC: return .purple
+        case .BUNDLE: return .pink
+        }
+    }
+}
+
+/// Condition overlay badge for sell list items (top-right corner)
+struct ConditionOverlayBadge: View {
+    let condition: ItemCondition
+
+    var body: some View {
+        VStack {
+            HStack {
+                Spacer()
+                Text(condition.shortName)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .background(conditionColor)
+                    .cornerRadius(4)
+                    .padding(4)
+            }
+            Spacer()
+        }
+    }
+
+    var conditionColor: Color {
+        switch condition {
+        case .MINT: return .green
+        case .NEAR_MINT: return .teal
+        case .VERY_GOOD: return .blue
+        case .GOOD: return .orange
+        case .FAIR: return .red
+        case .POOR: return .gray
+        }
+    }
+}
+
+/// Sold status overlay for sell list items (bottom)
+struct SoldStatusOverlay: View {
+    let isSold: Bool
+    let price: Double?
+
+    var body: some View {
+        if isSold {
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack(spacing: 2) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 12))
+                        Text("SOLD")
+                            .font(.system(size: 8, weight: .bold))
+                        if let price = price {
+                            Text(String(format: "$%.0f", price))
+                                .font(.system(size: 9, weight: .semibold))
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    Spacer()
+                }
+                .background(
+                    LinearGradient(
+                        colors: [.clear, .green.opacity(0.85)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            }
+        }
+    }
+}
+
+/// Price overlay for sell list items (bottom-left)
+struct PriceOverlay: View {
+    let price: Double
+
+    var body: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Text(String(format: "$%.0f", price))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.orange.opacity(0.9))
+                    .cornerRadius(4)
+                    .padding(4)
+                Spacer()
+            }
+        }
+    }
+}
+
 // MARK: - Game Cover with Context Menu
 
 /// A game cover cell with built-in context menu support
