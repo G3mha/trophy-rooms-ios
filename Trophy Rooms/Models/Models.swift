@@ -568,6 +568,16 @@ struct BuylistResponse: Decodable {
     let myBuylist: [BuylistItem]
 }
 
+// Lightweight response for queries that only need id and gameId
+struct BuylistItemIdResponse: Decodable {
+    let myBuylist: [BuylistItemIdOnly]
+}
+
+struct BuylistItemIdOnly: Decodable {
+    let id: String
+    let gameId: String?
+}
+
 struct UserBuylistResponse: Decodable {
     let userBuylist: [BuylistItem]
 }
@@ -594,6 +604,15 @@ struct UpdateBuylistItemResponse: Decodable {
 
 struct MarkAsPurchasedResponse: Decodable {
     let markAsPurchased: BuylistMutationResult
+}
+
+struct ConvertBuylistToCollectionResponse: Decodable {
+    let convertBuylistToCollection: ConvertBuylistToCollectionResult
+}
+
+struct ConvertBuylistToCollectionResult: Decodable {
+    let success: Bool
+    let collectionItem: CollectionItemRef?
 }
 
 struct BuylistMutationResult: Decodable {
@@ -1866,4 +1885,179 @@ struct GlobalSearchResults: Decodable {
 
 struct GlobalSearchResponse: Decodable {
     let globalSearch: GlobalSearchResults?
+}
+
+// MARK: - Sell List Models
+
+enum ItemCondition: String, Codable, CaseIterable {
+    case MINT
+    case NEAR_MINT
+    case VERY_GOOD
+    case GOOD
+    case FAIR
+    case POOR
+
+    var displayName: String {
+        switch self {
+        case .MINT: return "Mint"
+        case .NEAR_MINT: return "Near Mint"
+        case .VERY_GOOD: return "Very Good"
+        case .GOOD: return "Good"
+        case .FAIR: return "Fair"
+        case .POOR: return "Poor"
+        }
+    }
+
+    var shortName: String {
+        switch self {
+        case .MINT: return "M"
+        case .NEAR_MINT: return "NM"
+        case .VERY_GOOD: return "VG"
+        case .GOOD: return "G"
+        case .FAIR: return "F"
+        case .POOR: return "P"
+        }
+    }
+
+    var color: String {
+        switch self {
+        case .MINT: return "green"
+        case .NEAR_MINT: return "teal"
+        case .VERY_GOOD: return "blue"
+        case .GOOD: return "orange"
+        case .FAIR: return "red"
+        case .POOR: return "gray"
+        }
+    }
+}
+
+enum SellListItemStatus: String, Codable, CaseIterable {
+    case ACTIVE
+    case SOLD
+    case REMOVED
+
+    var displayName: String {
+        switch self {
+        case .ACTIVE: return "For Sale"
+        case .SOLD: return "Sold"
+        case .REMOVED: return "Removed"
+        }
+    }
+}
+
+enum SellListSortOption: String, CaseIterable, Identifiable, SortOptionProtocol {
+    case dateAddedDesc = "ADDED_AT_DESC"
+    case dateAddedAsc = "ADDED_AT_ASC"
+    case priceDesc = "PRICE_DESC"
+    case priceAsc = "PRICE_ASC"
+    case conditionDesc = "CONDITION_DESC"
+    case conditionAsc = "CONDITION_ASC"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .dateAddedDesc: return "Date Added (Newest)"
+        case .dateAddedAsc: return "Date Added (Oldest)"
+        case .priceDesc: return "Price (High to Low)"
+        case .priceAsc: return "Price (Low to High)"
+        case .conditionDesc: return "Condition (Best)"
+        case .conditionAsc: return "Condition (Worst)"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .dateAddedDesc: return "Newest"
+        case .dateAddedAsc: return "Oldest"
+        case .priceDesc, .priceAsc: return "Price"
+        case .conditionDesc, .conditionAsc: return "Condition"
+        }
+    }
+}
+
+struct SellListPlatform: Codable, Identifiable, Equatable, Hashable {
+    let id: String
+    let name: String
+    let slug: String?
+
+    static func == (lhs: SellListPlatform, rhs: SellListPlatform) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+struct SellListItem: Codable, Identifiable {
+    let id: String
+    let collectionItemId: String
+    let askingPrice: Double?
+    let condition: ItemCondition
+    let conditionNotes: String?
+    let listingUrl: String?
+    let notes: String?
+    let status: SellListItemStatus
+    let salePrice: Double?
+    let soldAt: String?
+    let displayTitle: String
+    let displayCoverUrl: String?
+    let displayPlatform: SellListPlatform?
+    let addedAt: String
+    let updatedAt: String
+}
+
+struct SellListStats: Codable {
+    let activeCount: Int
+    let soldCount: Int
+    let totalAskingValue: Double
+    let totalSoldValue: Double
+}
+
+// MARK: - Sell List Responses
+
+struct SellListResponse: Decodable {
+    let mySellList: [SellListItem]
+}
+
+struct SellListStatsResponse: Decodable {
+    let sellListStats: SellListStats
+}
+
+struct SellHistoryResponse: Decodable {
+    let mySellHistory: [SellListItem]
+}
+
+struct IsInSellListResponse: Decodable {
+    let isInSellList: Bool
+}
+
+struct AddToSellListResponse: Decodable {
+    let addToSellList: SellListMutationResult
+}
+
+struct UpdateSellListItemResponse: Decodable {
+    let updateSellListItem: SellListMutationResult
+}
+
+struct RemoveFromSellListResponse: Decodable {
+    let removeFromSellList: SellListMutationResult
+}
+
+struct MarkAsSoldResponse: Decodable {
+    let markAsSold: SellListMutationResult
+}
+
+struct MarkAsSoldAndRemoveFromCollectionResponse: Decodable {
+    let markAsSoldAndRemoveFromCollection: SellListMutationResult
+}
+
+struct SellListMutationResult: Decodable {
+    let success: Bool
+    let sellListItem: SellListItemRef?
+}
+
+struct SellListItemRef: Decodable {
+    let id: String
 }
