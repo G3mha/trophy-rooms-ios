@@ -206,7 +206,7 @@ class GameDetailViewModel: ObservableObject {
             """
 
             do {
-                let response: BuylistResponse = try await NetworkService.shared.fetch(query: query)
+                let response: BuylistItemIdResponse = try await NetworkService.shared.fetch(query: query)
                 if let item = response.myBuylist.first(where: { $0.gameId == gameId }) {
                     let mutation = """
                     mutation RemoveFromBuylist($id: ID!) {
