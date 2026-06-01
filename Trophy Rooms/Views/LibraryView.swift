@@ -360,7 +360,7 @@ struct VersionBadge: View {
 // MARK: - Library Grid Components
 
 private struct LibraryGroupedGrid: View {
-    let groups: [(platform: Platform?, items: [LibraryItem])]
+    let groups: [(platform: (id: String, name: String, slug: String?)?, items: [LibraryItem])]
     let expandedSections: ExpandedSectionsState
     let onEdit: (LibraryItem) -> Void
     let onDelete: (LibraryItem) -> Void
