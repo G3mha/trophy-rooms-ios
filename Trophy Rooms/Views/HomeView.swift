@@ -222,11 +222,7 @@ private struct GamesGridTab: View {
     let sortOption: SortOption
     let gameTypeFilter: GameTypeFilter
 
-    private let columns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
-    ]
+    private let columns = GameCoverGridLayout.columns(count: 3)
 
     var body: some View {
         if viewModel.isLoading && viewModel.games.isEmpty {
@@ -257,22 +253,25 @@ private struct GamesGridTab: View {
                         .padding(.top, 8)
                     }
 
-                    // Cover grid
+                    // Cover grid using reusable components
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(filteredGameGroups) { group in
                             if group.isSingleGame, let game = group.games.first {
                                 NavigationLink(destination: GameDetailView(gameId: game.id)) {
-                                    SimpleGameContextMenu(
+                                    GameCoverWithContextMenu(
                                         gameId: game.id,
                                         gameTitle: game.title,
+                                        coverUrl: game.coverUrl,
                                         platformId: game.platform?.id
                                     ) {
-                                        GameCoverCell(coverUrl: game.coverUrl, title: game.title)
+                                        EmptyView()
                                     }
                                 }
                             } else {
                                 NavigationLink(destination: GameFamilyView(title: group.title)) {
-                                    GameCoverCell(coverUrl: group.coverUrl, title: group.title, isGroup: true)
+                                    GameCoverCell(coverUrl: group.coverUrl, title: group.title) {
+                                        GroupIndicatorOverlay()
+                                    }
                                 }
                             }
                         }
@@ -326,84 +325,6 @@ private struct GamesGridTab: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Game Cover Cell
-
-private struct GameCoverCell: View {
-    let coverUrl: String?
-    let title: String
-    var isGroup: Bool = false
-
-    var body: some View {
-        VStack(spacing: 0) {
-            if let coverUrl = coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.2))
-                            .overlay(ProgressView())
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(3/4, contentMode: .fill)
-                    case .failure:
-                        CoverPlaceholder(title: title)
-                    @unknown default:
-                        CoverPlaceholder(title: title)
-                    }
-                }
-            } else {
-                CoverPlaceholder(title: title)
-            }
-        }
-        .aspectRatio(3/4, contentMode: .fit)
-        .cornerRadius(8)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        .overlay(
-            // Group indicator
-            Group {
-                if isGroup {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Image(systemName: "square.stack.fill")
-                                .font(.caption)
-                                .foregroundColor(.white)
-                                .padding(4)
-                                .background(Color.black.opacity(0.6))
-                                .cornerRadius(4)
-                                .padding(4)
-                        }
-                        Spacer()
-                    }
-                }
-            }
-        )
-    }
-}
-
-private struct CoverPlaceholder: View {
-    let title: String
-
-    var body: some View {
-        Rectangle()
-            .fill(Color.gray.opacity(0.3))
-            .overlay(
-                VStack(spacing: 4) {
-                    Image(systemName: "gamecontroller")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-                    Text(title)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .padding(.horizontal, 4)
-                }
-            )
     }
 }
 
