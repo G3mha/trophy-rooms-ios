@@ -262,7 +262,13 @@ private struct GamesGridTab: View {
                         ForEach(filteredGameGroups) { group in
                             if group.isSingleGame, let game = group.games.first {
                                 NavigationLink(destination: GameDetailView(gameId: game.id)) {
-                                    GameCoverCell(coverUrl: game.coverUrl, title: game.title)
+                                    SimpleGameContextMenu(
+                                        gameId: game.id,
+                                        gameTitle: game.title,
+                                        platformId: game.platform?.id
+                                    ) {
+                                        GameCoverCell(coverUrl: game.coverUrl, title: game.title)
+                                    }
                                 }
                             } else {
                                 NavigationLink(destination: GameFamilyView(title: group.title)) {
