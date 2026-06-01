@@ -44,12 +44,32 @@ struct MarkAsPurchasedSheet: View {
                     } footer: {
                         Text("Optional - select a platform for this game")
                     }
+
+                    Section {
+                        Picker("Region", selection: $viewModel.region) {
+                            ForEach(GameRegion.allCases, id: \.self) { region in
+                                Text(region.displayName).tag(region)
+                            }
+                        }
+
+                        Toggle("Digital Copy", isOn: $viewModel.isDigital)
+                    }
+
+                    if !viewModel.isDigital {
+                        Section("Physical Condition") {
+                            Toggle("Has Disc", isOn: $viewModel.hasDisc)
+                            Toggle("Has Box", isOn: $viewModel.hasBox)
+                            Toggle("Has Manual", isOn: $viewModel.hasManual)
+                            Toggle("Has Extras", isOn: $viewModel.hasExtras)
+                            Toggle("Sealed", isOn: $viewModel.isSealed)
+                        }
+                    }
                 }
 
                 Section {
                     Button {
                         Task {
-                            let success = await viewModel.markAsPurchased(id: item.id)
+                            let success = await viewModel.markAsPurchased(id: item.id, isGame: item.itemType == .GAME)
                             if success {
                                 onComplete()
                                 dismiss()
@@ -107,6 +127,15 @@ class MarkAsPurchasedSheetViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    // Collection fields
+    @Published var region: GameRegion = .NTSC_U
+    @Published var isDigital: Bool = false
+    @Published var hasDisc: Bool = true
+    @Published var hasBox: Bool = true
+    @Published var hasManual: Bool = true
+    @Published var hasExtras: Bool = false
+    @Published var isSealed: Bool = false
+
     func fetchPlatforms() async {
         let query = """
         query GetPlatforms {
@@ -128,15 +157,15 @@ class MarkAsPurchasedSheetViewModel: ObservableObject {
         }
     }
 
-    func markAsPurchased(id: String) async -> Bool {
+    func markAsPurchased(id: String, isGame: Bool) async -> Bool {
         DispatchQueue.main.async {
             self.isLoading = true
             self.errorMessage = nil
         }
 
         let mutation = """
-        mutation MarkAsPurchased($id: ID!, $platformId: ID, $purchasePrice: Float, $purchasedAt: DateTime) {
-            markAsPurchased(id: $id, platformId: $platformId, purchasePrice: $purchasePrice, purchasedAt: $purchasedAt) {
+        mutation MarkAsPurchased($id: ID!, $platformId: ID, $purchasePrice: Float, $purchasedAt: DateTime, $region: GameRegion, $isDigital: Boolean, $hasDisc: Boolean, $hasBox: Boolean, $hasManual: Boolean, $hasExtras: Boolean, $isSealed: Boolean) {
+            markAsPurchased(id: $id, platformId: $platformId, purchasePrice: $purchasePrice, purchasedAt: $purchasedAt, region: $region, isDigital: $isDigital, hasDisc: $hasDisc, hasBox: $hasBox, hasManual: $hasManual, hasExtras: $hasExtras, isSealed: $isSealed) {
                 success
             }
         }
@@ -154,6 +183,19 @@ class MarkAsPurchasedSheetViewModel: ObservableObject {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         variables["purchasedAt"] = formatter.string(from: purchasedAt)
+
+        // Add collection fields for games
+        if isGame {
+            variables["region"] = region.rawValue
+            variables["isDigital"] = isDigital
+            if !isDigital {
+                variables["hasDisc"] = hasDisc
+                variables["hasBox"] = hasBox
+                variables["hasManual"] = hasManual
+                variables["hasExtras"] = hasExtras
+                variables["isSealed"] = isSealed
+            }
+        }
 
         do {
             let response: MarkAsPurchasedResponse = try await NetworkService.shared.fetch(
