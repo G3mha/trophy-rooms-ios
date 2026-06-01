@@ -17,11 +17,8 @@ struct CollectionView: View {
     @State private var editingItem: CollectionItem?
     @State private var editingItemVersions: [GameVersion] = []
     @State private var showEditSheet = false
-    @State private var showPurchasedSheet = false
     @State private var selectedItemForPurchase: BuylistItem?
-    @State private var showAddToSellListSheet = false
     @State private var selectedItemForSellList: CollectionItem?
-    @State private var showMarkAsSoldSheet = false
     @State private var selectedSellListItem: SellListItem?
     @State private var selectedTab: CollectionTab = .collection
     @AppStorage("collection_showStats") private var showCollectionStats = true
@@ -76,37 +73,31 @@ struct CollectionView: View {
                 }
             }
         }
-        .sheet(isPresented: $showPurchasedSheet) {
-            if let item = selectedItemForPurchase {
-                MarkAsPurchasedSheet(item: item) {
-                    Task {
-                        await buylistViewModel.fetchBuylist()
-                        await buylistViewModel.fetchStats()
-                    }
+        .sheet(item: $selectedItemForPurchase) { item in
+            MarkAsPurchasedSheet(item: item) {
+                Task {
+                    await buylistViewModel.fetchBuylist()
+                    await buylistViewModel.fetchStats()
                 }
             }
         }
-        .sheet(isPresented: $showAddToSellListSheet) {
-            if let item = selectedItemForSellList {
-                AddToSellListSheet(
-                    collectionItemId: item.id,
-                    itemTitle: item.game.title
-                ) {
-                    Task {
-                        await sellListViewModel.fetchSellList()
-                        await sellListViewModel.fetchStats()
-                    }
+        .sheet(item: $selectedItemForSellList) { item in
+            AddToSellListSheet(
+                collectionItemId: item.id,
+                itemTitle: item.game.title
+            ) {
+                Task {
+                    await sellListViewModel.fetchSellList()
+                    await sellListViewModel.fetchStats()
                 }
             }
         }
-        .sheet(isPresented: $showMarkAsSoldSheet) {
-            if let item = selectedSellListItem {
-                MarkAsSoldSheet(item: item) {
-                    Task {
-                        await sellListViewModel.fetchSellList()
-                        await sellListViewModel.fetchStats()
-                        await collectionViewModel.fetchCollection()
-                    }
+        .sheet(item: $selectedSellListItem) { item in
+            MarkAsSoldSheet(item: item) {
+                Task {
+                    await sellListViewModel.fetchSellList()
+                    await sellListViewModel.fetchStats()
+                    await collectionViewModel.fetchCollection()
                 }
             }
         }
@@ -223,7 +214,6 @@ struct CollectionView: View {
                         },
                         onSell: { item in
                             selectedItemForSellList = item
-                            showAddToSellListSheet = true
                         },
                         onDelete: { item in
                             Task {
@@ -244,7 +234,6 @@ struct CollectionView: View {
                         },
                         onSell: { item in
                             selectedItemForSellList = item
-                            showAddToSellListSheet = true
                         },
                         onDelete: { item in
                             Task {
@@ -320,11 +309,6 @@ struct CollectionView: View {
                         expandedSections: expandedSections,
                         onMarkPurchased: { item in
                             selectedItemForPurchase = item
-                            showPurchasedSheet = true
-                        },
-                        onAddToCollection: { item in
-                            selectedItemForPurchase = item
-                            showPurchasedSheet = true
                         },
                         onDelete: { item in
                             Task {
@@ -337,11 +321,6 @@ struct CollectionView: View {
                         items: buylistViewModel.filteredItems,
                         onMarkPurchased: { item in
                             selectedItemForPurchase = item
-                            showPurchasedSheet = true
-                        },
-                        onAddToCollection: { item in
-                            selectedItemForPurchase = item
-                            showPurchasedSheet = true
                         },
                         onDelete: { item in
                             Task {
@@ -416,7 +395,6 @@ struct CollectionView: View {
                         expandedSections: expandedSections,
                         onMarkSold: { item in
                             selectedSellListItem = item
-                            showMarkAsSoldSheet = true
                         },
                         onDelete: { item in
                             Task {
@@ -429,7 +407,6 @@ struct CollectionView: View {
                         items: sellListViewModel.filteredItems,
                         onMarkSold: { item in
                             selectedSellListItem = item
-                            showMarkAsSoldSheet = true
                         },
                         onDelete: { item in
                             Task {
@@ -1261,7 +1238,6 @@ private struct BuylistGroupedGrid: View {
     let groups: [(platform: BuylistPlatform?, items: [BuylistItem])]
     let expandedSections: ExpandedSectionsState
     let onMarkPurchased: (BuylistItem) -> Void
-    let onAddToCollection: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
     private let columns = GameCoverGridLayout.columns(count: 3)
@@ -1279,7 +1255,6 @@ private struct BuylistGroupedGrid: View {
                                     BuylistGridCell(
                                         item: item,
                                         onMarkPurchased: { onMarkPurchased(item) },
-                                        onAddToCollection: { onAddToCollection(item) },
                                         onDelete: { onDelete(item) }
                                     )
                                 }
@@ -1309,7 +1284,6 @@ private struct BuylistGroupedGrid: View {
 private struct BuylistFlatGrid: View {
     let items: [BuylistItem]
     let onMarkPurchased: (BuylistItem) -> Void
-    let onAddToCollection: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
     private let columns = GameCoverGridLayout.columns(count: 3)
@@ -1321,7 +1295,6 @@ private struct BuylistFlatGrid: View {
                     BuylistGridCell(
                         item: item,
                         onMarkPurchased: { onMarkPurchased(item) },
-                        onAddToCollection: { onAddToCollection(item) },
                         onDelete: { onDelete(item) }
                     )
                 }
@@ -1335,7 +1308,6 @@ private struct BuylistFlatGrid: View {
 private struct BuylistGridCell: View {
     let item: BuylistItem
     let onMarkPurchased: () -> Void
-    let onAddToCollection: () -> Void
     let onDelete: () -> Void
 
     @ViewBuilder
@@ -1378,14 +1350,6 @@ private struct BuylistGridCell: View {
                     onMarkPurchased()
                 } label: {
                     Label("Mark as Purchased", systemImage: "checkmark.circle")
-                }
-
-                if item.itemType == .GAME {
-                    Button {
-                        onAddToCollection()
-                    } label: {
-                        Label("Add to Collection", systemImage: "tray.full")
-                    }
                 }
 
                 Divider()
