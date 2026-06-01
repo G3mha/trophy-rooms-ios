@@ -78,59 +78,43 @@ struct BuylistView: View {
                         }
                     )
 
-                    // Items list
-                    List {
-                        if viewModel.groupByPlatform {
-                            ForEach(Array(viewModel.groupedItems.enumerated()), id: \.offset) { _, group in
-                                let sectionId = group.platform?.id ?? "other"
-                                Section {
-                                    if expandedSections.isExpanded(sectionId) {
-                                        ForEach(group.items) { item in
-                                            NavigationLink(destination: destinationView(for: item)) {
-                                                BuylistItemRow(item: item, showPlatform: false)
-                                                    .buylistContextMenu(
-                                                        item: item,
-                                                        showPurchasedSheet: $showPurchasedSheet,
-                                                        showCollectionSheet: $showCollectionSheet,
-                                                        selectedItemForPurchase: $selectedItemForPurchase,
-                                                        selectedItemForCollection: $selectedItemForCollection,
-                                                        onRemove: { await viewModel.removeFromBuylist(id: item.id) }
-                                                    )
-                                            }
-                                        }
-                                    }
-                                } header: {
-                                    PlatformSectionHeader(
-                                        name: group.platform?.name,
-                                        slug: group.platform?.slug,
-                                        count: group.items.count,
-                                        isExpanded: expandedSections.isExpanded(sectionId),
-                                        onToggle: { expandedSections.toggle(sectionId) }
-                                    )
+                    // Items grid
+                    if viewModel.groupByPlatform {
+                        BuylistViewGroupedGrid(
+                            groups: viewModel.groupedItems,
+                            expandedSections: expandedSections,
+                            onMarkPurchased: { item in
+                                selectedItemForPurchase = item
+                                showPurchasedSheet = true
+                            },
+                            onAddToCollection: { item in
+                                selectedItemForCollection = item
+                                showCollectionSheet = true
+                            },
+                            onDelete: { item in
+                                Task {
+                                    await viewModel.removeFromBuylist(id: item.id)
                                 }
                             }
-                            .onAppear {
-                                // Expand all sections by default
-                                let ids = viewModel.groupedItems.map { $0.platform?.id ?? "other" }
-                                expandedSections.expandAll(ids)
-                            }
-                        } else {
-                            ForEach(viewModel.filteredItems) { item in
-                                NavigationLink(destination: destinationView(for: item)) {
-                                    BuylistItemRow(item: item, showPlatform: true)
-                                        .buylistContextMenu(
-                                            item: item,
-                                            showPurchasedSheet: $showPurchasedSheet,
-                                            showCollectionSheet: $showCollectionSheet,
-                                            selectedItemForPurchase: $selectedItemForPurchase,
-                                            selectedItemForCollection: $selectedItemForCollection,
-                                            onRemove: { await viewModel.removeFromBuylist(id: item.id) }
-                                        )
+                        )
+                    } else {
+                        BuylistViewFlatGrid(
+                            items: viewModel.filteredItems,
+                            onMarkPurchased: { item in
+                                selectedItemForPurchase = item
+                                showPurchasedSheet = true
+                            },
+                            onAddToCollection: { item in
+                                selectedItemForCollection = item
+                                showCollectionSheet = true
+                            },
+                            onDelete: { item in
+                                Task {
+                                    await viewModel.removeFromBuylist(id: item.id)
                                 }
                             }
-                        }
+                        )
                     }
-                    .listStyle(.plain)
                 }
             }
         }
@@ -428,6 +412,151 @@ struct ItemTypeBadge: View {
         case .GAME: return .blue
         case .DLC: return .purple
         case .BUNDLE: return .pink
+        }
+    }
+}
+
+// MARK: - Buylist Grid Components
+
+private struct BuylistViewGroupedGrid: View {
+    let groups: [(platform: BuylistPlatform?, items: [BuylistItem])]
+    let expandedSections: ExpandedSectionsState
+    let onMarkPurchased: (BuylistItem) -> Void
+    let onAddToCollection: (BuylistItem) -> Void
+    let onDelete: (BuylistItem) -> Void
+
+    private let columns = GameCoverGridLayout.columns(count: 3)
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                    let sectionId = "buylist_\(group.platform?.id ?? "other")"
+
+                    Section {
+                        if expandedSections.isExpanded(sectionId) {
+                            LazyVGrid(columns: columns, spacing: 12) {
+                                ForEach(group.items) { item in
+                                    BuylistViewGridCell(
+                                        item: item,
+                                        onMarkPurchased: { onMarkPurchased(item) },
+                                        onAddToCollection: { onAddToCollection(item) },
+                                        onDelete: { onDelete(item) }
+                                    )
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 8)
+                        }
+                    } header: {
+                        PlatformGridSectionHeader(
+                            name: group.platform?.name,
+                            slug: group.platform?.slug,
+                            count: group.items.count,
+                            isExpanded: expandedSections.isExpanded(sectionId),
+                            onToggle: { expandedSections.toggle(sectionId) }
+                        )
+                    }
+                }
+            }
+        }
+        .onAppear {
+            let ids = groups.map { "buylist_\($0.platform?.id ?? "other")" }
+            expandedSections.expandAll(ids)
+        }
+    }
+}
+
+private struct BuylistViewFlatGrid: View {
+    let items: [BuylistItem]
+    let onMarkPurchased: (BuylistItem) -> Void
+    let onAddToCollection: (BuylistItem) -> Void
+    let onDelete: (BuylistItem) -> Void
+
+    private let columns = GameCoverGridLayout.columns(count: 3)
+
+    var body: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(items) { item in
+                    BuylistViewGridCell(
+                        item: item,
+                        onMarkPurchased: { onMarkPurchased(item) },
+                        onAddToCollection: { onAddToCollection(item) },
+                        onDelete: { onDelete(item) }
+                    )
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+        }
+    }
+}
+
+private struct BuylistViewGridCell: View {
+    let item: BuylistItem
+    let onMarkPurchased: () -> Void
+    let onAddToCollection: () -> Void
+    let onDelete: () -> Void
+
+    @ViewBuilder
+    private var destination: some View {
+        switch item.itemType {
+        case .GAME:
+            if let gameId = item.gameId {
+                GameDetailView(gameId: gameId)
+            } else {
+                Text("Game not found")
+            }
+        case .DLC:
+            Text("DLC: \(item.displayTitle)")
+        case .BUNDLE:
+            if let bundleId = item.bundleId {
+                BundleDetailView(bundleId: bundleId)
+            } else {
+                Text("Bundle not found")
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationLink(destination: destination) {
+            GameCoverCell(coverUrl: item.displayCoverUrl, title: item.displayTitle) {
+                // Item type badge (top-left)
+                ItemTypeOverlayBadge(itemType: item.itemType)
+
+                // Priority badge (top-right)
+                PriorityOverlayBadge(priority: item.priority)
+
+                // Price overlay (bottom-left) if available
+                if let price = item.estimatedPrice {
+                    PriceOverlay(price: price)
+                }
+            }
+            .contentShape(Rectangle())
+            .contextMenu {
+                Button {
+                    onMarkPurchased()
+                } label: {
+                    Label("Mark as Purchased", systemImage: "checkmark.circle")
+                }
+
+                if item.itemType == .GAME {
+                    Button {
+                        onAddToCollection()
+                    } label: {
+                        Label("Add to Collection", systemImage: "tray.full")
+                    }
+                }
+
+                Divider()
+
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label("Remove from Buylist", systemImage: "trash")
+                }
+            }
         }
     }
 }
