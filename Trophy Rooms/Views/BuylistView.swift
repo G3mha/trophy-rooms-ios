@@ -8,6 +8,8 @@ struct BuylistView: View {
     @State private var showAuth = false
     @State private var showPurchasedSheet = false
     @State private var selectedItemForPurchase: BuylistItem?
+    @State private var showCollectionSheet = false
+    @State private var selectedItemForCollection: BuylistItem?
     @AppStorage("buylist_showStats") private var showStats = true
 
     var body: some View {
@@ -86,24 +88,14 @@ struct BuylistView: View {
                                         ForEach(group.items) { item in
                                             NavigationLink(destination: destinationView(for: item)) {
                                                 BuylistItemRow(item: item, showPlatform: false)
-                                            }
-                                            .swipeActions(edge: .leading) {
-                                                Button {
-                                                    selectedItemForPurchase = item
-                                                    showPurchasedSheet = true
-                                                } label: {
-                                                    Label("Purchased", systemImage: "checkmark")
-                                                }
-                                                .tint(.green)
-                                            }
-                                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                                Button(role: .destructive) {
-                                                    Task {
-                                                        await viewModel.removeFromBuylist(id: item.id)
-                                                    }
-                                                } label: {
-                                                    Label("Remove", systemImage: "trash")
-                                                }
+                                                    .buylistContextMenu(
+                                                        item: item,
+                                                        showPurchasedSheet: $showPurchasedSheet,
+                                                        showCollectionSheet: $showCollectionSheet,
+                                                        selectedItemForPurchase: $selectedItemForPurchase,
+                                                        selectedItemForCollection: $selectedItemForCollection,
+                                                        onRemove: { await viewModel.removeFromBuylist(id: item.id) }
+                                                    )
                                             }
                                         }
                                     }
@@ -126,24 +118,14 @@ struct BuylistView: View {
                             ForEach(viewModel.filteredItems) { item in
                                 NavigationLink(destination: destinationView(for: item)) {
                                     BuylistItemRow(item: item, showPlatform: true)
-                                }
-                                .swipeActions(edge: .leading) {
-                                    Button {
-                                        selectedItemForPurchase = item
-                                        showPurchasedSheet = true
-                                    } label: {
-                                        Label("Purchased", systemImage: "checkmark")
-                                    }
-                                    .tint(.green)
-                                }
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        Task {
-                                            await viewModel.removeFromBuylist(id: item.id)
-                                        }
-                                    } label: {
-                                        Label("Remove", systemImage: "trash")
-                                    }
+                                        .buylistContextMenu(
+                                            item: item,
+                                            showPurchasedSheet: $showPurchasedSheet,
+                                            showCollectionSheet: $showCollectionSheet,
+                                            selectedItemForPurchase: $selectedItemForPurchase,
+                                            selectedItemForCollection: $selectedItemForCollection,
+                                            onRemove: { await viewModel.removeFromBuylist(id: item.id) }
+                                        )
                                 }
                             }
                         }
@@ -162,6 +144,16 @@ struct BuylistView: View {
         .sheet(isPresented: $showPurchasedSheet) {
             if let item = selectedItemForPurchase {
                 MarkAsPurchasedSheet(item: item) {
+                    Task {
+                        await viewModel.fetchBuylist()
+                        await viewModel.fetchStats()
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showCollectionSheet) {
+            if let item = selectedItemForCollection {
+                ConvertToCollectionSheet(buylistItem: item) {
                     Task {
                         await viewModel.fetchBuylist()
                         await viewModel.fetchStats()
