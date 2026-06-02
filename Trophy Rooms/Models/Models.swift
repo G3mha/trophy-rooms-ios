@@ -11,7 +11,7 @@ enum AchievementTier: String, Codable, CaseIterable {
 
 // MARK: - Platform
 
-struct Platform: Identifiable, Decodable {
+struct Platform: Identifiable, Codable {
     let id: String
     let name: String
     let slug: String?
@@ -59,7 +59,7 @@ struct GameFamily: Identifiable, Decodable, Equatable {
 }
 
 /// Reference to a GameFamily (for self-referencing relations)
-struct GameFamilyRef: Identifiable, Decodable {
+struct GameFamilyRef: Identifiable, Codable {
     let id: String
     let title: String
     let slug: String
@@ -139,7 +139,7 @@ struct GameSummary: Identifiable, Decodable, Equatable {
     }
 }
 
-struct AchievementSet: Identifiable, Decodable {
+struct AchievementSet: Identifiable, Codable {
     let id: String
     let title: String
     let type: String
@@ -153,7 +153,7 @@ struct AchievementSet: Identifiable, Decodable {
     let achievements: [Achievement]
 }
 
-struct Achievement: Identifiable, Decodable {
+struct Achievement: Identifiable, Codable {
     let id: String
     let title: String
     let description: String?
@@ -186,7 +186,7 @@ extension Achievement {
     }
 }
 
-struct GameDetail: Identifiable, Decodable {
+struct GameDetail: Identifiable, Codable {
     let id: String
     let gameFamilyId: String?
     let gameFamily: GameFamilyRef?
@@ -296,7 +296,7 @@ struct DerivativeGame: Identifiable, Decodable {
 
 // MARK: - User-Facing DLC
 
-struct GameDLC: Identifiable, Decodable {
+struct GameDLC: Identifiable, Codable {
     let id: String
     let name: String
     let slug: String
@@ -312,7 +312,7 @@ struct GameDLC: Identifiable, Decodable {
 
 // MARK: - User-Facing Bundle
 
-struct GameBundle: Identifiable, Decodable {
+struct GameBundle: Identifiable, Codable {
     let id: String
     let name: String
     let slug: String
@@ -564,7 +564,7 @@ struct BuylistStats: Codable {
 
 // MARK: - Buylist Responses
 
-struct BuylistResponse: Decodable {
+struct BuylistResponse: Codable {
     let myBuylist: [BuylistItem]
 }
 
@@ -582,7 +582,7 @@ struct UserBuylistResponse: Decodable {
     let userBuylist: [BuylistItem]
 }
 
-struct BuylistStatsResponse: Decodable {
+struct BuylistStatsResponse: Codable {
     let buylistStats: BuylistStats
 }
 
@@ -699,7 +699,7 @@ enum GameRegion: String, Codable, CaseIterable {
     }
 }
 
-struct CollectionItem: Decodable, Identifiable {
+struct CollectionItem: Codable, Identifiable {
     let id: String
     let gameId: String
     let game: CollectionGame
@@ -724,7 +724,7 @@ struct CollectionItem: Decodable, Identifiable {
     }
 }
 
-struct CollectionGame: Decodable {
+struct CollectionGame: Codable {
     let id: String
     let title: String
     let coverUrl: String?
@@ -813,7 +813,7 @@ struct PlatformsResponse: Decodable {
     let platforms: [Platform]
 }
 
-struct GameDetailResponse: Decodable {
+struct GameDetailResponse: Codable {
     let game: GameDetail?
 }
 
@@ -885,7 +885,7 @@ struct GameProgressResponse: Decodable {
 
 // MARK: - Library Responses
 
-struct LibraryResponse: Decodable {
+struct LibraryResponse: Codable {
     let myGamesByStatus: [LibraryItem]
 }
 
@@ -924,7 +924,7 @@ struct CollectionResponse: Decodable {
     let myCollection: [CollectionItem]
 }
 
-struct CollectionForGameResponse: Decodable {
+struct CollectionForGameResponse: Codable {
     let myCollectionForGame: [CollectionItem]
 }
 
@@ -1107,7 +1107,7 @@ struct DLCGame: Decodable {
     let title: String
 }
 
-struct DLCRef: Identifiable, Decodable {
+struct DLCRef: Identifiable, Codable {
     let id: String
     let name: String
     let slug: String
@@ -1235,7 +1235,7 @@ enum GameType: String, Codable, CaseIterable {
     }
 }
 
-struct AppBundle: Identifiable, Decodable {
+struct AppBundle: Identifiable, Codable {
     let id: String
     let name: String
     let slug: String
@@ -1254,13 +1254,13 @@ struct AppBundle: Identifiable, Decodable {
     let ownedPlatforms: [Platform]?
 }
 
-struct BundleGameFamily: Identifiable, Decodable {
+struct BundleGameFamily: Identifiable, Codable {
     let id: String
     let title: String
     let coverUrl: String?
 }
 
-struct BundleDLC: Identifiable, Decodable {
+struct BundleDLC: Identifiable, Codable {
     let id: String
     let name: String
     let slug: String?
@@ -1273,7 +1273,7 @@ struct BundlesResponse: Decodable {
     let bundles: [AppBundle]
 }
 
-struct BundleResponse: Decodable {
+struct BundleResponse: Codable {
     let bundle: AppBundle?
 }
 
@@ -1338,7 +1338,7 @@ struct SimpleMutationResult: Decodable {
 
 // MARK: - Game Version Models
 
-struct GameVersion: Identifiable, Decodable {
+struct GameVersion: Identifiable, Codable {
     let id: String
     let name: String
     let slug: String?
@@ -1355,7 +1355,7 @@ struct GameVersion: Identifiable, Decodable {
     let achievementSetCount: Int?
 }
 
-struct GameVersionGame: Decodable {
+struct GameVersionGame: Codable {
     let id: String
     let title: String
     let platform: Platform?
@@ -1580,7 +1580,7 @@ struct AdminAchievementSet: Identifiable, Decodable {
     }
 }
 
-struct GameVersionRef: Decodable {
+struct GameVersionRef: Codable {
     let id: String
     let name: String
 }
@@ -2017,11 +2017,11 @@ struct SellListStats: Codable {
 
 // MARK: - Sell List Responses
 
-struct SellListResponse: Decodable {
+struct SellListResponse: Codable {
     let mySellList: [SellListItem]
 }
 
-struct SellListStatsResponse: Decodable {
+struct SellListStatsResponse: Codable {
     let sellListStats: SellListStats
 }
 
