@@ -80,6 +80,10 @@ struct BuylistView: View {
                         BuylistViewGroupedGrid(
                             groups: viewModel.groupedItems,
                             expandedSections: expandedSections,
+                            onRefresh: {
+                                await viewModel.fetchBuylist(forceRefresh: true)
+                                await viewModel.fetchStats(forceRefresh: true)
+                            },
                             onMarkPurchased: { item in
                                 selectedItemForPurchase = item
                             },
@@ -92,6 +96,10 @@ struct BuylistView: View {
                     } else {
                         BuylistViewFlatGrid(
                             items: viewModel.filteredItems,
+                            onRefresh: {
+                                await viewModel.fetchBuylist(forceRefresh: true)
+                                await viewModel.fetchStats(forceRefresh: true)
+                            },
                             onMarkPurchased: { item in
                                 selectedItemForPurchase = item
                             },
@@ -396,6 +404,7 @@ struct ItemTypeBadge: View {
 private struct BuylistViewGroupedGrid: View {
     let groups: [(platform: BuylistPlatform?, items: [BuylistItem])]
     let expandedSections: ExpandedSectionsState
+    let onRefresh: () async -> Void
     let onMarkPurchased: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
@@ -433,6 +442,9 @@ private struct BuylistViewGroupedGrid: View {
                 }
             }
         }
+        .refreshable {
+            await onRefresh()
+        }
         .onAppear {
             let ids = groups.map { "buylist_\($0.platform?.id ?? "other")" }
             expandedSections.expandAll(ids)
@@ -442,6 +454,7 @@ private struct BuylistViewGroupedGrid: View {
 
 private struct BuylistViewFlatGrid: View {
     let items: [BuylistItem]
+    let onRefresh: () async -> Void
     let onMarkPurchased: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
@@ -460,6 +473,9 @@ private struct BuylistViewFlatGrid: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
+        }
+        .refreshable {
+            await onRefresh()
         }
     }
 }
