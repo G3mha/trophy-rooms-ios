@@ -112,8 +112,22 @@ class CollectionViewModel: ObservableObject {
         return platforms.sorted { $0.name < $1.name }
     }
 
-    func fetchCollection() async {
-        isLoading = true
+    func fetchCollection(forceRefresh: Bool = false) async {
+        // Load from cache immediately (no loading state)
+        if !forceRefresh, let cached: CollectionWithStatsResponse = await CacheManager.shared.get(.collection) {
+            collectionItems = cached.myCollection
+            stats = cached.collectionStats
+            ownedBundles = cached.myOwnedBundles ?? []
+            // If we have cached data and not forcing refresh, we're done
+            if !collectionItems.isEmpty && hasLoadedOnce {
+                return
+            }
+        }
+
+        // Show loading only if no data at all (first load with no cache)
+        if collectionItems.isEmpty && !hasLoadedOnce {
+            isLoading = true
+        }
         errorMessage = nil
 
         let query = """
@@ -161,6 +175,7 @@ class CollectionViewModel: ObservableObject {
 
         do {
             let response: CollectionWithStatsResponse = try await NetworkService.shared.fetch(query: query)
+            await CacheManager.shared.set(.collection, value: response)
             collectionItems = response.myCollection
             stats = response.collectionStats
             ownedBundles = response.myOwnedBundles ?? []
@@ -173,7 +188,10 @@ class CollectionViewModel: ObservableObject {
             isLoading = false
             hasLoadedOnce = true
         } catch {
-            errorMessage = error.localizedDescription
+            // Only show error if no cached data
+            if collectionItems.isEmpty {
+                errorMessage = error.localizedDescription
+            }
             isLoading = false
             hasLoadedOnce = true
         }
@@ -194,6 +212,7 @@ class CollectionViewModel: ObservableObject {
                 variables: ["id": id]
             )
             if response.removeFromCollection.success {
+                await CacheInvalidation.forCollectionChange()
                 collectionItems.removeAll { $0.id == id }
                 // Update stats
                 if var currentStats = stats {
@@ -215,7 +234,7 @@ class CollectionViewModel: ObservableObject {
 }
 
 // Response type for combined query
-struct CollectionWithStatsResponse: Decodable {
+struct CollectionWithStatsResponse: Codable {
     let myCollection: [CollectionItem]
     let collectionStats: CollectionStats
     let myOwnedBundles: [AppBundle]?

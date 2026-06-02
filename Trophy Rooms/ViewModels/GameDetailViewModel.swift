@@ -18,9 +18,17 @@ class GameDetailViewModel: ObservableObject {
     @Published var ownedDlcIds: Set<String> = []
     @Published var isDlcOwnershipLoading: Set<String> = []
 
-    func fetchGame(id: String) async {
-        self.isLoading = true
-        self.errorMessage = nil
+    func fetchGame(id: String, forceRefresh: Bool = false) async {
+        // Load from cache immediately (no loading state)
+        if !forceRefresh, let cached: GameDetailResponse = await CacheManager.shared.get(.game(id: id)) {
+            game = cached.game
+        }
+
+        // Show loading only if no cached data
+        if game == nil {
+            isLoading = true
+        }
+        errorMessage = nil
 
         let query = """
         query GetGame($id: ID!) {
@@ -132,14 +140,17 @@ class GameDetailViewModel: ObservableObject {
 
         do {
             let response: GameDetailResponse = try await NetworkService.shared.fetch(query: query, variables: ["id": id])
-            self.game = response.game
-            self.isLoading = false
+            await CacheManager.shared.set(.game(id: id), value: response)
+            game = response.game
         } catch is CancellationError {
-            self.isLoading = false
+            // Cancelled - keep cached data
         } catch {
-            self.errorMessage = error.localizedDescription
-            self.isLoading = false
+            // Only show error if no cached data
+            if game == nil {
+                errorMessage = error.localizedDescription
+            }
         }
+        isLoading = false
     }
 
     func toggleAchievement(_ achievement: Achievement) async {
@@ -190,9 +201,7 @@ class GameDetailViewModel: ObservableObject {
     func toggleBuylist() async {
         guard let gameId = game?.id else { return }
 
-        DispatchQueue.main.async {
-            self.isBuylistLoading = true
-        }
+        isBuylistLoading = true
 
         if isInBuylist {
             // Remove from buylist - we need to find the item ID first
@@ -219,20 +228,15 @@ class GameDetailViewModel: ObservableObject {
                         query: mutation,
                         variables: ["id": item.id]
                     )
-                    DispatchQueue.main.async {
-                        self.isInBuylist = false
-                        self.isBuylistLoading = false
-                    }
+                    await CacheInvalidation.forBuylistChange()
+                    isInBuylist = false
+                    isBuylistLoading = false
                 } else {
-                    DispatchQueue.main.async {
-                        self.isBuylistLoading = false
-                    }
+                    isBuylistLoading = false
                 }
             } catch {
-                DispatchQueue.main.async {
-                    self.errorMessage = error.localizedDescription
-                    self.isBuylistLoading = false
-                }
+                errorMessage = error.localizedDescription
+                isBuylistLoading = false
             }
         } else {
             // Add to buylist
@@ -257,18 +261,15 @@ class GameDetailViewModel: ObservableObject {
                     query: mutation,
                     variables: ["input": input]
                 )
-                DispatchQueue.main.async {
-                    if response.addToBuylist.success {
-                        self.isInBuylist = true
-                        self.buylistItemId = response.addToBuylist.buylistItem?.id
-                    }
-                    self.isBuylistLoading = false
+                if response.addToBuylist.success {
+                    await CacheInvalidation.forBuylistChange()
+                    isInBuylist = true
+                    buylistItemId = response.addToBuylist.buylistItem?.id
                 }
+                isBuylistLoading = false
             } catch {
-                DispatchQueue.main.async {
-                    self.errorMessage = error.localizedDescription
-                    self.isBuylistLoading = false
-                }
+                errorMessage = error.localizedDescription
+                isBuylistLoading = false
             }
         }
     }
@@ -301,9 +302,7 @@ class GameDetailViewModel: ObservableObject {
     func setGameStatus(_ status: GameStatus, platformId: String? = nil, gameVersionId: String? = nil) async {
         guard let gameId = game?.id else { return }
 
-        DispatchQueue.main.async {
-            self.isStatusLoading = true
-        }
+        isStatusLoading = true
 
         let mutation = """
         mutation SetGameStatus($gameId: ID!, $status: GameStatus!, $platformId: ID, $gameVersionId: ID) {
@@ -329,28 +328,23 @@ class GameDetailViewModel: ObservableObject {
                 query: mutation,
                 variables: variables
             )
-            DispatchQueue.main.async {
-                if response.setGameStatus.success {
-                    self.currentStatus = response.setGameStatus.status
-                    self.currentPlatformId = response.setGameStatus.platformId
-                    self.currentVersionId = response.setGameStatus.gameVersionId
-                }
-                self.isStatusLoading = false
+            if response.setGameStatus.success {
+                await CacheInvalidation.forLibraryChange()
+                currentStatus = response.setGameStatus.status
+                currentPlatformId = response.setGameStatus.platformId
+                currentVersionId = response.setGameStatus.gameVersionId
             }
+            isStatusLoading = false
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isStatusLoading = false
-            }
+            errorMessage = error.localizedDescription
+            isStatusLoading = false
         }
     }
 
     func clearGameStatus() async {
         guard let gameId = game?.id else { return }
 
-        DispatchQueue.main.async {
-            self.isStatusLoading = true
-        }
+        isStatusLoading = true
 
         let mutation = """
         mutation ClearGameStatus($gameId: ID!) {
@@ -365,27 +359,29 @@ class GameDetailViewModel: ObservableObject {
                 query: mutation,
                 variables: ["gameId": gameId]
             )
-            DispatchQueue.main.async {
-                if response.clearGameStatus.success {
-                    self.currentStatus = nil
-                    self.currentPlatformId = nil
-                    self.currentVersionId = nil
-                }
-                self.isStatusLoading = false
+            if response.clearGameStatus.success {
+                await CacheInvalidation.forLibraryChange()
+                currentStatus = nil
+                currentPlatformId = nil
+                currentVersionId = nil
             }
+            isStatusLoading = false
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isStatusLoading = false
-            }
+            errorMessage = error.localizedDescription
+            isStatusLoading = false
         }
     }
 
     // MARK: - Collection Methods
 
-    func fetchCollectionForGame(gameId: String) async {
-        DispatchQueue.main.async {
-            self.isCollectionLoading = true
+    func fetchCollectionForGame(gameId: String, forceRefresh: Bool = false) async {
+        // Load from cache immediately
+        if !forceRefresh, let cached: CollectionForGameResponse = await CacheManager.shared.get(.collectionForGame(gameId: gameId)) {
+            collectionItems = cached.myCollectionForGame
+        }
+
+        if collectionItems.isEmpty {
+            isCollectionLoading = true
         }
 
         let query = """
@@ -415,15 +411,12 @@ class GameDetailViewModel: ObservableObject {
                 query: query,
                 variables: ["gameId": gameId]
             )
-            DispatchQueue.main.async {
-                self.collectionItems = response.myCollectionForGame
-                self.isCollectionLoading = false
-            }
+            await CacheManager.shared.set(.collectionForGame(gameId: gameId), value: response)
+            collectionItems = response.myCollectionForGame
         } catch {
-            DispatchQueue.main.async {
-                self.isCollectionLoading = false
-            }
+            // Keep cached data on error
         }
+        isCollectionLoading = false
     }
 
     // MARK: - DLC Ownership Methods
@@ -431,9 +424,7 @@ class GameDetailViewModel: ObservableObject {
     func toggleDlcOwnership(dlcId: String) async {
         guard let dlc = game?.dlcs?.first(where: { $0.id == dlcId }) else { return }
 
-        DispatchQueue.main.async {
-            self.isDlcOwnershipLoading.insert(dlcId)
-        }
+        isDlcOwnershipLoading.insert(dlcId)
 
         let isCurrentlyOwned = dlc.isOwned ?? false
         let mutationName = isCurrentlyOwned ? "RemoveDLCFromOwned" : "AddDLCToOwned"
@@ -458,20 +449,17 @@ class GameDetailViewModel: ObservableObject {
                 : response.addDLCToOwned?.success ?? false
 
             if success {
-                // Refetch game to get updated ownership state
+                // Invalidate game cache and refetch
                 if let gameId = game?.id {
-                    await fetchGame(id: gameId)
+                    await CacheInvalidation.forGame(id: gameId)
+                    await fetchGame(id: gameId, forceRefresh: true)
                 }
             }
 
-            DispatchQueue.main.async {
-                self.isDlcOwnershipLoading.remove(dlcId)
-            }
+            isDlcOwnershipLoading.remove(dlcId)
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isDlcOwnershipLoading.remove(dlcId)
-            }
+            errorMessage = error.localizedDescription
+            isDlcOwnershipLoading.remove(dlcId)
         }
     }
 }

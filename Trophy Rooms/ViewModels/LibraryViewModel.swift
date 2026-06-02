@@ -1,12 +1,14 @@
 import Foundation
 import Combine
 
+@MainActor
 class LibraryViewModel: ObservableObject {
     @Published var libraryItems: [LibraryItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedStatus: GameStatus?
     @Published var selectedPlatformId: String?
+    var hasLoadedOnce = false
     @Published var selectedSortOption: LibrarySortOption = .titleAsc {
         didSet {
             UserDefaults.standard.set(selectedSortOption.rawValue, forKey: "library_sortOption")
@@ -114,11 +116,21 @@ class LibraryViewModel: ObservableObject {
         return counts
     }
 
-    func fetchLibrary() async {
-        DispatchQueue.main.async {
-            self.isLoading = true
-            self.errorMessage = nil
+    func fetchLibrary(forceRefresh: Bool = false) async {
+        // Load from cache immediately (no loading state)
+        if !forceRefresh, let cached: LibraryResponse = await CacheManager.shared.get(.library) {
+            libraryItems = cached.myGamesByStatus
+            // If we have cached data and not forcing refresh, we're done
+            if !libraryItems.isEmpty && hasLoadedOnce {
+                return
+            }
         }
+
+        // Show loading only if no data at all (first load with no cache)
+        if libraryItems.isEmpty && !hasLoadedOnce {
+            isLoading = true
+        }
+        errorMessage = nil
 
         let query = """
         query GetMyLibrary {
@@ -143,16 +155,23 @@ class LibraryViewModel: ObservableObject {
 
         do {
             let response: LibraryResponse = try await NetworkService.shared.fetch(query: query)
-            DispatchQueue.main.async {
-                self.libraryItems = response.myGamesByStatus
-                self.isLoading = false
-            }
+            await CacheManager.shared.set(.library, value: response)
+            libraryItems = response.myGamesByStatus
+            hasLoadedOnce = true
+        } catch is CancellationError {
+            isLoading = false
+            hasLoadedOnce = true
+        } catch let error as NSError where error.code == NSURLErrorCancelled {
+            isLoading = false
+            hasLoadedOnce = true
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
+            // Only show error if no cached data
+            if libraryItems.isEmpty {
+                errorMessage = error.localizedDescription
             }
+            hasLoadedOnce = true
         }
+        isLoading = false
     }
 
     func setGameStatus(gameId: String, status: GameStatus, platformId: String? = nil, gameVersionId: String? = nil) async -> Bool {
@@ -181,13 +200,12 @@ class LibraryViewModel: ObservableObject {
                 variables: variables
             )
             if response.setGameStatus.success {
-                await fetchLibrary()
+                await CacheInvalidation.forLibraryChange()
+                await fetchLibrary(forceRefresh: true)
             }
             return response.setGameStatus.success
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
             return false
         }
     }
@@ -207,15 +225,12 @@ class LibraryViewModel: ObservableObject {
                 variables: ["gameId": gameId]
             )
             if response.clearGameStatus.success {
-                DispatchQueue.main.async {
-                    self.libraryItems.removeAll { $0.gameId == gameId }
-                }
+                await CacheInvalidation.forLibraryChange()
+                libraryItems.removeAll { $0.gameId == gameId }
             }
             return response.clearGameStatus.success
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
             return false
         }
     }

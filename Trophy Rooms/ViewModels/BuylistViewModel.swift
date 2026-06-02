@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class BuylistViewModel: ObservableObject {
     @Published var buylistItems: [BuylistItem] = []
     @Published var stats: BuylistStats?
@@ -18,6 +19,7 @@ class BuylistViewModel: ObservableObject {
             UserDefaults.standard.set(groupByPlatform, forKey: "buylist_groupByPlatform")
         }
     }
+    var hasLoadedOnce = false
 
     init() {
         // Load persisted preferences
@@ -104,11 +106,21 @@ class BuylistViewModel: ObservableObject {
         return counts
     }
 
-    func fetchBuylist() async {
-        DispatchQueue.main.async {
-            self.isLoading = true
-            self.errorMessage = nil
+    func fetchBuylist(forceRefresh: Bool = false) async {
+        // Load from cache immediately (no loading state)
+        if !forceRefresh, let cached: BuylistResponse = await CacheManager.shared.get(.buylist) {
+            buylistItems = cached.myBuylist
+            // If we have cached data and not forcing refresh, we're done
+            if !buylistItems.isEmpty && hasLoadedOnce {
+                return
+            }
         }
+
+        // Show loading only if no data at all (first load with no cache)
+        if buylistItems.isEmpty && !hasLoadedOnce {
+            isLoading = true
+        }
+        errorMessage = nil
 
         let query = """
         query GetMyBuylist($orderBy: BuylistOrderBy) {
@@ -140,19 +152,28 @@ class BuylistViewModel: ObservableObject {
                 query: query,
                 variables: ["orderBy": selectedSortOption.rawValue]
             )
-            DispatchQueue.main.async {
-                self.buylistItems = response.myBuylist
-                self.isLoading = false
-            }
+            await CacheManager.shared.set(.buylist, value: response)
+            buylistItems = response.myBuylist
+            hasLoadedOnce = true
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
+            // Only show error if no data at all
+            if buylistItems.isEmpty {
+                errorMessage = error.localizedDescription
             }
         }
+        isLoading = false
     }
 
-    func fetchStats() async {
+    func fetchStats(forceRefresh: Bool = false) async {
+        // Load from cache immediately
+        if !forceRefresh, let cached: BuylistStatsResponse = await CacheManager.shared.get(.buylistStats) {
+            stats = cached.buylistStats
+            // If we have cached stats and not forcing refresh, we're done
+            if stats != nil && hasLoadedOnce {
+                return
+            }
+        }
+
         let query = """
         query GetBuylistStats {
             buylistStats {
@@ -170,12 +191,12 @@ class BuylistViewModel: ObservableObject {
 
         do {
             let response: BuylistStatsResponse = try await NetworkService.shared.fetch(query: query)
-            DispatchQueue.main.async {
-                self.stats = response.buylistStats
-            }
+            await CacheManager.shared.set(.buylistStats, value: response)
+            stats = response.buylistStats
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
+            // Only show error if no stats at all
+            if stats == nil {
+                errorMessage = error.localizedDescription
             }
         }
     }
@@ -214,14 +235,13 @@ class BuylistViewModel: ObservableObject {
                 variables: ["input": input]
             )
             if response.addToBuylist.success {
-                await fetchBuylist()
-                await fetchStats()
+                await CacheInvalidation.forBuylistChange()
+                await fetchBuylist(forceRefresh: true)
+                await fetchStats(forceRefresh: true)
             }
             return response.addToBuylist.success
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
             return false
         }
     }
@@ -241,16 +261,13 @@ class BuylistViewModel: ObservableObject {
                 variables: ["id": id]
             )
             if response.removeFromBuylist.success {
-                DispatchQueue.main.async {
-                    self.buylistItems.removeAll { $0.id == id }
-                }
-                await fetchStats()
+                await CacheInvalidation.forBuylistChange()
+                buylistItems.removeAll { $0.id == id }
+                await fetchStats(forceRefresh: true)
             }
             return response.removeFromBuylist.success
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
             return false
         }
     }
@@ -285,14 +302,13 @@ class BuylistViewModel: ObservableObject {
                 variables: ["id": id, "input": input]
             )
             if response.updateBuylistItem.success {
-                await fetchBuylist()
-                await fetchStats()
+                await CacheInvalidation.forBuylistChange()
+                await fetchBuylist(forceRefresh: true)
+                await fetchStats(forceRefresh: true)
             }
             return response.updateBuylistItem.success
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
             return false
         }
     }
@@ -330,16 +346,14 @@ class BuylistViewModel: ObservableObject {
                 variables: variables
             )
             if response.markAsPurchased.success {
-                DispatchQueue.main.async {
-                    self.buylistItems.removeAll { $0.id == id }
-                }
-                await fetchStats()
+                // Mark as purchased affects buylist, collection, and library
+                await CacheInvalidation.forMarkAsPurchased()
+                buylistItems.removeAll { $0.id == id }
+                await fetchStats(forceRefresh: true)
             }
             return response.markAsPurchased.success
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
             return false
         }
     }

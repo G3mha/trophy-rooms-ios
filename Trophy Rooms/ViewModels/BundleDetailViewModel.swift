@@ -1,17 +1,24 @@
 import Foundation
 import Combine
 
+@MainActor
 class BundleDetailViewModel: ObservableObject {
     @Published var bundle: AppBundle?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var isOwnershipLoading = false
 
-    func fetchBundle(id: String) async {
-        DispatchQueue.main.async {
-            self.isLoading = true
-            self.errorMessage = nil
+    func fetchBundle(id: String, forceRefresh: Bool = false) async {
+        // Load from cache immediately (no loading state)
+        if !forceRefresh, let cached: BundleResponse = await CacheManager.shared.get(.bundle(id: id)) {
+            bundle = cached.bundle
         }
+
+        // Show loading only if no cached data
+        if bundle == nil {
+            isLoading = true
+        }
+        errorMessage = nil
 
         let query = """
         query GetBundle($id: ID!) {
@@ -64,24 +71,21 @@ class BundleDetailViewModel: ObservableObject {
                 query: query,
                 variables: ["id": id]
             )
-            DispatchQueue.main.async {
-                self.bundle = response.bundle
-                self.isLoading = false
-            }
+            await CacheManager.shared.set(.bundle(id: id), value: response)
+            bundle = response.bundle
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
+            // Only show error if no cached data
+            if bundle == nil {
+                errorMessage = error.localizedDescription
             }
         }
+        isLoading = false
     }
 
     func addOwnership(platformId: String?) async {
         guard let bundleId = bundle?.id else { return }
 
-        DispatchQueue.main.async {
-            self.isOwnershipLoading = true
-        }
+        isOwnershipLoading = true
 
         let mutation = """
         mutation AddBundleToOwned($bundleId: ID!, $platformId: ID) {
@@ -103,26 +107,22 @@ class BundleDetailViewModel: ObservableObject {
             )
 
             if response.addBundleToOwned?.success == true {
-                await fetchBundle(id: bundleId)
+                await CacheInvalidation.forBundleOwnershipChange()
+                await CacheInvalidation.forBundle(id: bundleId)
+                await fetchBundle(id: bundleId, forceRefresh: true)
             }
 
-            DispatchQueue.main.async {
-                self.isOwnershipLoading = false
-            }
+            isOwnershipLoading = false
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isOwnershipLoading = false
-            }
+            errorMessage = error.localizedDescription
+            isOwnershipLoading = false
         }
     }
 
     func removeOwnership(platformId: String?) async {
         guard let bundleId = bundle?.id else { return }
 
-        DispatchQueue.main.async {
-            self.isOwnershipLoading = true
-        }
+        isOwnershipLoading = true
 
         let mutation = """
         mutation RemoveBundleFromOwned($bundleId: ID!, $platformId: ID) {
@@ -144,17 +144,15 @@ class BundleDetailViewModel: ObservableObject {
             )
 
             if response.removeBundleFromOwned?.success == true {
-                await fetchBundle(id: bundleId)
+                await CacheInvalidation.forBundleOwnershipChange()
+                await CacheInvalidation.forBundle(id: bundleId)
+                await fetchBundle(id: bundleId, forceRefresh: true)
             }
 
-            DispatchQueue.main.async {
-                self.isOwnershipLoading = false
-            }
+            isOwnershipLoading = false
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-                self.isOwnershipLoading = false
-            }
+            errorMessage = error.localizedDescription
+            isOwnershipLoading = false
         }
     }
 
