@@ -909,20 +909,7 @@ private struct GameRowView: View {
 
     var body: some View {
         HStack {
-            if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray
-                }
-                .frame(width: 50, height: 50)
-                .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 50)
-                    .cornerRadius(8)
-            }
+            CachedImageFixed(url: game.coverUrl, width: 50, height: 50)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -960,20 +947,7 @@ private struct GroupedGameRowView: View {
 
     var body: some View {
         HStack {
-            if let coverUrl = group.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray
-                }
-                .frame(width: 50, height: 50)
-                .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 50)
-                    .cornerRadius(8)
-            }
+            CachedImageFixed(url: group.coverUrl, width: 50, height: 50)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(group.title)
@@ -1111,25 +1085,12 @@ private struct SearchResultRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let coverUrl = item.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                .frame(width: 50, height: 50)
-                .cornerRadius(8)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 50)
-                    .overlay {
-                        Image(systemName: iconName)
-                            .foregroundStyle(.gray)
-                    }
-            }
+            CachedImageFixed(
+                url: item.coverUrl,
+                width: 50,
+                height: 50,
+                placeholderIcon: iconName
+            )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.title)

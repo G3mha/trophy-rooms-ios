@@ -103,9 +103,8 @@ struct CollectionView: View {
         }
         .task {
             if clerk.user != nil {
-                if !collectionViewModel.hasLoadedOnce {
-                    await collectionViewModel.fetchCollection()
-                }
+                // Fetch all data once on initial load - ViewModels will use cache and skip if already loaded
+                await collectionViewModel.fetchCollection()
                 await buylistViewModel.fetchBuylist()
                 await buylistViewModel.fetchStats()
                 await sellListViewModel.fetchSellList()
@@ -115,11 +114,12 @@ struct CollectionView: View {
         .onChange(of: clerk.user?.id) {
             if clerk.user != nil {
                 Task {
-                    await collectionViewModel.fetchCollection()
-                    await buylistViewModel.fetchBuylist()
-                    await buylistViewModel.fetchStats()
-                    await sellListViewModel.fetchSellList()
-                    await sellListViewModel.fetchStats()
+                    // Force refresh when user changes
+                    await collectionViewModel.fetchCollection(forceRefresh: true)
+                    await buylistViewModel.fetchBuylist(forceRefresh: true)
+                    await buylistViewModel.fetchStats(forceRefresh: true)
+                    await sellListViewModel.fetchSellList(forceRefresh: true)
+                    await sellListViewModel.fetchStats(forceRefresh: true)
                 }
             }
         }
@@ -205,6 +205,9 @@ struct CollectionView: View {
                         groups: collectionViewModel.groupedItems,
                         ownedBundles: collectionViewModel.ownedBundles,
                         expandedSections: expandedSections,
+                        onRefresh: {
+                            await collectionViewModel.fetchCollection(forceRefresh: true)
+                        },
                         onEdit: { item in
                             editingItem = item
                             Task {
@@ -225,6 +228,9 @@ struct CollectionView: View {
                     CollectionFlatGrid(
                         items: collectionViewModel.filteredItems,
                         ownedBundles: collectionViewModel.ownedBundles,
+                        onRefresh: {
+                            await collectionViewModel.fetchCollection(forceRefresh: true)
+                        },
                         onEdit: { item in
                             editingItem = item
                             Task {
@@ -307,6 +313,10 @@ struct CollectionView: View {
                     BuylistGroupedGrid(
                         groups: buylistViewModel.groupedItems,
                         expandedSections: expandedSections,
+                        onRefresh: {
+                            await buylistViewModel.fetchBuylist(forceRefresh: true)
+                            await buylistViewModel.fetchStats(forceRefresh: true)
+                        },
                         onMarkPurchased: { item in
                             selectedItemForPurchase = item
                         },
@@ -319,6 +329,10 @@ struct CollectionView: View {
                 } else {
                     BuylistFlatGrid(
                         items: buylistViewModel.filteredItems,
+                        onRefresh: {
+                            await buylistViewModel.fetchBuylist(forceRefresh: true)
+                            await buylistViewModel.fetchStats(forceRefresh: true)
+                        },
                         onMarkPurchased: { item in
                             selectedItemForPurchase = item
                         },
@@ -393,6 +407,10 @@ struct CollectionView: View {
                     SellListGroupedGrid(
                         groups: sellListViewModel.groupedItems,
                         expandedSections: expandedSections,
+                        onRefresh: {
+                            await sellListViewModel.fetchSellList(forceRefresh: true)
+                            await sellListViewModel.fetchStats(forceRefresh: true)
+                        },
                         onMarkSold: { item in
                             selectedSellListItem = item
                         },
@@ -405,6 +423,10 @@ struct CollectionView: View {
                 } else {
                     SellListFlatGrid(
                         items: sellListViewModel.filteredItems,
+                        onRefresh: {
+                            await sellListViewModel.fetchSellList(forceRefresh: true)
+                            await sellListViewModel.fetchStats(forceRefresh: true)
+                        },
                         onMarkSold: { item in
                             selectedSellListItem = item
                         },
@@ -796,24 +818,12 @@ private struct OwnedBundleRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Cover image
-            if let coverUrl = bundle.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                .frame(width: 60, height: 60)
-                .cornerRadius(8)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 60, height: 60)
-                    .overlay {
-                        Image(systemName: "shippingbox")
-                            .font(.title2)
-                            .foregroundStyle(.gray)
-                    }
-            }
+            CachedImageFixed(
+                url: bundle.coverUrl,
+                width: 60,
+                height: 60,
+                placeholderIcon: "shippingbox"
+            )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(bundle.name)
@@ -931,24 +941,7 @@ private struct SellListItemRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Cover image
-            if let coverUrl = item.displayCoverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                .frame(width: 60, height: 60)
-                .cornerRadius(8)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 60, height: 60)
-                    .overlay {
-                        Image(systemName: "gamecontroller")
-                            .font(.title2)
-                            .foregroundStyle(.gray)
-                    }
-            }
+            CachedImageFixed(url: item.displayCoverUrl, width: 60, height: 60)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.displayTitle)
@@ -1033,6 +1026,7 @@ private struct CollectionGroupedGrid: View {
     let groups: [(platform: Platform?, items: [CollectionItem])]
     let ownedBundles: [AppBundle]
     let expandedSections: ExpandedSectionsState
+    let onRefresh: () async -> Void
     let onEdit: (CollectionItem) -> Void
     let onSell: (CollectionItem) -> Void
     let onDelete: (CollectionItem) -> Void
@@ -1112,6 +1106,9 @@ private struct CollectionGroupedGrid: View {
                 }
             }
         }
+        .refreshable {
+            await onRefresh()
+        }
         .onAppear {
             let ids = groups.map { $0.platform?.id ?? "other" }
             expandedSections.expandAll(ids)
@@ -1122,6 +1119,7 @@ private struct CollectionGroupedGrid: View {
 private struct CollectionFlatGrid: View {
     let items: [CollectionItem]
     let ownedBundles: [AppBundle]
+    let onRefresh: () async -> Void
     let onEdit: (CollectionItem) -> Void
     let onSell: (CollectionItem) -> Void
     let onDelete: (CollectionItem) -> Void
@@ -1182,6 +1180,9 @@ private struct CollectionFlatGrid: View {
                 .padding(.vertical, 12)
             }
         }
+        .refreshable {
+            await onRefresh()
+        }
     }
 }
 
@@ -1237,6 +1238,7 @@ private struct CollectionGridCell: View {
 private struct BuylistGroupedGrid: View {
     let groups: [(platform: BuylistPlatform?, items: [BuylistItem])]
     let expandedSections: ExpandedSectionsState
+    let onRefresh: () async -> Void
     let onMarkPurchased: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
@@ -1274,6 +1276,9 @@ private struct BuylistGroupedGrid: View {
                 }
             }
         }
+        .refreshable {
+            await onRefresh()
+        }
         .onAppear {
             let ids = groups.map { "buylist_\($0.platform?.id ?? "other")" }
             expandedSections.expandAll(ids)
@@ -1283,6 +1288,7 @@ private struct BuylistGroupedGrid: View {
 
 private struct BuylistFlatGrid: View {
     let items: [BuylistItem]
+    let onRefresh: () async -> Void
     let onMarkPurchased: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
@@ -1301,6 +1307,9 @@ private struct BuylistFlatGrid: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
+        }
+        .refreshable {
+            await onRefresh()
         }
     }
 }
@@ -1369,6 +1378,7 @@ private struct BuylistGridCell: View {
 private struct SellListGroupedGrid: View {
     let groups: [(platform: SellListPlatform?, items: [SellListItem])]
     let expandedSections: ExpandedSectionsState
+    let onRefresh: () async -> Void
     let onMarkSold: (SellListItem) -> Void
     let onDelete: (SellListItem) -> Void
 
@@ -1406,6 +1416,9 @@ private struct SellListGroupedGrid: View {
                 }
             }
         }
+        .refreshable {
+            await onRefresh()
+        }
         .onAppear {
             let ids = groups.map { "sell_\($0.platform?.id ?? "other")" }
             expandedSections.expandAll(ids)
@@ -1415,6 +1428,7 @@ private struct SellListGroupedGrid: View {
 
 private struct SellListFlatGrid: View {
     let items: [SellListItem]
+    let onRefresh: () async -> Void
     let onMarkSold: (SellListItem) -> Void
     let onDelete: (SellListItem) -> Void
 
@@ -1433,6 +1447,9 @@ private struct SellListFlatGrid: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
+        }
+        .refreshable {
+            await onRefresh()
         }
     }
 }
