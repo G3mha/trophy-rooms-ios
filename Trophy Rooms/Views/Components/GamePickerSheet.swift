@@ -154,25 +154,7 @@ struct GameRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Cover image
-            if let coverUrl = game.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                .frame(width: 50, height: 50)
-                .cornerRadius(8)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 50)
-                    .overlay {
-                        Image(systemName: "gamecontroller")
-                            .foregroundStyle(.gray)
-                    }
-            }
+            CachedImageFixed(url: game.coverUrl, width: 50, height: 50)
 
             // Game info
             VStack(alignment: .leading, spacing: 4) {
@@ -238,25 +220,7 @@ struct GroupedGameRow: View {
             } label: {
                 HStack(spacing: 12) {
                     // Cover image
-                    if let coverUrl = group.coverUrl, let url = URL(string: coverUrl) {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Color.gray.opacity(0.3)
-                        }
-                        .frame(width: 50, height: 50)
-                        .cornerRadius(8)
-                    } else {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 50, height: 50)
-                            .overlay {
-                                Image(systemName: "gamecontroller")
-                                    .foregroundStyle(.gray)
-                            }
-                    }
+                    CachedImageFixed(url: group.coverUrl, width: 50, height: 50)
 
                     // Game info
                     VStack(alignment: .leading, spacing: 4) {

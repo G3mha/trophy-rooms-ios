@@ -490,26 +490,12 @@ private struct GameCoverImage: View {
     let size: CGFloat
 
     var body: some View {
-        if let coverUrl = url, let imageUrl = URL(string: coverUrl) {
-            AsyncImage(url: imageUrl) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Color.gray.opacity(0.3)
-            }
-            .frame(width: size, height: size * 1.4)
-            .cornerRadius(4)
-        } else {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: size, height: size * 1.4)
-                .overlay {
-                    Image(systemName: "gamecontroller")
-                        .font(.caption2)
-                        .foregroundStyle(.gray)
-                }
-        }
+        CachedImageFixed(
+            url: url,
+            width: size,
+            height: size * 1.4,
+            cornerRadius: 4
+        )
     }
 }
 

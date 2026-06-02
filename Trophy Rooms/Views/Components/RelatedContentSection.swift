@@ -88,26 +88,13 @@ struct RelatedItemRow<Badge: View, Subtitle: View, Trailing: View>: View {
     var body: some View {
         HStack(spacing: 12) {
             // Cover image
-            if let coverUrl = coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                .frame(width: coverSize.width, height: coverSize.height)
-                .cornerRadius(coverCornerRadius)
-            } else {
-                RoundedRectangle(cornerRadius: coverCornerRadius)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: coverSize.width, height: coverSize.height)
-                    .overlay {
-                        Image(systemName: placeholderIcon)
-                            .font(.caption)
-                            .foregroundStyle(.gray)
-                    }
-            }
+            CachedImageFixed(
+                url: coverUrl,
+                width: coverSize.width,
+                height: coverSize.height,
+                cornerRadius: coverCornerRadius,
+                placeholderIcon: placeholderIcon
+            )
 
             // Content
             VStack(alignment: .leading, spacing: 4) {
