@@ -80,6 +80,9 @@ struct LibraryView: View {
                         LibraryGroupedGrid(
                             groups: viewModel.groupedItems,
                             expandedSections: expandedSections,
+                            onRefresh: {
+                                await viewModel.fetchLibrary(forceRefresh: true)
+                            },
                             onEdit: { item in
                                 editingItem = item
                                 showStatusPicker = true
@@ -93,6 +96,9 @@ struct LibraryView: View {
                     } else {
                         LibraryFlatGrid(
                             items: viewModel.filteredItems,
+                            onRefresh: {
+                                await viewModel.fetchLibrary(forceRefresh: true)
+                            },
                             onEdit: { item in
                                 editingItem = item
                                 showStatusPicker = true
@@ -139,7 +145,7 @@ struct LibraryView: View {
         .onChange(of: clerk.user?.id) {
             if clerk.user != nil {
                 Task {
-                    await viewModel.fetchLibrary()
+                    await viewModel.fetchLibrary(forceRefresh: true)
                 }
             }
         }
@@ -362,6 +368,7 @@ struct VersionBadge: View {
 private struct LibraryGroupedGrid: View {
     let groups: [(platform: (id: String, name: String, slug: String?)?, items: [LibraryItem])]
     let expandedSections: ExpandedSectionsState
+    let onRefresh: () async -> Void
     let onEdit: (LibraryItem) -> Void
     let onDelete: (LibraryItem) -> Void
 
@@ -399,6 +406,9 @@ private struct LibraryGroupedGrid: View {
                 }
             }
         }
+        .refreshable {
+            await onRefresh()
+        }
         .onAppear {
             let ids = groups.map { $0.platform?.id ?? "other" }
             expandedSections.expandAll(ids)
@@ -408,6 +418,7 @@ private struct LibraryGroupedGrid: View {
 
 private struct LibraryFlatGrid: View {
     let items: [LibraryItem]
+    let onRefresh: () async -> Void
     let onEdit: (LibraryItem) -> Void
     let onDelete: (LibraryItem) -> Void
 
@@ -426,6 +437,9 @@ private struct LibraryFlatGrid: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
+        }
+        .refreshable {
+            await onRefresh()
         }
     }
 }
