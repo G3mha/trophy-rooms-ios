@@ -4,6 +4,7 @@ import Combine
 // MARK: - Game Cover Cell
 
 /// A reusable game cover cell with optional overlay badges and context menu support
+/// Uses CachedImage internally for reliable loading and caching
 struct GameCoverCell<Overlay: View>: View {
     let coverUrl: String?
     let title: String
@@ -26,30 +27,11 @@ struct GameCoverCell<Overlay: View>: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if let coverUrl = coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.2))
-                            .overlay(ProgressView())
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(aspectRatio, contentMode: .fill)
-                    case .failure:
-                        GameCoverPlaceholder(title: title)
-                    @unknown default:
-                        GameCoverPlaceholder(title: title)
-                    }
-                }
-            } else {
-                GameCoverPlaceholder(title: title)
-            }
-        }
-        .aspectRatio(aspectRatio, contentMode: .fit)
-        .cornerRadius(cornerRadius)
+        CachedImage(
+            url: coverUrl,
+            aspectRatio: aspectRatio,
+            cornerRadius: cornerRadius
+        )
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         .overlay(overlay())
     }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// A reusable component for displaying game/DLC cover images with consistent styling
+/// Uses CachedImageFixed internally for reliable loading and caching
 struct CoverImage: View {
     let url: String?
     let width: CGFloat
@@ -23,39 +24,13 @@ struct CoverImage: View {
     }
 
     var body: some View {
-        if let urlString = url, let imageUrl = URL(string: urlString) {
-            AsyncImage(url: imageUrl) { phase in
-                switch phase {
-                case .empty:
-                    placeholder
-                        .overlay {
-                            ProgressView()
-                        }
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                case .failure:
-                    placeholder
-                @unknown default:
-                    placeholder
-                }
-            }
-            .frame(width: width, height: height)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-        } else {
-            placeholder
-        }
-    }
-
-    private var placeholder: some View {
-        RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(Color.gray.opacity(0.3))
-            .frame(width: width, height: height)
-            .overlay {
-                Image(systemName: placeholderIcon)
-                    .foregroundStyle(.gray)
-            }
+        CachedImageFixed(
+            url: url,
+            width: width,
+            height: height,
+            cornerRadius: cornerRadius,
+            placeholderIcon: placeholderIcon
+        )
     }
 }
 
