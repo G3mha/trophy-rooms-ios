@@ -1,4 +1,5 @@
 import SwiftUI
+import Kingfisher
 
 struct PlatformIcon: View {
     let slug: String
@@ -13,25 +14,20 @@ struct PlatformIcon: View {
     }
 
     var body: some View {
-        AsyncImage(url: URL(string: "\(baseURL)/\(slug).png")) { phase in
-            switch phase {
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: size, height: size)
-            case .failure(_), .empty:
-                // Fallback to SF Symbol based on platform type
+        KFImage(URL(string: "\(baseURL)/\(slug).png"))
+            .placeholder {
+                // Show fallback SF Symbol while loading
                 Image(systemName: sfSymbol(for: slug))
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: size, height: size)
                     .foregroundColor(.secondary)
-            @unknown default:
-                ProgressView()
-                    .frame(width: size, height: size)
             }
-        }
+            .onFailure { _ in }
+            .retry(maxCount: 2, interval: .seconds(1))
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
     }
 
     // Map platform slugs to appropriate SF Symbols
