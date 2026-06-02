@@ -10,6 +10,7 @@
 		EB454BB72F6735F10033B7C6 /* TrophyRoomsIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EB454BB62F6735F00033B7C6 /* TrophyRoomsIcon.icon */; };
 		EB454BBA2F6737260033B7C6 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = EB454BB92F6737260033B7C6 /* ClerkKit */; };
 		EB454BBC2F6737260033B7C6 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = EB454BBB2F6737260033B7C6 /* ClerkKitUI */; };
+		EB454BBE2F6737270033B7C6 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = EB454BBF2F6737270033B7C6 /* Kingfisher */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +63,7 @@
 			files = (
 				EB454BBA2F6737260033B7C6 /* ClerkKit in Frameworks */,
 				EB454BBC2F6737260033B7C6 /* ClerkKitUI in Frameworks */,
+				EB454BBE2F6737270033B7C6 /* Kingfisher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +136,7 @@
 			packageProductDependencies = (
 				EB454BB92F6737260033B7C6 /* ClerkKit */,
 				EB454BBB2F6737260033B7C6 /* ClerkKitUI */,
+				EB454BBF2F6737270033B7C6 /* Kingfisher */,
 			);
 			productName = "Trophy Rooms";
 			productReference = EB7016802F549F3B0099D8C5 /* Trophy Rooms.app */;
@@ -219,6 +222,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+				EB454BC02F6737280033B7C6 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EB7016812F549F3B0099D8C5 /* Products */;
@@ -628,6 +632,14 @@
 				minimumVersion = 1.0.5;
 			};
 		};
+		EB454BC02F6737280033B7C6 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -640,6 +652,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */;
 			productName = ClerkKitUI;
+		};
+		EB454BBF2F6737270033B7C6 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EB454BC02F6737280033B7C6 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
