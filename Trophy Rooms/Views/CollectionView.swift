@@ -12,7 +12,9 @@ struct CollectionView: View {
     @StateObject private var collectionViewModel = CollectionViewModel()
     @StateObject private var buylistViewModel = BuylistViewModel()
     @StateObject private var sellListViewModel = SellListViewModel()
-    @StateObject private var expandedSections = ExpandedSectionsState()
+    @StateObject private var collectionExpandedSections = ExpandedSectionsState()
+    @StateObject private var buylistExpandedSections = ExpandedSectionsState()
+    @StateObject private var sellListExpandedSections = ExpandedSectionsState()
     @State private var showAuth = false
     @State private var editingItem: CollectionItem?
     @State private var editingItemVersions: [GameVersion] = []
@@ -204,7 +206,7 @@ struct CollectionView: View {
                     CollectionGroupedGrid(
                         groups: collectionViewModel.groupedItems,
                         ownedBundles: collectionViewModel.ownedBundles,
-                        expandedSections: expandedSections,
+                        expandedSections: collectionExpandedSections,
                         onRefresh: {
                             await collectionViewModel.fetchCollection(forceRefresh: true)
                         },
@@ -312,7 +314,7 @@ struct CollectionView: View {
                 if buylistViewModel.groupByPlatform {
                     BuylistGroupedGrid(
                         groups: buylistViewModel.groupedItems,
-                        expandedSections: expandedSections,
+                        expandedSections: buylistExpandedSections,
                         onRefresh: {
                             await buylistViewModel.fetchBuylist(forceRefresh: true)
                             await buylistViewModel.fetchStats(forceRefresh: true)
@@ -406,7 +408,7 @@ struct CollectionView: View {
                 if sellListViewModel.groupByPlatform {
                     SellListGroupedGrid(
                         groups: sellListViewModel.groupedItems,
-                        expandedSections: expandedSections,
+                        expandedSections: sellListExpandedSections,
                         onRefresh: {
                             await sellListViewModel.fetchSellList(forceRefresh: true)
                             await sellListViewModel.fetchStats(forceRefresh: true)
