@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash:*)",
+      "Bash(printf:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)",
+      "WebFetch(domain:www.donnywals.com)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:hasanalidev.medium.com)",
+      "WebFetch(domain:xavier7t.com)",
+      "WebFetch(domain:swiftwithmajid.com)",
+      "Bash(git revert:*)"
+    ]
+  }
+}

@@ -85,7 +85,7 @@ private struct TabBarMinimizeModifier: ViewModifier {
         if #available(iOS 26.0, *) {
             content
                 .tabBarMinimizeBehavior(.onScrollDown)
-                .toolbarBackgroundVisibility(.automatic, for: .tabBar)
+                .toolbarBackground(.hidden, for: .tabBar)
         } else {
             content
         }
