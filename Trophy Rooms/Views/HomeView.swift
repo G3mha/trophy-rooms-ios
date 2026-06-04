@@ -324,6 +324,7 @@ private struct GamesGridTab: View {
                     }
                 }
             }
+            .scrollClipDisabled()
         }
     }
 }
@@ -340,6 +341,7 @@ private struct LeaderboardTab: View {
             }
             .padding()
         }
+        .scrollClipDisabled()
     }
 }
 
@@ -355,6 +357,7 @@ private struct ActivityTab: View {
             }
             .padding()
         }
+        .scrollClipDisabled()
     }
 }
 

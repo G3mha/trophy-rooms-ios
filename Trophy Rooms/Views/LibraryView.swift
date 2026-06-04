@@ -406,6 +406,7 @@ private struct LibraryGroupedGrid: View {
                 }
             }
         }
+        .scrollClipDisabled()
         .refreshable {
             await onRefresh()
         }
@@ -438,6 +439,7 @@ private struct LibraryFlatGrid: View {
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
+        .scrollClipDisabled()
         .refreshable {
             await onRefresh()
         }
