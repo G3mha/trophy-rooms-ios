@@ -1108,7 +1108,6 @@ private struct CollectionGroupedGrid: View {
                 }
             }
         }
-        .scrollClipDisabled()
         .refreshable {
             await onRefresh()
         }
@@ -1183,7 +1182,6 @@ private struct CollectionFlatGrid: View {
                 .padding(.vertical, 12)
             }
         }
-        .scrollClipDisabled()
         .refreshable {
             await onRefresh()
         }
@@ -1280,7 +1278,6 @@ private struct BuylistGroupedGrid: View {
                 }
             }
         }
-        .scrollClipDisabled()
         .refreshable {
             await onRefresh()
         }
@@ -1313,7 +1310,6 @@ private struct BuylistFlatGrid: View {
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
-        .scrollClipDisabled()
         .refreshable {
             await onRefresh()
         }
@@ -1422,7 +1418,6 @@ private struct SellListGroupedGrid: View {
                 }
             }
         }
-        .scrollClipDisabled()
         .refreshable {
             await onRefresh()
         }
@@ -1455,7 +1450,6 @@ private struct SellListFlatGrid: View {
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
-        .scrollClipDisabled()
         .refreshable {
             await onRefresh()
         }
