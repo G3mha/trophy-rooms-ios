@@ -78,12 +78,14 @@ struct RootView: View {
     }
 }
 
-// MARK: - Tab Bar Minimize Modifier
+// MARK: - Tab Bar Modifier
 
 private struct TabBarMinimizeModifier: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 26.0, *) {
-            content.tabBarMinimizeBehavior(.onScrollDown)
+            content
+                .tabBarMinimizeBehavior(.onScrollDown)
+                .toolbarBackgroundVisibility(.automatic, for: .tabBar)
         } else {
             content
         }
@@ -248,23 +250,12 @@ private struct SearchItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let coverUrl = item.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                .frame(width: 44, height: 44)
-                .cornerRadius(8)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 44, height: 44)
-                    .overlay {
-                        Image(systemName: iconName)
-                            .foregroundStyle(.gray)
-                    }
-            }
+            CachedImageFixed(
+                url: item.coverUrl,
+                width: 44,
+                height: 44,
+                placeholderIcon: iconName
+            )
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
                     .font(.headline)
