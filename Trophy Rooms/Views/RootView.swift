@@ -45,7 +45,7 @@ struct RootView: View {
                 GlobalSearchSheet()
             }
         }
-        .modifier(TabBarMinimizeModifier())
+        .tabBarMinimizeBehavior(.onScrollDown)
         .overlay(alignment: .bottom) {
             if inlineAdminContext.canAccessAdmin && inlineAdminContext.currentEntity != nil {
                 HStack {
@@ -80,96 +80,50 @@ struct RootView: View {
     }
 }
 
-// MARK: - Tab Bar Modifier
-
-private struct TabBarMinimizeModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(iOS 26.0, *) {
-            content
-                .tabBarMinimizeBehavior(.onScrollDown)
-        } else {
-            content
-        }
-    }
-}
-
 // MARK: - Global Search View
 
 private struct GlobalSearchSheet: View {
     @StateObject private var viewModel = GlobalSearchViewModel()
     @State private var searchText = ""
-    @FocusState private var isSearchFocused: Bool
+
+    private var trimmedQuery: String {
+        searchText.trimmingCharacters(in: .whitespaces)
+    }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Search field
-                HStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.secondary)
-
-                    TextField("Search games, users, platforms...", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .focused($isSearchFocused)
-                        .submitLabel(.search)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    if !searchText.isEmpty {
-                        Button {
-                            searchText = ""
-                            viewModel.clearResults()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 18))
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .padding(.horizontal)
-                .padding(.top, 8)
-
-                // Results
-                if searchText.trimmingCharacters(in: .whitespaces).count >= 2 {
-                    SearchResultsView(viewModel: viewModel)
+            Group {
+                if trimmedQuery.count >= 2 {
+                    SearchResultsView(viewModel: viewModel, query: trimmedQuery)
                 } else {
-                    VStack(spacing: 12) {
-                        Spacer()
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 40, weight: .light))
-                            .foregroundStyle(.secondary.opacity(0.7))
-                        Text("Search for games, users, and more")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                    }
+                    ContentUnavailableView(
+                        "Search Trophy Rooms",
+                        systemImage: "magnifyingglass",
+                        description: Text("Find games, bundles, and DLCs")
+                    )
                 }
             }
             .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: "Search games, users, platforms...")
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
         }
         .onChange(of: searchText) {
             Task {
-                if searchText.trimmingCharacters(in: .whitespaces).count >= 2 {
+                if trimmedQuery.count >= 2 {
                     await viewModel.search(query: searchText)
                 } else {
                     viewModel.clearResults()
                 }
             }
         }
-        .onAppear {
-            isSearchFocused = true
-        }
     }
 }
 
 private struct SearchResultsView: View {
     @ObservedObject var viewModel: GlobalSearchViewModel
+    let query: String
 
     var gameItems: [GlobalSearchItem] {
         viewModel.items.filter { $0.type == .GAME }
@@ -188,16 +142,7 @@ private struct SearchResultsView: View {
             if viewModel.isLoading && !viewModel.hasResults {
                 SearchSkeletonList()
             } else if !viewModel.hasResults && !viewModel.isLoading {
-                VStack(spacing: 12) {
-                    Spacer()
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 40, weight: .light))
-                        .foregroundStyle(.secondary.opacity(0.7))
-                    Text("No results found")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
+                ContentUnavailableView.search(text: query)
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 8) {
