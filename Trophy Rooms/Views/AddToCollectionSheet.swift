@@ -239,6 +239,15 @@ struct AddToCollectionSheet: View {
                         .lineLimit(3...6)
                 }
 
+                // Library section (only when adding, not editing)
+                if !isEditing {
+                    Section {
+                        Toggle("Also add to Library", isOn: $viewModel.addToLibrary)
+                    } footer: {
+                        Text("Adds this game to your library as Backlog. If you already track it, nothing changes.")
+                    }
+                }
+
                 Section {
                     Button {
                         Task {
@@ -402,6 +411,7 @@ class AddToCollectionViewModel: ObservableObject {
     @Published var hasExtras = false
     @Published var isSealed = false
     @Published var notes = ""
+    @Published var addToLibrary = true
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -431,7 +441,8 @@ class AddToCollectionViewModel: ObservableObject {
             "hasExtras": isDigital ? false : hasExtras,
             "isSealed": isDigital ? false : isSealed,
             "region": region.rawValue,
-            "notes": notes.isEmpty ? NSNull() : notes
+            "notes": notes.isEmpty ? NSNull() : notes,
+            "addToLibrary": addToLibrary
         ]
         if let platformId = platformId {
             input["platformId"] = platformId
@@ -445,6 +456,9 @@ class AddToCollectionViewModel: ObservableObject {
                 query: mutation,
                 variables: ["input": input]
             )
+            if response.addToCollection.success && addToLibrary {
+                await CacheInvalidation.forLibraryChange()
+            }
             DispatchQueue.main.async {
                 self.isLoading = false
             }
