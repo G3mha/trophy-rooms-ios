@@ -82,14 +82,14 @@ class BundleDetailViewModel: ObservableObject {
         isLoading = false
     }
 
-    func addOwnership(platformId: String?) async {
+    func addOwnership(platformId: String?, libraryGameFamilyIds: [String] = []) async {
         guard let bundleId = bundle?.id else { return }
 
         isOwnershipLoading = true
 
         let mutation = """
-        mutation AddBundleToOwned($bundleId: ID!, $platformId: ID) {
-            addBundleToOwned(bundleId: $bundleId, platformId: $platformId) {
+        mutation AddBundleToOwned($bundleId: ID!, $platformId: ID, $libraryGameFamilyIds: [ID!]) {
+            addBundleToOwned(bundleId: $bundleId, platformId: $platformId, libraryGameFamilyIds: $libraryGameFamilyIds) {
                 success
             }
         }
@@ -98,6 +98,9 @@ class BundleDetailViewModel: ObservableObject {
         var variables: [String: Any] = ["bundleId": bundleId]
         if let platformId = platformId {
             variables["platformId"] = platformId
+        }
+        if !libraryGameFamilyIds.isEmpty {
+            variables["libraryGameFamilyIds"] = libraryGameFamilyIds
         }
 
         do {
@@ -108,6 +111,9 @@ class BundleDetailViewModel: ObservableObject {
 
             if response.addBundleToOwned?.success == true {
                 await CacheInvalidation.forBundleOwnershipChange()
+                if !libraryGameFamilyIds.isEmpty {
+                    await CacheInvalidation.forLibraryChange()
+                }
                 await CacheInvalidation.forBundle(id: bundleId)
                 await fetchBundle(id: bundleId, forceRefresh: true)
             }
