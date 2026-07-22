@@ -229,8 +229,7 @@ struct CollectionView: View {
                 // Collection grid
                 if collectionViewModel.groupByPlatform {
                     CollectionGroupedGrid(
-                        groups: collectionViewModel.groupedItems,
-                        ownedBundles: collectionViewModel.ownedBundles,
+                        groups: collectionViewModel.groupedEntries,
                         expandedSections: collectionExpandedSections,
                         onRefresh: {
                             await collectionViewModel.fetchCollection(forceRefresh: true)
@@ -253,8 +252,7 @@ struct CollectionView: View {
                     )
                 } else {
                     CollectionFlatGrid(
-                        items: collectionViewModel.filteredItems,
-                        ownedBundles: collectionViewModel.ownedBundles,
+                        entries: collectionViewModel.flatEntries,
                         onRefresh: {
                             await collectionViewModel.fetchCollection(forceRefresh: true)
                         },
@@ -1050,8 +1048,7 @@ private struct ConditionBadge: View {
 // MARK: - Collection Grid Components
 
 private struct CollectionGroupedGrid: View {
-    let groups: [(platform: Platform?, items: [CollectionItem])]
-    let ownedBundles: [AppBundle]
+    let groups: [(platform: Platform?, entries: [CollectionEntry])]
     let expandedSections: ExpandedSectionsState
     let onRefresh: () async -> Void
     let onEdit: (CollectionItem) -> Void
@@ -1063,58 +1060,18 @@ private struct CollectionGroupedGrid: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                // Owned Bundles section
-                if !ownedBundles.isEmpty {
-                    Section {
-                        LazyVGrid(columns: columns, spacing: 12) {
-                            ForEach(ownedBundles) { bundle in
-                                NavigationLink(destination: BundleDetailView(bundleId: bundle.id)) {
-                                    GameCoverCell(coverUrl: bundle.coverUrl, title: bundle.name) {
-                                        // Owned indicator
-                                        VStack {
-                                            HStack {
-                                                Spacer()
-                                                Image(systemName: "checkmark.circle.fill")
-                                                    .font(.system(size: 14))
-                                                    .foregroundColor(.white)
-                                                    .background(Circle().fill(Color.green).frame(width: 18, height: 18))
-                                                    .padding(4)
-                                            }
-                                            Spacer()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                    } header: {
-                        HStack {
-                            Image(systemName: "shippingbox.fill")
-                            Text("Bundles (\(ownedBundles.count))")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                            Spacer()
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                        .background(Color(.systemBackground))
-                    }
-                }
-
-                // Game groups
                 ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
                     let sectionId = group.platform?.id ?? "other"
 
                     Section {
                         if expandedSections.isExpanded(sectionId) {
                             LazyVGrid(columns: columns, spacing: 12) {
-                                ForEach(group.items) { item in
-                                    CollectionGridCell(
-                                        item: item,
-                                        onEdit: { onEdit(item) },
-                                        onSell: { onSell(item) },
-                                        onDelete: { onDelete(item) }
+                                ForEach(group.entries) { entry in
+                                    CollectionEntryCell(
+                                        entry: entry,
+                                        onEdit: onEdit,
+                                        onSell: onSell,
+                                        onDelete: onDelete
                                     )
                                 }
                             }
@@ -1125,7 +1082,7 @@ private struct CollectionGroupedGrid: View {
                         PlatformGridSectionHeader(
                             name: group.platform?.name,
                             slug: group.platform?.slug,
-                            count: group.items.count,
+                            count: group.entries.count,
                             isExpanded: expandedSections.isExpanded(sectionId),
                             onToggle: { expandedSections.toggle(sectionId) }
                         )
@@ -1145,8 +1102,7 @@ private struct CollectionGroupedGrid: View {
 }
 
 private struct CollectionFlatGrid: View {
-    let items: [CollectionItem]
-    let ownedBundles: [AppBundle]
+    let entries: [CollectionEntry]
     let onRefresh: () async -> Void
     let onEdit: (CollectionItem) -> Void
     let onSell: (CollectionItem) -> Void
@@ -1156,61 +1112,56 @@ private struct CollectionFlatGrid: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
-                // Owned Bundles section
-                if !ownedBundles.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "shippingbox.fill")
-                            Text("Bundles (\(ownedBundles.count))")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                            Spacer()
-                        }
-                        .padding(.horizontal)
-
-                        LazyVGrid(columns: columns, spacing: 12) {
-                            ForEach(ownedBundles) { bundle in
-                                NavigationLink(destination: BundleDetailView(bundleId: bundle.id)) {
-                                    GameCoverCell(coverUrl: bundle.coverUrl, title: bundle.name) {
-                                        VStack {
-                                            HStack {
-                                                Spacer()
-                                                Image(systemName: "checkmark.circle.fill")
-                                                    .font(.system(size: 14))
-                                                    .foregroundColor(.white)
-                                                    .background(Circle().fill(Color.green).frame(width: 18, height: 18))
-                                                    .padding(4)
-                                            }
-                                            Spacer()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                    .padding(.vertical, 8)
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(entries) { entry in
+                    CollectionEntryCell(
+                        entry: entry,
+                        onEdit: onEdit,
+                        onSell: onSell,
+                        onDelete: onDelete
+                    )
                 }
-
-                // Games grid
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(items) { item in
-                        CollectionGridCell(
-                            item: item,
-                            onEdit: { onEdit(item) },
-                            onSell: { onSell(item) },
-                            onDelete: { onDelete(item) }
-                        )
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
             }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
         }
         .contentMargins(.bottom, 100, for: .scrollContent)
         .refreshable {
             await onRefresh()
+        }
+    }
+}
+
+private struct CollectionEntryCell: View {
+    let entry: CollectionEntry
+    let onEdit: (CollectionItem) -> Void
+    let onSell: (CollectionItem) -> Void
+    let onDelete: (CollectionItem) -> Void
+
+    var body: some View {
+        switch entry {
+        case .game(let item):
+            CollectionGridCell(
+                item: item,
+                onEdit: { onEdit(item) },
+                onSell: { onSell(item) },
+                onDelete: { onDelete(item) }
+            )
+        case .bundle(let bundle):
+            CollectionBundleCell(bundle: bundle)
+        }
+    }
+}
+
+private struct CollectionBundleCell: View {
+    let bundle: AppBundle
+
+    var body: some View {
+        NavigationLink(destination: BundleDetailView(bundleId: bundle.id)) {
+            GameCoverCell(coverUrl: bundle.coverUrl, title: bundle.name) {
+                // Bundle marker (top-left), same badge language as the buylist
+                ItemTypeOverlayBadge(itemType: .BUNDLE)
+            }
         }
     }
 }
