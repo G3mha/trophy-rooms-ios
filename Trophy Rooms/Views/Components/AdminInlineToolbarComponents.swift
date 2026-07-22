@@ -74,23 +74,13 @@ struct AdminInlineToolbarMenuContent: View {
 
 struct AdminInlineToolbarLabel: View {
     var body: some View {
-        if #available(iOS 26.0, *) {
-            Image(systemName: "gearshape.fill")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.primary)
-                .frame(width: 56, height: 56)
-                .glassEffect(.regular.tint(.blue.opacity(0.3)))
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-        } else {
-            Image(systemName: "gearshape.fill")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 56, height: 56)
-                .background(Color.blue)
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-        }
+        Image(systemName: "gearshape.fill")
+            .font(.system(size: 20, weight: .semibold))
+            .foregroundStyle(.primary)
+            .frame(width: 56, height: 56)
+            .glassEffect(.regular.tint(.blue.opacity(0.3)))
+            .clipShape(Circle())
+            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
