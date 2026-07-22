@@ -100,6 +100,8 @@ struct TrophyRoomView: View {
                     }
                     .padding()
                 }
+                .contentMargins(.bottom, 100, for: .scrollContent)
+                .ignoresSafeArea(edges: .bottom)
             }
         }
         .navigationBar(title: "Trophy Room")

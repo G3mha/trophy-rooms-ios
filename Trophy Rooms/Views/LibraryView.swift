@@ -406,6 +406,8 @@ private struct LibraryGroupedGrid: View {
                 }
             }
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
+        .ignoresSafeArea(edges: .bottom)
         .refreshable {
             await onRefresh()
         }
@@ -438,6 +440,8 @@ private struct LibraryFlatGrid: View {
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
+        .ignoresSafeArea(edges: .bottom)
         .refreshable {
             await onRefresh()
         }
