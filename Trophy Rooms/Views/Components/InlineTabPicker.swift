@@ -14,7 +14,9 @@ struct InlineTabPicker<Tab: Hashable>: View {
                     icon: tab.icon,
                     isSelected: selectedTab == tab.value
                 ) {
-                    selectedTab = tab.value
+                    withAnimation {
+                        selectedTab = tab.value
+                    }
                 }
             }
         }

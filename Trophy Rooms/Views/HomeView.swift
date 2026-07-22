@@ -51,6 +51,19 @@ struct HomeView: View {
         searchText.trimmingCharacters(in: .whitespaces).count >= 2
     }
 
+    // scrollPosition(id:) needs an optional binding; it reports nil mid-swipe,
+    // which must not clear the selected tab.
+    private var pagedTabSelection: Binding<HomeTab?> {
+        Binding(
+            get: { selectedTab },
+            set: { newTab in
+                if let newTab {
+                    selectedTab = newTab
+                }
+            }
+        )
+    }
+
     var body: some View {
         Group {
             if isSearching {
@@ -62,30 +75,42 @@ struct HomeView: View {
                     // Tab picker
                     InlineTabPicker(selectedTab: $selectedTab, tabs: homeTabs)
 
-                    // Tab content
-                    TabView(selection: $selectedTab) {
-                        // MARK: - Games Tab
-                        GamesGridTab(
-                            viewModel: gameListViewModel,
-                            filteredGameGroups: filteredGameGroups,
-                            searchText: searchText,
-                            selectedPlatformId: selectedPlatformId,
-                            achievementFilter: achievementFilter,
-                            sortOption: sortOption,
-                            gameTypeFilter: gameTypeFilter
-                        )
-                        .tag(HomeTab.games)
+                    // Tab content — a paging ScrollView instead of TabView(.page):
+                    // the UIKit-backed pager re-applies the window's bottom safe area
+                    // inside each page, keeping content from reaching the screen bottom.
+                    ScrollView(.horizontal) {
+                        LazyHStack(spacing: 0) {
+                            // MARK: - Games Tab
+                            GamesGridTab(
+                                viewModel: gameListViewModel,
+                                filteredGameGroups: filteredGameGroups,
+                                searchText: searchText,
+                                selectedPlatformId: selectedPlatformId,
+                                achievementFilter: achievementFilter,
+                                sortOption: sortOption,
+                                gameTypeFilter: gameTypeFilter
+                            )
+                            .containerRelativeFrame([.horizontal, .vertical])
+                            .id(HomeTab.games)
 
-                        // MARK: - Leaderboard Tab
-                        LeaderboardTab(viewModel: leaderboardViewModel)
-                            .tag(HomeTab.leaderboard)
+                            // MARK: - Leaderboard Tab
+                            LeaderboardTab(viewModel: leaderboardViewModel)
+                                .containerRelativeFrame([.horizontal, .vertical])
+                                .id(HomeTab.leaderboard)
 
-                        // MARK: - Activity Tab
-                        ActivityTab(viewModel: activityViewModel)
-                            .tag(HomeTab.activity)
+                            // MARK: - Activity Tab
+                            ActivityTab(viewModel: activityViewModel)
+                                .containerRelativeFrame([.horizontal, .vertical])
+                                .id(HomeTab.activity)
+                        }
+                        .scrollTargetLayout()
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .scrollTargetBehavior(.paging)
+                    .scrollIndicators(.hidden)
+                    .scrollPosition(id: pagedTabSelection)
                 }
+                // Extend under the floating tab bar so page content can scroll beneath it.
+                .ignoresSafeArea(.container, edges: .bottom)
             }
         }
         .navigationBar(title: "Home", showAuth: $showAuth)
@@ -324,6 +349,7 @@ private struct GamesGridTab: View {
                     }
                 }
             }
+            .contentMargins(.bottom, 100, for: .scrollContent)
         }
     }
 }
@@ -340,6 +366,7 @@ private struct LeaderboardTab: View {
             }
             .padding()
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
     }
 }
 
@@ -355,6 +382,7 @@ private struct ActivityTab: View {
             }
             .padding()
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
     }
 }
 

@@ -33,6 +33,19 @@ struct CollectionView: View {
         InlineTab(title: "Sell List", icon: "tag.fill", value: .sellList)
     ]
 
+    // scrollPosition(id:) needs an optional binding; it reports nil mid-swipe,
+    // which must not clear the selected tab.
+    private var pagedTabSelection: Binding<CollectionTab?> {
+        Binding(
+            get: { selectedTab },
+            set: { newTab in
+                if let newTab {
+                    selectedTab = newTab
+                }
+            }
+        )
+    }
+
     var body: some View {
         Group {
             if clerk.user == nil {
@@ -42,19 +55,31 @@ struct CollectionView: View {
                     // Tab picker
                     InlineTabPicker(selectedTab: $selectedTab, tabs: collectionTabs)
 
-                    // Tab content
-                    TabView(selection: $selectedTab) {
-                        collectionContent
-                            .tag(CollectionTab.collection)
+                    // Tab content — a paging ScrollView instead of TabView(.page):
+                    // the UIKit-backed pager re-applies the window's bottom safe area
+                    // inside each page, keeping content from reaching the screen bottom.
+                    ScrollView(.horizontal) {
+                        LazyHStack(spacing: 0) {
+                            collectionContent
+                                .containerRelativeFrame([.horizontal, .vertical])
+                                .id(CollectionTab.collection)
 
-                        buylistContent
-                            .tag(CollectionTab.buylist)
+                            buylistContent
+                                .containerRelativeFrame([.horizontal, .vertical])
+                                .id(CollectionTab.buylist)
 
-                        sellListContent
-                            .tag(CollectionTab.sellList)
+                            sellListContent
+                                .containerRelativeFrame([.horizontal, .vertical])
+                                .id(CollectionTab.sellList)
+                        }
+                        .scrollTargetLayout()
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .scrollTargetBehavior(.paging)
+                    .scrollIndicators(.hidden)
+                    .scrollPosition(id: pagedTabSelection)
                 }
+                // Extend under the floating tab bar so page content can scroll beneath it.
+                .ignoresSafeArea(.container, edges: .bottom)
             }
         }
         .navigationBar(title: "Collection")
@@ -1108,6 +1133,7 @@ private struct CollectionGroupedGrid: View {
                 }
             }
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
         .refreshable {
             await onRefresh()
         }
@@ -1182,6 +1208,7 @@ private struct CollectionFlatGrid: View {
                 .padding(.vertical, 12)
             }
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
         .refreshable {
             await onRefresh()
         }
@@ -1278,6 +1305,7 @@ private struct BuylistGroupedGrid: View {
                 }
             }
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
         .refreshable {
             await onRefresh()
         }
@@ -1310,6 +1338,7 @@ private struct BuylistFlatGrid: View {
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
         .refreshable {
             await onRefresh()
         }
@@ -1418,6 +1447,7 @@ private struct SellListGroupedGrid: View {
                 }
             }
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
         .refreshable {
             await onRefresh()
         }
@@ -1450,6 +1480,7 @@ private struct SellListFlatGrid: View {
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
+        .contentMargins(.bottom, 100, for: .scrollContent)
         .refreshable {
             await onRefresh()
         }
