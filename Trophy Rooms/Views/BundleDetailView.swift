@@ -102,9 +102,13 @@ struct BundleDetailView: View {
             BundlePlatformPickerSheet(
                 platforms: platformsViewModel.platforms,
                 ownedPlatformIds: Set(viewModel.bundle?.ownedPlatforms?.map { $0.id } ?? []),
-                onSelect: { platformId in
+                gameFamilies: viewModel.bundle?.gameFamilies ?? [],
+                onSelect: { platformId, libraryGameFamilyIds in
                     Task {
-                        await viewModel.addOwnership(platformId: platformId)
+                        await viewModel.addOwnership(
+                            platformId: platformId,
+                            libraryGameFamilyIds: libraryGameFamilyIds
+                        )
                     }
                 }
             )
@@ -327,40 +331,90 @@ private struct BundlePlatformPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     let platforms: [Platform]
     let ownedPlatformIds: Set<String>
-    let onSelect: (String?) -> Void
+    let gameFamilies: [BundleGameFamily]
+    let onSelect: (String?, [String]) -> Void
+
+    @State private var selectedFamilyIds: Set<String>
+
+    init(
+        platforms: [Platform],
+        ownedPlatformIds: Set<String>,
+        gameFamilies: [BundleGameFamily],
+        onSelect: @escaping (String?, [String]) -> Void
+    ) {
+        self.platforms = platforms
+        self.ownedPlatformIds = ownedPlatformIds
+        self.gameFamilies = gameFamilies
+        self.onSelect = onSelect
+        // Included games are pre-checked: owning the bundle means owning them
+        _selectedFamilyIds = State(initialValue: Set(gameFamilies.map { $0.id }))
+    }
 
     var availablePlatforms: [Platform] {
         platforms.filter { !ownedPlatformIds.contains($0.id) }
     }
 
+    private var selectionInOrder: [String] {
+        gameFamilies.map { $0.id }.filter { selectedFamilyIds.contains($0) }
+    }
+
     var body: some View {
         NavigationStack {
             List {
-                // "Any Platform" option (no specific platform)
-                Button {
-                    onSelect(nil)
-                    dismiss()
-                } label: {
-                    HStack {
-                        Image(systemName: "square.stack.3d.up")
-                            .frame(width: 32)
-                        Text("Any Platform")
-                        Spacer()
+                if !gameFamilies.isEmpty {
+                    Section {
+                        ForEach(gameFamilies) { family in
+                            Button {
+                                if selectedFamilyIds.contains(family.id) {
+                                    selectedFamilyIds.remove(family.id)
+                                } else {
+                                    selectedFamilyIds.insert(family.id)
+                                }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: selectedFamilyIds.contains(family.id)
+                                        ? "checkmark.circle.fill"
+                                        : "circle")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(selectedFamilyIds.contains(family.id)
+                                            ? Color.accentColor
+                                            : Color.secondary)
+                                    Text(family.title)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                }
+                            }
+                        }
+                    } header: {
+                        Text("Add to Library")
+                    } footer: {
+                        Text("Checked games are added to your library as Backlog. Games you already track are left untouched.")
                     }
                 }
 
-                if !availablePlatforms.isEmpty {
-                    Section("Select Platform") {
-                        ForEach(availablePlatforms) { platform in
-                            Button {
-                                onSelect(platform.id)
-                                dismiss()
-                            } label: {
-                                HStack {
-                                    PlatformIcon(slug: platform.slug ?? "", size: 24)
-                                    Text(platform.name)
-                                    Spacer()
-                                }
+                Section(gameFamilies.isEmpty ? "" : "Select Platform") {
+                    // "Any Platform" option (no specific platform)
+                    Button {
+                        onSelect(nil, selectionInOrder)
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Image(systemName: "square.stack.3d.up")
+                                .frame(width: 32)
+                            Text("Any Platform")
+                            Spacer()
+                        }
+                    }
+
+                    ForEach(availablePlatforms) { platform in
+                        Button {
+                            onSelect(platform.id, selectionInOrder)
+                            dismiss()
+                        } label: {
+                            HStack {
+                                PlatformIcon(slug: platform.slug ?? "", size: 24)
+                                Text(platform.name)
+                                Spacer()
                             }
                         }
                     }
@@ -376,7 +430,7 @@ private struct BundlePlatformPickerSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 }
 
