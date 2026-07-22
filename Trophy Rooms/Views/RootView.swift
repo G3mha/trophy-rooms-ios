@@ -52,7 +52,9 @@ struct RootView: View {
                     Spacer()
                     AdminInlineToolbar()
                         .padding(.trailing, 16)
-                        .padding(.bottom, 90)
+                        // Overlay content is inset by the tab bar's safe area,
+                        // so this is the gap above the floating bar.
+                        .padding(.bottom, 12)
                 }
             }
         }
