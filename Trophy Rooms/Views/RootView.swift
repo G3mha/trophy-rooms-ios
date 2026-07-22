@@ -183,13 +183,9 @@ private struct SearchResultsView: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading {
-                VStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                }
-            } else if !viewModel.hasResults {
+            if viewModel.isLoading && !viewModel.hasResults {
+                SearchSkeletonList()
+            } else if !viewModel.hasResults && !viewModel.isLoading {
                 VStack(spacing: 12) {
                     Spacer()
                     Image(systemName: "magnifyingglass")
@@ -201,38 +197,53 @@ private struct SearchResultsView: View {
                     Spacer()
                 }
             } else {
-                List {
-                    if !gameItems.isEmpty {
-                        Section("Games") {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        if !gameItems.isEmpty {
+                            SearchSectionHeader(title: "Games")
                             ForEach(gameItems) { item in
                                 NavigationLink(destination: GameFamilyRouter(title: item.title)) {
                                     SearchItemRow(item: item)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
-                    }
-                    if !bundleItems.isEmpty {
-                        Section("Bundles") {
+                        if !bundleItems.isEmpty {
+                            SearchSectionHeader(title: "Bundles")
                             ForEach(bundleItems) { item in
                                 NavigationLink(destination: BundleDetailView(bundleId: item.id)) {
                                     SearchItemRow(item: item)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
-                    }
-                    if !dlcItems.isEmpty {
-                        Section("DLCs") {
+                        if !dlcItems.isEmpty {
+                            SearchSectionHeader(title: "DLCs")
                             ForEach(dlcItems) { item in
                                 NavigationLink(destination: DLCDetailView(dlcId: item.id)) {
                                     SearchItemRow(item: item)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
                 }
-                .listStyle(.plain)
             }
         }
+    }
+}
+
+private struct SearchSectionHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title.uppercased())
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.top, 12)
+            .padding(.bottom, 2)
     }
 }
 
@@ -251,19 +262,71 @@ private struct SearchItemRow: View {
         HStack(spacing: 12) {
             CachedImageFixed(
                 url: item.coverUrl,
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 64,
+                cornerRadius: 6,
                 placeholderIcon: iconName
             )
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(item.title)
                     .font(.headline)
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
                 if let subtitle = item.subtitle {
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
+        .padding(12)
+        .background(
+            Color(.secondarySystemBackground),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+        )
+    }
+}
+
+private struct SearchSkeletonList: View {
+    @State private var pulsing = false
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                ForEach(0..<6, id: \.self) { _ in
+                    HStack(spacing: 12) {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color(.tertiarySystemFill))
+                            .frame(width: 48, height: 64)
+                        VStack(alignment: .leading, spacing: 6) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color(.tertiarySystemFill))
+                                .frame(width: 180, height: 14)
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color(.tertiarySystemFill))
+                                .frame(width: 120, height: 10)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(12)
+                    .background(
+                        Color(.secondarySystemBackground),
+                        in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    )
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+        }
+        .scrollDisabled(true)
+        .opacity(pulsing ? 0.5 : 1)
+        .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulsing)
+        .onAppear { pulsing = true }
     }
 }
