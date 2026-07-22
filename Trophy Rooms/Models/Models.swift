@@ -701,8 +701,11 @@ enum GameRegion: String, Codable, CaseIterable {
 
 struct CollectionItem: Codable, Identifiable {
     let id: String
-    let gameId: String
-    let game: CollectionGame
+    // Exactly one of game/bundle is set (mirrors the backend model)
+    let gameId: String?
+    let game: CollectionGame?
+    let bundleId: String?
+    let bundle: CollectionBundleRef?
     let platform: Platform?
     let gameVersion: GameVersionRef?
     let gameVersionId: String?
@@ -717,6 +720,10 @@ struct CollectionItem: Codable, Identifiable {
     let createdAt: String
     let updatedAt: String
 
+    var isBundle: Bool { bundleId != nil }
+    var displayTitle: String { game?.title ?? bundle?.name ?? "Unknown" }
+    var displayCoverUrl: String? { game?.coverUrl ?? bundle?.coverUrl }
+
     var isComplete: Bool {
         // Digital copies are considered complete by default
         if isDigital == true { return true }
@@ -728,6 +735,13 @@ struct CollectionGame: Codable {
     let id: String
     let title: String
     let coverUrl: String?
+}
+
+struct CollectionBundleRef: Codable {
+    let id: String
+    let name: String
+    let coverUrl: String?
+    let gameFamilies: [BundleGameFamily]?
 }
 
 struct CollectionStats: Codable {

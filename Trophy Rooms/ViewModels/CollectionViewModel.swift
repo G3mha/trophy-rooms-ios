@@ -1,31 +1,9 @@
 import Foundation
 import Combine
 
-/// A single cell in the collection grid: either an owned game copy or an
-/// owned bundle, so both can live in the same platform groups.
-enum CollectionEntry: Identifiable {
-    case game(CollectionItem)
-    case bundle(AppBundle)
-
-    var id: String {
-        switch self {
-        case .game(let item): return "game-\(item.id)"
-        case .bundle(let bundle): return "bundle-\(bundle.id)"
-        }
-    }
-
-    var sortTitle: String {
-        switch self {
-        case .game(let item): return item.game.title
-        case .bundle(let bundle): return bundle.name
-        }
-    }
-}
-
 @MainActor
 class CollectionViewModel: ObservableObject {
     @Published var collectionItems: [CollectionItem] = []
-    @Published var ownedBundles: [AppBundle] = []
     @Published var stats: CollectionStats?
     @Published var isLoading = false
     @Published var hasLoadedOnce = false
@@ -79,9 +57,9 @@ class CollectionViewModel: ObservableObject {
     private func sortItems(_ items: [CollectionItem]) -> [CollectionItem] {
         switch selectedSortOption {
         case .titleAsc:
-            return items.sorted { $0.game.title.localizedCaseInsensitiveCompare($1.game.title) == .orderedAscending }
+            return items.sorted { $0.displayTitle.localizedCaseInsensitiveCompare($1.displayTitle) == .orderedAscending }
         case .titleDesc:
-            return items.sorted { $0.game.title.localizedCaseInsensitiveCompare($1.game.title) == .orderedDescending }
+            return items.sorted { $0.displayTitle.localizedCaseInsensitiveCompare($1.displayTitle) == .orderedDescending }
         case .dateAddedDesc:
             return items.sorted { $0.createdAt > $1.createdAt }
         case .dateAddedAsc:
@@ -100,112 +78,24 @@ class CollectionViewModel: ObservableObject {
         }
     }
 
-    /// Bundles that pass the active filters. Region/sealed/complete filters
-    /// cannot apply to bundles, so bundles are hidden while any is active.
-    var filteredBundles: [AppBundle] {
-        if selectedRegion != nil || showSealedOnly || showCompleteOnly {
-            return []
-        }
-        var bundles = ownedBundles
-        if let platformId = selectedPlatformId {
-            bundles = bundles.filter { bundle in
-                let owned = bundle.ownedPlatforms ?? []
-                if !owned.isEmpty {
-                    return owned.contains { $0.id == platformId }
-                }
-                return bundle.platforms.contains { $0.id == platformId }
-            }
-        }
-        return bundles
-    }
-
-    /// Platforms a bundle should be grouped under: the platforms the user
-    /// owns it on, else its only available platform, else the "Other" group.
-    private func groupPlatforms(for bundle: AppBundle) -> [Platform?] {
-        if let owned = bundle.ownedPlatforms, !owned.isEmpty {
-            return owned
-        }
-        if bundle.platforms.count == 1 {
-            return [bundle.platforms[0]]
-        }
-        return [nil]
-    }
-
-    private func sortEntries(_ entries: [CollectionEntry]) -> [CollectionEntry] {
-        func titleAscending(_ a: CollectionEntry, _ b: CollectionEntry) -> Bool {
-            a.sortTitle.localizedCaseInsensitiveCompare(b.sortTitle) == .orderedAscending
-        }
-
-        switch selectedSortOption {
-        case .titleAsc:
-            return entries.sorted(by: titleAscending)
-        case .titleDesc:
-            return entries.sorted { titleAscending($1, $0) }
-        case .dateAddedDesc:
-            // Bundles carry no local owned-date, so they sort after games
-            return entries.sorted {
-                switch ($0, $1) {
-                case (.game(let a), .game(let b)): return a.createdAt > b.createdAt
-                case (.game, .bundle): return true
-                case (.bundle, .game): return false
-                case (.bundle, .bundle): return titleAscending($0, $1)
-                }
-            }
-        case .dateAddedAsc:
-            return entries.sorted {
-                switch ($0, $1) {
-                case (.game(let a), .game(let b)): return a.createdAt < b.createdAt
-                case (.game, .bundle): return true
-                case (.bundle, .game): return false
-                case (.bundle, .bundle): return titleAscending($0, $1)
-                }
-            }
-        case .regionAsc:
-            return entries.sorted {
-                switch ($0, $1) {
-                case (.game(let a), .game(let b)): return regionOrder(a.region) < regionOrder(b.region)
-                case (.game, .bundle): return true
-                case (.bundle, .game): return false
-                case (.bundle, .bundle): return titleAscending($0, $1)
-                }
-            }
-        }
-    }
-
-    /// Filtered games and owned bundles merged into one sorted list
-    var flatEntries: [CollectionEntry] {
-        sortEntries(filteredItems.map { .game($0) } + filteredBundles.map { .bundle($0) })
-    }
-
-    /// Groups filtered games and owned bundles together by platform
-    var groupedEntries: [(platform: Platform?, entries: [CollectionEntry])] {
-        var groups: [String: (platform: Platform?, entries: [CollectionEntry])] = [:]
-
-        func append(_ entry: CollectionEntry, under platform: Platform?) {
-            let key = platform?.id ?? "other"
-            if groups[key] != nil {
-                groups[key]!.entries.append(entry)
-            } else {
-                groups[key] = (platform: platform, entries: [entry])
-            }
-        }
+    /// Groups filtered items (games and bundles alike) by platform
+    var groupedItems: [(platform: Platform?, items: [CollectionItem])] {
+        var groups: [String: (platform: Platform?, items: [CollectionItem])] = [:]
 
         for item in filteredItems {
-            append(.game(item), under: item.platform)
-        }
-        for bundle in filteredBundles {
-            for platform in groupPlatforms(for: bundle) {
-                append(.bundle(bundle), under: platform)
+            let key = item.platform?.id ?? "other"
+            if groups[key] != nil {
+                groups[key]!.items.append(item)
+            } else {
+                groups[key] = (platform: item.platform, items: [item])
             }
         }
 
-        return groups.values
-            .map { (platform: $0.platform, entries: sortEntries($0.entries)) }
-            .sorted { lhs, rhs in
-                if lhs.platform == nil { return false }
-                if rhs.platform == nil { return true }
-                return (lhs.platform?.name ?? "") < (rhs.platform?.name ?? "")
-            }
+        return groups.values.sorted { lhs, rhs in
+            if lhs.platform == nil { return false }
+            if rhs.platform == nil { return true }
+            return (lhs.platform?.name ?? "") < (rhs.platform?.name ?? "")
+        }
     }
 
     // Get unique platforms from collection items
@@ -226,7 +116,6 @@ class CollectionViewModel: ObservableObject {
         if !forceRefresh, let cached: CollectionWithStatsResponse = await CacheManager.shared.get(.collection) {
             collectionItems = cached.myCollection
             stats = cached.collectionStats
-            ownedBundles = cached.myOwnedBundles ?? []
             // If we have cached data and not forcing refresh, we're done
             if !collectionItems.isEmpty && hasLoadedOnce {
                 return
@@ -245,6 +134,8 @@ class CollectionViewModel: ObservableObject {
                 id
                 gameId
                 game { id title coverUrl }
+                bundleId
+                bundle { id name coverUrl gameFamilies { id title coverUrl } }
                 platform { id name slug }
                 gameVersion { id name }
                 gameVersionId
@@ -268,18 +159,6 @@ class CollectionViewModel: ObservableObject {
                     count
                 }
             }
-            myOwnedBundles {
-                id
-                name
-                slug
-                type
-                coverUrl
-                platforms { id name slug }
-                ownedPlatforms { id name slug }
-                platformCount
-                gameFamilyCount
-                dlcCount
-            }
         }
         """
 
@@ -288,7 +167,6 @@ class CollectionViewModel: ObservableObject {
             await CacheManager.shared.set(.collection, value: response)
             collectionItems = response.myCollection
             stats = response.collectionStats
-            ownedBundles = response.myOwnedBundles ?? []
             isLoading = false
             hasLoadedOnce = true
         } catch is CancellationError {

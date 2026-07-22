@@ -19,6 +19,8 @@ struct CollectionView: View {
     @State private var editingItem: CollectionItem?
     @State private var editingItemVersions: [GameVersion] = []
     @State private var showEditSheet = false
+    @State private var editingBundleItem: CollectionItem?
+    @State private var bundleDetailTarget: BundleDetailTarget?
     @State private var selectedItemForPurchase: BuylistItem?
     @State private var selectedItemForSellList: CollectionItem?
     @State private var selectedSellListItem: SellListItem?
@@ -32,6 +34,18 @@ struct CollectionView: View {
         InlineTab(title: "Buylist", icon: "cart.fill", value: .buylist),
         InlineTab(title: "Sell List", icon: "tag.fill", value: .sellList)
     ]
+
+    private func handleEditCollectionItem(_ item: CollectionItem) {
+        if item.isBundle {
+            editingBundleItem = item
+        } else if let gameId = item.gameId {
+            editingItem = item
+            Task {
+                await fetchVersionsForGame(gameId: gameId)
+                showEditSheet = true
+            }
+        }
+    }
 
     // scrollPosition(id:) needs an optional binding; it reports nil mid-swipe,
     // which must not clear the selected tab.
@@ -83,20 +97,30 @@ struct CollectionView: View {
             }
         }
         .navigationBar(title: "Collection")
+        .navigationDestination(item: $bundleDetailTarget) { target in
+            BundleDetailView(bundleId: target.id)
+        }
         .sheet(isPresented: $showAuth) {
             AuthView()
         }
         .sheet(isPresented: $showEditSheet) {
-            if let item = editingItem {
+            if let item = editingItem, let gameId = item.gameId {
                 AddToCollectionSheet(
-                    gameId: item.gameId,
-                    gameTitle: item.game.title,
+                    gameId: gameId,
+                    gameTitle: item.displayTitle,
                     editingItem: item,
                     versions: editingItemVersions
                 ) {
                     Task {
                         await collectionViewModel.fetchCollection()
                     }
+                }
+            }
+        }
+        .sheet(item: $editingBundleItem) { item in
+            EditBundleItemSheet(item: item) {
+                Task {
+                    await collectionViewModel.fetchCollection(forceRefresh: true)
                 }
             }
         }
@@ -111,7 +135,7 @@ struct CollectionView: View {
         .sheet(item: $selectedItemForSellList) { item in
             AddToSellListSheet(
                 collectionItemId: item.id,
-                itemTitle: item.game.title
+                itemTitle: item.displayTitle
             ) {
                 Task {
                     await sellListViewModel.fetchSellList()
@@ -186,7 +210,7 @@ struct CollectionView: View {
                     }
                 }
             }
-        } else if collectionViewModel.collectionItems.isEmpty && collectionViewModel.ownedBundles.isEmpty {
+        } else if collectionViewModel.collectionItems.isEmpty {
             VStack(spacing: 16) {
                 Image(systemName: "archivebox")
                     .font(.system(size: 48))
@@ -229,46 +253,44 @@ struct CollectionView: View {
                 // Collection grid
                 if collectionViewModel.groupByPlatform {
                     CollectionGroupedGrid(
-                        groups: collectionViewModel.groupedEntries,
+                        groups: collectionViewModel.groupedItems,
                         expandedSections: collectionExpandedSections,
                         onRefresh: {
                             await collectionViewModel.fetchCollection(forceRefresh: true)
                         },
-                        onEdit: { item in
-                            editingItem = item
-                            Task {
-                                await fetchVersionsForGame(gameId: item.gameId)
-                                showEditSheet = true
-                            }
-                        },
+                        onEdit: handleEditCollectionItem,
                         onSell: { item in
                             selectedItemForSellList = item
                         },
                         onDelete: { item in
                             Task {
                                 await collectionViewModel.removeFromCollection(id: item.id)
+                            }
+                        },
+                        onDetails: { item in
+                            if let bundleId = item.bundleId {
+                                bundleDetailTarget = BundleDetailTarget(id: bundleId)
                             }
                         }
                     )
                 } else {
                     CollectionFlatGrid(
-                        entries: collectionViewModel.flatEntries,
+                        items: collectionViewModel.filteredItems,
                         onRefresh: {
                             await collectionViewModel.fetchCollection(forceRefresh: true)
                         },
-                        onEdit: { item in
-                            editingItem = item
-                            Task {
-                                await fetchVersionsForGame(gameId: item.gameId)
-                                showEditSheet = true
-                            }
-                        },
+                        onEdit: handleEditCollectionItem,
                         onSell: { item in
                             selectedItemForSellList = item
                         },
                         onDelete: { item in
                             Task {
                                 await collectionViewModel.removeFromCollection(id: item.id)
+                            }
+                        },
+                        onDetails: { item in
+                            if let bundleId = item.bundleId {
+                                bundleDetailTarget = BundleDetailTarget(id: bundleId)
                             }
                         }
                     )
@@ -738,10 +760,10 @@ private struct CollectionItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            CoverImage.gameRow(url: item.game.coverUrl)
+            CoverImage.gameRow(url: item.displayCoverUrl)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.game.title)
+                Text(item.displayTitle)
                     .font(.headline)
                     .lineLimit(2)
 
@@ -1047,15 +1069,18 @@ private struct ConditionBadge: View {
 
 // MARK: - Collection Grid Components
 
+struct BundleDetailTarget: Identifiable, Hashable {
+    let id: String
+}
+
 private struct CollectionGroupedGrid: View {
-    let groups: [(platform: Platform?, entries: [CollectionEntry])]
+    let groups: [(platform: Platform?, items: [CollectionItem])]
     let expandedSections: ExpandedSectionsState
     let onRefresh: () async -> Void
     let onEdit: (CollectionItem) -> Void
     let onSell: (CollectionItem) -> Void
     let onDelete: (CollectionItem) -> Void
-
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    let onDetails: (CollectionItem) -> Void
 
     var body: some View {
         ScrollView {
@@ -1065,16 +1090,13 @@ private struct CollectionGroupedGrid: View {
 
                     Section {
                         if expandedSections.isExpanded(sectionId) {
-                            LazyVGrid(columns: columns, spacing: 12) {
-                                ForEach(group.entries) { entry in
-                                    CollectionEntryCell(
-                                        entry: entry,
-                                        onEdit: onEdit,
-                                        onSell: onSell,
-                                        onDelete: onDelete
-                                    )
-                                }
-                            }
+                            CollectionItemsGrid(
+                                items: group.items,
+                                onEdit: onEdit,
+                                onSell: onSell,
+                                onDelete: onDelete,
+                                onDetails: onDetails
+                            )
                             .padding(.horizontal)
                             .padding(.vertical, 8)
                         }
@@ -1082,7 +1104,7 @@ private struct CollectionGroupedGrid: View {
                         PlatformGridSectionHeader(
                             name: group.platform?.name,
                             slug: group.platform?.slug,
-                            count: group.entries.count,
+                            count: group.items.count,
                             isExpanded: expandedSections.isExpanded(sectionId),
                             onToggle: { expandedSections.toggle(sectionId) }
                         )
@@ -1102,26 +1124,22 @@ private struct CollectionGroupedGrid: View {
 }
 
 private struct CollectionFlatGrid: View {
-    let entries: [CollectionEntry]
+    let items: [CollectionItem]
     let onRefresh: () async -> Void
     let onEdit: (CollectionItem) -> Void
     let onSell: (CollectionItem) -> Void
     let onDelete: (CollectionItem) -> Void
-
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    let onDetails: (CollectionItem) -> Void
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(entries) { entry in
-                    CollectionEntryCell(
-                        entry: entry,
-                        onEdit: onEdit,
-                        onSell: onSell,
-                        onDelete: onDelete
-                    )
-                }
-            }
+            CollectionItemsGrid(
+                items: items,
+                onEdit: onEdit,
+                onSell: onSell,
+                onDelete: onDelete,
+                onDetails: onDetails
+            )
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
@@ -1132,36 +1150,267 @@ private struct CollectionFlatGrid: View {
     }
 }
 
-private struct CollectionEntryCell: View {
-    let entry: CollectionEntry
+/// Grid of collection items where bundle cells expand in place to reveal the
+/// games stacked inside them.
+private struct CollectionItemsGrid: View {
+    let items: [CollectionItem]
     let onEdit: (CollectionItem) -> Void
     let onSell: (CollectionItem) -> Void
     let onDelete: (CollectionItem) -> Void
+    let onDetails: (CollectionItem) -> Void
+
+    @State private var expandedBundleIds: Set<String> = []
+
+    private let columns = GameCoverGridLayout.columns(count: 3)
+
+    private enum GridCell: Identifiable {
+        case item(CollectionItem)
+        case bundleGame(BundleGameFamily, parentId: String)
+
+        var id: String {
+            switch self {
+            case .item(let item): return "item-\(item.id)"
+            case .bundleGame(let family, let parentId): return "family-\(parentId)-\(family.id)"
+            }
+        }
+    }
+
+    private var cells: [GridCell] {
+        var cells: [GridCell] = []
+        for item in items {
+            cells.append(.item(item))
+            if item.isBundle, expandedBundleIds.contains(item.id) {
+                for family in item.bundle?.gameFamilies ?? [] {
+                    cells.append(.bundleGame(family, parentId: item.id))
+                }
+            }
+        }
+        return cells
+    }
 
     var body: some View {
-        switch entry {
-        case .game(let item):
-            CollectionGridCell(
-                item: item,
-                onEdit: { onEdit(item) },
-                onSell: { onSell(item) },
-                onDelete: { onDelete(item) }
-            )
-        case .bundle(let bundle):
-            CollectionBundleCell(bundle: bundle)
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(cells) { cell in
+                switch cell {
+                case .item(let item):
+                    if item.isBundle {
+                        CollectionBundleCell(
+                            item: item,
+                            isExpanded: expandedBundleIds.contains(item.id),
+                            onToggle: {
+                                withAnimation(.snappy) {
+                                    if expandedBundleIds.contains(item.id) {
+                                        expandedBundleIds.remove(item.id)
+                                    } else {
+                                        expandedBundleIds.insert(item.id)
+                                    }
+                                }
+                            },
+                            onEdit: { onEdit(item) },
+                            onSell: { onSell(item) },
+                            onDelete: { onDelete(item) },
+                            onDetails: { onDetails(item) }
+                        )
+                    } else {
+                        CollectionGridCell(
+                            item: item,
+                            onEdit: { onEdit(item) },
+                            onSell: { onSell(item) },
+                            onDelete: { onDelete(item) }
+                        )
+                    }
+                case .bundleGame(let family, _):
+                    NavigationLink(destination: GameFamilyRouter(title: family.title)) {
+                        GameCoverCell(coverUrl: family.coverUrl, title: family.title) {
+                            // Marks the cell as coming from an expanded bundle
+                            GroupIndicatorOverlay()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
+                }
+            }
         }
     }
 }
 
+/// Bundle collection item rendered as a stacked pile of games. Tapping fans
+/// the pile open; the context menu carries the item actions.
 private struct CollectionBundleCell: View {
-    let bundle: AppBundle
+    let item: CollectionItem
+    let isExpanded: Bool
+    let onToggle: () -> Void
+    let onEdit: () -> Void
+    let onSell: () -> Void
+    let onDelete: () -> Void
+    let onDetails: () -> Void
+
+    private var gameCount: Int { item.bundle?.gameFamilies?.count ?? 0 }
 
     var body: some View {
-        NavigationLink(destination: BundleDetailView(bundleId: bundle.id)) {
-            GameCoverCell(coverUrl: bundle.coverUrl, title: bundle.name) {
-                // Bundle marker (top-left), same badge language as the buylist
-                ItemTypeOverlayBadge(itemType: .BUNDLE)
+        Button(action: onToggle) {
+            ZStack {
+                // Cards peeking out behind the cover hint at the games inside
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.tertiarySystemFill))
+                    .aspectRatio(3 / 4, contentMode: .fit)
+                    .rotationEffect(.degrees(isExpanded ? 0 : 5))
+                    .offset(x: isExpanded ? 0 : 7, y: isExpanded ? 0 : -3)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.secondarySystemFill))
+                    .aspectRatio(3 / 4, contentMode: .fit)
+                    .rotationEffect(.degrees(isExpanded ? 0 : 2.5))
+                    .offset(x: isExpanded ? 0 : 3, y: isExpanded ? 0 : -1.5)
+
+                GameCoverCell(coverUrl: item.displayCoverUrl, title: item.displayTitle) {
+                    RegionOverlayBadge(region: item.region)
+
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 4) {
+                            Image(systemName: "shippingbox.fill")
+                                .font(.system(size: 10))
+                            if gameCount > 0 {
+                                Text("\(gameCount)")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            Spacer()
+                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 10, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(4)
+                        .background(
+                            LinearGradient(
+                                colors: [.clear, .black.opacity(0.7)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    }
+                }
             }
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                onDetails()
+            } label: {
+                Label("Bundle Details", systemImage: "shippingbox")
+            }
+
+            Button {
+                onEdit()
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+
+            Button {
+                onSell()
+            } label: {
+                Label("Add to Sell List", systemImage: "tag")
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label("Remove from Collection", systemImage: "trash")
+            }
+        }
+    }
+}
+
+/// Region, condition, and notes editor for bundle collection items. Reuses
+/// AddToCollectionViewModel's updateCollectionItem mutation.
+private struct EditBundleItemSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel = AddToCollectionViewModel()
+    let item: CollectionItem
+    let onSave: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Picker("Region", selection: $viewModel.region) {
+                        ForEach(GameRegion.allCases, id: \.self) { region in
+                            Text(region.displayName).tag(region)
+                        }
+                    }
+                    Toggle("Digital Copy", isOn: $viewModel.isDigital)
+                }
+
+                Section {
+                    Toggle("Has Cartridge/Disc", isOn: $viewModel.hasDisc)
+                        .disabled(viewModel.isDigital)
+                    Toggle("Has Box", isOn: $viewModel.hasBox)
+                        .disabled(viewModel.isDigital)
+                    Toggle("Has Manual", isOn: $viewModel.hasManual)
+                        .disabled(viewModel.isDigital)
+                    Toggle("Has Extras", isOn: $viewModel.hasExtras)
+                        .disabled(viewModel.isDigital)
+                    Toggle("Sealed", isOn: $viewModel.isSealed)
+                        .disabled(viewModel.isDigital)
+                } header: {
+                    Text("Physical Condition")
+                }
+
+                Section {
+                    TextField("Notes (optional)", text: $viewModel.notes, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+
+                Section {
+                    Button {
+                        Task {
+                            if await viewModel.updateCollectionItem(id: item.id) {
+                                onSave()
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Spacer()
+                            if viewModel.isLoading {
+                                ProgressView()
+                            } else {
+                                Text("Save Changes")
+                                    .fontWeight(.semibold)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(viewModel.isLoading)
+                }
+            }
+            .navigationTitle(item.displayTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .onAppear {
+            viewModel.region = item.region
+            viewModel.platformId = item.platform?.id
+            viewModel.isDigital = item.isDigital ?? false
+            viewModel.hasDisc = item.hasDisc
+            viewModel.hasBox = item.hasBox
+            viewModel.hasManual = item.hasManual
+            viewModel.hasExtras = item.hasExtras
+            viewModel.isSealed = item.isSealed
+            viewModel.notes = item.notes ?? ""
         }
     }
 }
@@ -1173,8 +1422,8 @@ private struct CollectionGridCell: View {
     let onDelete: () -> Void
 
     var body: some View {
-        NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
-            GameCoverCell(coverUrl: item.game.coverUrl, title: item.game.title) {
+        NavigationLink(destination: GameDetailView(gameId: item.gameId ?? "")) {
+            GameCoverCell(coverUrl: item.displayCoverUrl, title: item.displayTitle) {
                 // Region badge (top-left)
                 RegionOverlayBadge(region: item.region)
 
