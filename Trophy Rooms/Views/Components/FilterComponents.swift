@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Filter Pill (with count badge)
 
-/// A pill-shaped filter button with a count badge.
+/// A capsule filter button with a count badge.
 /// Used for filters that show item counts (e.g., status filters, priority filters).
 struct FilterPill: View {
     let title: String
@@ -13,22 +13,27 @@ struct FilterPill: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Text(title)
-                    .font(.subheadline)
-                    .fontWeight(isSelected ? .semibold : .regular)
+                    .font(.subheadline.weight(isSelected ? .semibold : .regular))
                 Text("\(count)")
-                    .font(.caption)
+                    .font(.caption2.weight(.semibold))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(isSelected ? Color.white.opacity(0.3) : Color.secondary.opacity(0.2))
-                    .cornerRadius(8)
+                    .background(
+                        isSelected
+                            ? AnyShapeStyle(.white.opacity(0.25))
+                            : AnyShapeStyle(.fill.tertiary),
+                        in: .capsule
+                    )
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isSelected ? color : Color(.secondarySystemBackground))
-            .foregroundColor(isSelected ? .white : .primary)
-            .cornerRadius(16)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .foregroundStyle(isSelected ? Color.white : .primary)
+            .background(
+                isSelected ? AnyShapeStyle(color) : AnyShapeStyle(.fill.secondary),
+                in: .capsule
+            )
         }
         .buttonStyle(.plain)
     }
@@ -36,21 +41,23 @@ struct FilterPill: View {
 
 // MARK: - Filter Chip (simple, without count)
 
-/// A simple chip-shaped filter button without count.
+/// A simple capsule filter label without count.
 /// Used for toggle filters (e.g., Sealed, Complete) and dropdown menus (e.g., Platform, Region).
 struct FilterChip: View {
     let title: String
     let isActive: Bool
-    var activeColor: Color = .blue
+    var activeColor: Color = .accentColor
 
     var body: some View {
         Text(title)
-            .font(.subheadline)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isActive ? activeColor : Color(.secondarySystemBackground))
-            .foregroundColor(isActive ? .white : .primary)
-            .cornerRadius(16)
+            .font(.subheadline.weight(isActive ? .semibold : .regular))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .foregroundStyle(isActive ? Color.white : .primary)
+            .background(
+                isActive ? AnyShapeStyle(activeColor) : AnyShapeStyle(.fill.secondary),
+                in: .capsule
+            )
     }
 }
 
@@ -72,11 +79,10 @@ struct FilterBarContainer<Content: View>: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .background(Color(.systemBackground))
     }
 }
 
 // MARK: - Common Filter Colors
 
 /// Standard color for the "All" filter pill when selected.
-let filterAllColor = Color(.darkGray)
+let filterAllColor = Color.gray
