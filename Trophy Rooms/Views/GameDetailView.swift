@@ -1177,20 +1177,13 @@ private struct GameVersionsSectionView: View {
     let versions: [GameVersion]
     let gameFamilyCoverUrl: String?
 
-    /// Get the cover URL for a version, using game family cover for default versions
+    /// Edition-specific art when the version has its own cover, otherwise
+    /// this game's cover. effectiveCoverUrl is deliberately not used as a
+    /// fallback: for versions shared across games (GOTY, Remastered, ...)
+    /// it resolves to the FIRST linked game's cover, which can belong to a
+    /// different game entirely.
     func coverUrlForVersion(_ version: GameVersion) -> String? {
-        // If version has its own cover, use it
-        if let effectiveCover = version.effectiveCoverUrl {
-            return effectiveCover
-        }
-        if let versionCover = version.coverUrl {
-            return versionCover
-        }
-        // For default versions, fall back to game family cover
-        if version.isDefault, let familyCover = gameFamilyCoverUrl {
-            return familyCover
-        }
-        return nil
+        version.coverUrl ?? gameFamilyCoverUrl
     }
 
     var body: some View {
