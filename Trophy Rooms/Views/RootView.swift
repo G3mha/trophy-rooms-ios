@@ -125,6 +125,8 @@ private struct SearchResultsView: View {
     @ObservedObject var viewModel: GlobalSearchViewModel
     let query: String
 
+    @Namespace private var zoomNamespace
+
     var gameItems: [GlobalSearchItem] {
         viewModel.items.filter { $0.type == .GAME }
     }
@@ -149,27 +151,39 @@ private struct SearchResultsView: View {
                         if !gameItems.isEmpty {
                             SearchSectionHeader(title: "Games")
                             ForEach(gameItems) { item in
-                                NavigationLink(destination: GameFamilyRouter(title: item.title)) {
+                                NavigationLink(
+                                    destination: GameFamilyRouter(title: item.title)
+                                        .navigationTransition(.zoom(sourceID: item.id, in: zoomNamespace))
+                                ) {
                                     SearchItemRow(item: item)
                                 }
+                                .matchedTransitionSource(id: item.id, in: zoomNamespace)
                                 .buttonStyle(.plain)
                             }
                         }
                         if !bundleItems.isEmpty {
                             SearchSectionHeader(title: "Bundles")
                             ForEach(bundleItems) { item in
-                                NavigationLink(destination: BundleDetailView(bundleId: item.id)) {
+                                NavigationLink(
+                                    destination: BundleDetailView(bundleId: item.id)
+                                        .navigationTransition(.zoom(sourceID: item.id, in: zoomNamespace))
+                                ) {
                                     SearchItemRow(item: item)
                                 }
+                                .matchedTransitionSource(id: item.id, in: zoomNamespace)
                                 .buttonStyle(.plain)
                             }
                         }
                         if !dlcItems.isEmpty {
                             SearchSectionHeader(title: "DLCs")
                             ForEach(dlcItems) { item in
-                                NavigationLink(destination: DLCDetailView(dlcId: item.id)) {
+                                NavigationLink(
+                                    destination: DLCDetailView(dlcId: item.id)
+                                        .navigationTransition(.zoom(sourceID: item.id, in: zoomNamespace))
+                                ) {
                                     SearchItemRow(item: item)
                                 }
+                                .matchedTransitionSource(id: item.id, in: zoomNamespace)
                                 .buttonStyle(.plain)
                             }
                         }
