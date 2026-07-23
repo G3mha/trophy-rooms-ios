@@ -116,6 +116,7 @@ struct AddToCollectionSheet: View {
                                 let item = existingItems[index]
                                 Task {
                                     _ = await viewModel.removeFromCollection(id: item.id)
+                                    Haptics.success()
                                     onSave()
                                 }
                             }
@@ -258,6 +259,7 @@ struct AddToCollectionSheet: View {
                                 success = await viewModel.addToCollection(gameId: gameId)
                             }
                             if success {
+                                Haptics.success()
                                 onSave()
                                 dismiss()
                             }

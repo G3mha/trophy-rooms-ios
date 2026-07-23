@@ -56,6 +56,7 @@ struct AddToSellListSheet: View {
                         Task {
                             let success = await viewModel.addToSellList(collectionItemId: collectionItemId)
                             if success {
+                                Haptics.success()
                                 onSave()
                                 dismiss()
                             }

@@ -1215,6 +1215,7 @@ private struct CollectionItemsGrid: View {
                 }
             }
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: expandedBundleIds)
     }
 }
 
@@ -1356,6 +1357,7 @@ private struct EditBundleItemSheet: View {
                     Button {
                         Task {
                             if await viewModel.updateCollectionItem(id: item.id) {
+                                Haptics.success()
                                 onSave()
                                 dismiss()
                             }

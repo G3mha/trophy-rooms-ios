@@ -71,6 +71,7 @@ struct MarkAsPurchasedSheet: View {
                         Task {
                             let success = await viewModel.markAsPurchased(id: item.id, isGame: item.itemType == .GAME)
                             if success {
+                                Haptics.success()
                                 onComplete()
                                 dismiss()
                             }

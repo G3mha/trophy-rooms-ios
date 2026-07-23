@@ -36,6 +36,7 @@ struct MarkAsSoldSheet: View {
                         Task {
                             let success = await viewModel.markAsSold(id: item.id, removeFromCollection: false)
                             if success {
+                                Haptics.success()
                                 onComplete()
                                 dismiss()
                             }
@@ -66,6 +67,7 @@ struct MarkAsSoldSheet: View {
                         Task {
                             let success = await viewModel.markAsSold(id: item.id, removeFromCollection: true)
                             if success {
+                                Haptics.success()
                                 onComplete()
                                 dismiss()
                             }
