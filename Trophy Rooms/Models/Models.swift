@@ -1565,6 +1565,8 @@ struct AdminGameItem: Identifiable, Decodable {
         title: String,
         description: String?,
         coverUrl: String?,
+        platformCoverUrl: String? = nil,
+        platformDescription: String? = nil,
         type: GameType?,
         baseGameFamilyId: String?,
         baseGameFamilyIds: [String]?,
@@ -1579,6 +1581,8 @@ struct AdminGameItem: Identifiable, Decodable {
         self.title = title
         self.description = description
         self.coverUrl = coverUrl
+        self.platformCoverUrl = platformCoverUrl
+        self.platformDescription = platformDescription
         self.type = type
         self.baseGameFamilyId = baseGameFamilyId
         self.baseGameFamilyIds = baseGameFamilyIds
