@@ -205,12 +205,7 @@ private struct TierStat: View {
     }
 
     var tierColor: Color {
-        switch tier {
-        case .PLATINUM: return Color(red: 0.898, green: 0.894, blue: 0.886)
-        case .GOLD: return Color(red: 1.0, green: 0.84, blue: 0.0)
-        case .SILVER: return Color(red: 0.75, green: 0.75, blue: 0.75)
-        case .BRONZE: return Color(red: 0.8, green: 0.5, blue: 0.2)
-        }
+        tier.tierColor
     }
 }
 

@@ -472,7 +472,7 @@ private struct GameHeader: View {
                 if game.trophyCount > 0 {
                     HStack(spacing: 4) {
                         Image(systemName: "trophy.fill")
-                            .foregroundColor(Color(red: 0.863, green: 0.078, blue: 0.235))
+                            .foregroundColor(Color.accentColor)
                         Text("\(game.trophyCount) trophies")
                             .font(.subheadline)
                     }

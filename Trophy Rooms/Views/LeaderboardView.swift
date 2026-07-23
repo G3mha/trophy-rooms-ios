@@ -159,10 +159,11 @@ private struct RankBadge: View {
     let rank: Int
 
     var backgroundColor: Color {
+        // Medal colors reuse the achievement tier palette
         switch rank {
-        case 1: return Color(red: 1.0, green: 0.843, blue: 0.0)
-        case 2: return Color(red: 0.753, green: 0.753, blue: 0.753)
-        case 3: return Color(red: 0.804, green: 0.498, blue: 0.196)
+        case 1: return AchievementTier.GOLD.tierColor
+        case 2: return AchievementTier.SILVER.tierColor
+        case 3: return AchievementTier.BRONZE.tierColor
         default: return Color(.systemGray5)
         }
     }

@@ -39,7 +39,7 @@ struct TrophyRoomView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack {
                                     Image(systemName: "trophy.fill")
-                                        .foregroundColor(Color(red: 0.863, green: 0.078, blue: 0.235))
+                                        .foregroundColor(Color.accentColor)
                                     Text("Completed Games")
                                         .font(.title2)
                                         .fontWeight(.bold)
@@ -130,7 +130,7 @@ private struct StatsHeader: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            TrophyRoomStatCard(title: "Trophies", value: stats.totalTrophies, icon: "trophy.fill", color: Color(red: 0.863, green: 0.078, blue: 0.235))
+            TrophyRoomStatCard(title: "Trophies", value: stats.totalTrophies, icon: "trophy.fill", color: Color.accentColor)
             TrophyRoomStatCard(title: "Achievements", value: stats.totalAchievements, icon: "star.fill", color: .yellow)
             TrophyRoomStatCard(title: "Games", value: stats.totalGamesPlayed, icon: "gamecontroller.fill", color: .blue)
         }
@@ -189,7 +189,7 @@ private struct CompletedGameCard: View {
                         .foregroundColor(.primary)
                     Spacer()
                     Image(systemName: "trophy.fill")
-                        .foregroundColor(Color(red: 0.863, green: 0.078, blue: 0.235))
+                        .foregroundColor(Color.accentColor)
                 }
                 Text("\(progress.earnedCount)/\(progress.totalCount) achievements • \(progress.earnedPoints) pts")
                     .font(.subheadline)
