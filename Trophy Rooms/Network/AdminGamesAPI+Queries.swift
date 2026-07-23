@@ -11,6 +11,8 @@ extension AdminGamesAPI {
                     title
                     description
                     coverUrl
+                    platformCoverUrl
+                    platformDescription
                     type
                     baseGameFamilyIds
                     platformId
@@ -60,6 +62,8 @@ extension AdminGamesAPI {
                 title
                 description
                 coverUrl
+                platformCoverUrl
+                platformDescription
                 type
                 baseGameFamilies {
                     id

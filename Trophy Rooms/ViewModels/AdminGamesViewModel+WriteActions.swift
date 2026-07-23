@@ -47,6 +47,8 @@ extension AdminGamesViewModel {
         title: String,
         description: String?,
         coverUrl: String?,
+        platformDescription: String? = nil,
+        platformCoverUrl: String? = nil,
         platformId: String,
         type: GameType = .BASE_GAME,
         baseGameFamilyIds: [String]? = nil
@@ -56,6 +58,8 @@ extension AdminGamesViewModel {
                 title: title,
                 description: description,
                 coverUrl: coverUrl,
+                platformDescription: platformDescription,
+                platformCoverUrl: platformCoverUrl,
                 platformId: platformId,
                 type: type,
                 baseGameFamilyIds: baseGameFamilyIds

@@ -5,6 +5,8 @@ final class AdminGameFormDraft: ObservableObject {
     @Published var title: String
     @Published var description: String
     @Published var coverUrl: String
+    @Published var platformDescription: String
+    @Published var platformCoverUrl: String
     @Published var selectedPlatformIds: Set<String>
     @Published var selectedType: GameType
     @Published var selectedBaseGameIds: Set<String>
@@ -16,6 +18,8 @@ final class AdminGameFormDraft: ObservableObject {
         self.title = game?.title ?? ""
         self.description = game?.description ?? ""
         self.coverUrl = game?.coverUrl ?? ""
+        self.platformDescription = game?.platformDescription ?? ""
+        self.platformCoverUrl = game?.platformCoverUrl ?? ""
         self.selectedPlatformIds = game?.platformId.map { [$0] } ?? []
         self.selectedType = game?.type ?? .BASE_GAME
 
@@ -54,6 +58,16 @@ final class AdminGameFormDraft: ObservableObject {
 
     var normalizedCoverUrl: String? {
         let value = coverUrl.trimmingCharacters(in: .whitespaces)
+        return value.isEmpty ? nil : value
+    }
+
+    var normalizedPlatformDescription: String? {
+        let value = platformDescription.trimmingCharacters(in: .whitespaces)
+        return value.isEmpty ? nil : value
+    }
+
+    var normalizedPlatformCoverUrl: String? {
+        let value = platformCoverUrl.trimmingCharacters(in: .whitespaces)
         return value.isEmpty ? nil : value
     }
 

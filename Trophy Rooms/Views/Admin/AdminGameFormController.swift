@@ -32,6 +32,8 @@ struct AdminGameFormController {
                 title: draft.normalizedTitle,
                 description: draft.normalizedDescription,
                 coverUrl: draft.normalizedCoverUrl,
+                platformDescription: draft.normalizedPlatformDescription,
+                platformCoverUrl: draft.normalizedPlatformCoverUrl,
                 platformId: draft.selectedPlatformIds.first ?? "",
                 type: draft.selectedType,
                 baseGameFamilyIds: draft.normalizedBaseGameFamilyIds

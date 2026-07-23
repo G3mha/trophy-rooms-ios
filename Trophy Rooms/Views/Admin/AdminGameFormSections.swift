@@ -117,6 +117,28 @@ struct AdminGameOptionalMetadataSection: View {
     }
 }
 
+struct AdminGamePlatformOverridesSection: View {
+    @Binding var platformDescription: String
+    @Binding var platformCoverUrl: String
+
+    var body: some View {
+        Section {
+            TextField("Platform description", text: $platformDescription, axis: .vertical)
+                .lineLimit(2...8)
+                .frame(minHeight: 60, maxHeight: 150)
+
+            TextField("Platform cover URL", text: $platformCoverUrl)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+        } header: {
+            Text("Platform Overrides")
+        } footer: {
+            Text("Only for this platform release - leave empty to inherit the family values (e.g. a remake's own box art and text).")
+        }
+    }
+}
+
 struct AdminGameCoverPreviewSection: View {
     let coverUrl: String
 

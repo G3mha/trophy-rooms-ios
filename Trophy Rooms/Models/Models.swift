@@ -664,6 +664,12 @@ enum GameStatus: String, Codable, CaseIterable {
     }
 }
 
+struct LibraryBundleRef: Codable, Identifiable {
+    let id: String
+    let name: String
+    let coverUrl: String?
+}
+
 struct LibraryItem: Codable, Identifiable {
     let id: String
     let gameId: String
@@ -677,6 +683,7 @@ struct LibraryItem: Codable, Identifiable {
     let gameVersionId: String?
     let gameVersionName: String?
     let status: GameStatus
+    let bundles: [LibraryBundleRef]?
     let addedAt: String
     let updatedAt: String
 }
@@ -728,6 +735,44 @@ struct CollectionItem: Codable, Identifiable {
         // Digital copies are considered complete by default
         if isDigital == true { return true }
         return hasDisc && hasBox && hasManual
+    }
+
+    /// Collector condition derived from the physical components
+    var condition: CollectionCondition {
+        if isDigital == true { return .digital }
+        if isSealed { return .sealed }
+        if hasDisc && hasBox && hasManual { return .cib }
+        if hasDisc && !hasBox && !hasManual { return .loose }
+        if hasDisc && hasBox { return .noManual }
+        if hasDisc && hasManual { return .noBox }
+        if hasBox || hasManual { return .noGame }
+        return .unspecified
+    }
+}
+
+/// Collector terms for a physical copy's completeness
+enum CollectionCondition {
+    case digital
+    case sealed
+    case cib
+    case loose
+    case noManual
+    case noBox
+    case noGame
+    case unspecified
+
+    /// Short tag shown on collection items; nil when nothing is recorded
+    var label: String? {
+        switch self {
+        case .digital: return "Digital"
+        case .sealed: return "Sealed"
+        case .cib: return "CIB"
+        case .loose: return "Loose"
+        case .noManual: return "No Manual"
+        case .noBox: return "No Box"
+        case .noGame: return "No Game"
+        case .unspecified: return nil
+        }
     }
 }
 
@@ -878,7 +923,7 @@ struct LeaderboardResponse: Decodable {
     let leaderboardByTrophies: [LeaderboardEntry]?
     let leaderboardByAchievements: [LeaderboardEntry]?
     let leaderboardByPoints: [LeaderboardEntry]?
-    let leaderboardByGames: [LeaderboardEntry]?
+    let leaderboardByGamesPlayed: [LeaderboardEntry]?
 }
 
 struct FastestCompletionsResponse: Decodable {
@@ -1491,6 +1536,8 @@ struct AdminGameItem: Identifiable, Decodable {
     let title: String
     let description: String?
     let coverUrl: String?
+    let platformCoverUrl: String?
+    let platformDescription: String?
     let type: GameType?
     let baseGameFamilyId: String?       // First base game family
     let baseGameFamilyIds: [String]?    // All base game family IDs
@@ -1546,13 +1593,13 @@ struct AdminGameItem: Identifiable, Decodable {
 // Admin Achievement Set
 enum AchievementSetType: String, Codable, CaseIterable {
     case OFFICIAL
-    case COMMUNITY
+    case COMPLETIONIST
     case CUSTOM
 
     var displayName: String {
         switch self {
         case .OFFICIAL: return "Official"
-        case .COMMUNITY: return "Community"
+        case .COMPLETIONIST: return "Completionist"
         case .CUSTOM: return "Custom"
         }
     }
@@ -1561,13 +1608,11 @@ enum AchievementSetType: String, Codable, CaseIterable {
 enum AchievementSetVisibility: String, Codable, CaseIterable {
     case PUBLIC
     case PRIVATE
-    case UNLISTED
 
     var displayName: String {
         switch self {
         case .PUBLIC: return "Public"
         case .PRIVATE: return "Private"
-        case .UNLISTED: return "Unlisted"
         }
     }
 }

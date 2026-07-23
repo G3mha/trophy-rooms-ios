@@ -63,6 +63,15 @@ struct AdminGameFormSheet: View {
 
                 AdminGameCoverPreviewSection(coverUrl: draft.coverUrl)
 
+                if game != nil {
+                    AdminGamePlatformOverridesSection(
+                        platformDescription: $draft.platformDescription,
+                        platformCoverUrl: $draft.platformCoverUrl
+                    )
+
+                    AdminGameCoverPreviewSection(coverUrl: draft.platformCoverUrl)
+                }
+
                 if let error = viewModel.errorMessage {
                     AdminGameErrorSection(error: error)
                 }

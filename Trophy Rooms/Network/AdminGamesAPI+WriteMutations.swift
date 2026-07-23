@@ -139,6 +139,8 @@ extension AdminGamesAPI {
         title: String,
         description: String?,
         coverUrl: String?,
+        platformDescription: String?,
+        platformCoverUrl: String?,
         platformId: String,
         type: GameType,
         baseGameFamilyIds: [String]?
@@ -175,6 +177,9 @@ extension AdminGamesAPI {
         } else if type == .BASE_GAME {
             input["baseGameFamilyIds"] = [String]()
         }
+        // Always sent: null clears the override so the family value applies
+        input["platformDescription"] = platformDescription ?? NSNull()
+        input["platformCoverUrl"] = platformCoverUrl ?? NSNull()
 
         return try await networkService.fetch(
             query: mutation,
