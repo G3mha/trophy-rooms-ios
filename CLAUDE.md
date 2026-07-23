@@ -39,7 +39,8 @@ git push origin main
 
 - The Xcode project uses file-system-synchronized groups: new Swift files
   placed in the source folders are picked up automatically, no pbxproj edits
-  needed
+  needed. Prefer existing folders - a brand-new directory created outside
+  Xcode may not be seen until the project is closed and reopened
 - SourceKit diagnostics like "No such module 'ClerkKit'" in editor tooling are
   index noise, not build errors - packages resolve fine in Xcode
 - Do NOT use `TabView(.page)` for horizontally paged content that must extend
