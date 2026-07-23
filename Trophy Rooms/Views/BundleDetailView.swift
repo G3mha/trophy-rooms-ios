@@ -431,6 +431,7 @@ private struct BundlePlatformPickerSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }
 

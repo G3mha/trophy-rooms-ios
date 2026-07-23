@@ -142,5 +142,6 @@ struct CloneResultsSheet: View {
             }
         }
         .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
 }

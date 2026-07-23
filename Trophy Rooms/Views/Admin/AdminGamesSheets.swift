@@ -97,6 +97,7 @@ struct CloneGameSheet: View {
             .interactiveDismissDisabled(isCloning)
         }
         .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
 }
 
@@ -179,5 +180,6 @@ struct AddPlatformSheet: View {
             .interactiveDismissDisabled(isAdding)
         }
         .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }

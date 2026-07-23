@@ -122,6 +122,7 @@ struct StatusPickerSheet: View {
             }
         }
         .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
 
     func statusColor(for status: GameStatus) -> Color {

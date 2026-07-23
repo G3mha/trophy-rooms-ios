@@ -249,6 +249,7 @@ struct PlatformSelectionField<P: PlatformProtocol>: View {
                 allowsMultipleSelection: allowsMultipleSelection
             )
             .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
     }
 }

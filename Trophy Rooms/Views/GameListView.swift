@@ -297,6 +297,7 @@ private struct PaginationControls: View {
                 }
             )
             .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
         }
     }
 }
