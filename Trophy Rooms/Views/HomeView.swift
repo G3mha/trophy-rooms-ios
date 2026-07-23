@@ -247,6 +247,8 @@ private struct GamesGridTab: View {
     let sortOption: SortOption
     let gameTypeFilter: GameTypeFilter
 
+    @Namespace private var zoomNamespace
+
     private let columns = GameCoverGridLayout.columns(count: 3)
 
     var body: some View {
@@ -282,7 +284,10 @@ private struct GamesGridTab: View {
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(filteredGameGroups) { group in
                             if group.isSingleGame, let game = group.games.first {
-                                NavigationLink(destination: GameDetailView(gameId: game.id)) {
+                                NavigationLink(
+                                    destination: GameDetailView(gameId: game.id)
+                                        .navigationTransition(.zoom(sourceID: group.id, in: zoomNamespace))
+                                ) {
                                     GameCoverWithContextMenu(
                                         gameId: game.id,
                                         gameTitle: game.title,
@@ -292,12 +297,17 @@ private struct GamesGridTab: View {
                                         EmptyView()
                                     }
                                 }
+                                .matchedTransitionSource(id: group.id, in: zoomNamespace)
                             } else {
-                                NavigationLink(destination: GameFamilyView(title: group.title)) {
+                                NavigationLink(
+                                    destination: GameFamilyView(title: group.title)
+                                        .navigationTransition(.zoom(sourceID: group.id, in: zoomNamespace))
+                                ) {
                                     GameCoverCell(coverUrl: group.coverUrl, title: group.title) {
                                         GroupIndicatorOverlay()
                                     }
                                 }
+                                .matchedTransitionSource(id: group.id, in: zoomNamespace)
                             }
                         }
                     }
