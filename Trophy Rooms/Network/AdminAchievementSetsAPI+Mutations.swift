@@ -27,6 +27,8 @@ extension AdminAchievementSetsAPI {
                     dlc {
                         id
                         name
+                        slug
+                        type
                     }
                     achievementCount
                 }
@@ -79,6 +81,8 @@ extension AdminAchievementSetsAPI {
                     dlc {
                         id
                         name
+                        slug
+                        type
                     }
                     achievementCount
                 }

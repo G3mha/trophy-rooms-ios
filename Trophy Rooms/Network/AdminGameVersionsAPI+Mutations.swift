@@ -30,6 +30,8 @@ extension AdminGameVersionsAPI {
                     dlcs {
                         id
                         name
+                        slug
+                        type
                     }
                 }
             }
@@ -90,6 +92,8 @@ extension AdminGameVersionsAPI {
                     dlcs {
                         id
                         name
+                        slug
+                        type
                     }
                 }
             }

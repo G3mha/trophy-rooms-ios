@@ -71,6 +71,7 @@ extension AdminGameVersionsAPI {
                 name
                 slug
                 type
+                gameFamilyId
             }
         }
         """

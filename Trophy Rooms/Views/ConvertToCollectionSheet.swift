@@ -370,6 +370,7 @@ class GameVersionsViewModel: ObservableObject {
                     digitalOnly
                     games {
                         id
+                        title
                         platform {
                             id
                             name
