@@ -249,7 +249,7 @@ private struct GamesGridTab: View {
 
     @Namespace private var zoomNamespace
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         if viewModel.isLoading && viewModel.games.isEmpty {

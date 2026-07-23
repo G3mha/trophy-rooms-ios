@@ -365,7 +365,7 @@ private struct LibraryGroupedGrid: View {
     let onEdit: (LibraryItem) -> Void
     let onDelete: (LibraryItem) -> Void
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         ScrollView {
@@ -417,7 +417,7 @@ private struct LibraryFlatGrid: View {
     let onEdit: (LibraryItem) -> Void
     let onDelete: (LibraryItem) -> Void
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         ScrollView {

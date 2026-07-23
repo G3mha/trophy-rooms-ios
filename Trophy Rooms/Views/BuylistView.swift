@@ -401,7 +401,7 @@ private struct BuylistViewGroupedGrid: View {
     let onMarkPurchased: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         ScrollView {
@@ -451,7 +451,7 @@ private struct BuylistViewFlatGrid: View {
     let onMarkPurchased: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         ScrollView {

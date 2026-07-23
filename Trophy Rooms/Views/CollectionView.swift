@@ -1141,7 +1141,7 @@ private struct CollectionItemsGrid: View {
     @State private var expandedBundleIds: Set<String> = []
     @Namespace private var zoomNamespace
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     private enum GridCell: Identifiable {
         case item(CollectionItem)
@@ -1463,7 +1463,7 @@ private struct BuylistGroupedGrid: View {
     let onMarkPurchased: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         ScrollView {
@@ -1514,7 +1514,7 @@ private struct BuylistFlatGrid: View {
     let onMarkPurchased: (BuylistItem) -> Void
     let onDelete: (BuylistItem) -> Void
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         ScrollView {
@@ -1605,7 +1605,7 @@ private struct SellListGroupedGrid: View {
     let onMarkSold: (SellListItem) -> Void
     let onDelete: (SellListItem) -> Void
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         ScrollView {
@@ -1656,7 +1656,7 @@ private struct SellListFlatGrid: View {
     let onMarkSold: (SellListItem) -> Void
     let onDelete: (SellListItem) -> Void
 
-    private let columns = GameCoverGridLayout.columns(count: 3)
+    private let columns = GameCoverGridLayout.columns()
 
     var body: some View {
         ScrollView {

@@ -390,8 +390,8 @@ struct GameCoverWithContextMenu<Overlay: View>: View {
 struct GameCoverGridLayout: View {
     let columns: [GridItem]
 
-    init(columnCount: Int = 3, spacing: CGFloat = 12) {
-        self.columns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: columnCount)
+    init(spacing: CGFloat = 12) {
+        self.columns = GameCoverGridLayout.columns(spacing: spacing)
     }
 
     var body: some View {
@@ -399,8 +399,10 @@ struct GameCoverGridLayout: View {
         EmptyView()
     }
 
-    static func columns(count: Int = 3, spacing: CGFloat = 12) -> [GridItem] {
-        Array(repeating: GridItem(.flexible(), spacing: spacing), count: count)
+    /// Adaptive columns: about three across on iPhone widths, scaling up
+    /// naturally on iPad without per-screen column counts.
+    static func columns(spacing: CGFloat = 12) -> [GridItem] {
+        [GridItem(.adaptive(minimum: 105, maximum: 160), spacing: spacing)]
     }
 }
 
@@ -465,7 +467,7 @@ struct GroupedGameCoverGrid<Item: Identifiable, Overlay: View>: View {
     ) {
         self.groups = groups
         self.expandedSections = expandedSections
-        self.columns = GameCoverGridLayout.columns(count: columnCount)
+        self.columns = GameCoverGridLayout.columns()
         self.gameId = gameId
         self.gameTitle = gameTitle
         self.coverUrl = coverUrl
@@ -541,7 +543,7 @@ struct FlatGameCoverGrid<Item: Identifiable, Overlay: View>: View {
         @ViewBuilder overlay: @escaping (Item) -> Overlay
     ) {
         self.items = items
-        self.columns = GameCoverGridLayout.columns(count: columnCount)
+        self.columns = GameCoverGridLayout.columns()
         self.gameId = gameId
         self.gameTitle = gameTitle
         self.coverUrl = coverUrl
