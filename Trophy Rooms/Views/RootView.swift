@@ -46,18 +46,6 @@ struct RootView: View {
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
-        .overlay(alignment: .bottom) {
-            if inlineAdminContext.canAccessAdmin && inlineAdminContext.currentEntity != nil {
-                HStack {
-                    Spacer()
-                    AdminInlineToolbar()
-                        .padding(.trailing, 16)
-                        // Overlay content is inset by the tab bar's safe area,
-                        // so this is the gap above the floating bar.
-                        .padding(.bottom, 12)
-                }
-            }
-        }
         .environmentObject(adminViewModel)
         .onAppear {
             inlineAdminContext.adminViewModel = adminViewModel
@@ -234,6 +222,7 @@ private struct SearchItemRow: View {
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
+
                 if let subtitle = item.subtitle {
                     Text(subtitle)
                         .font(.caption)

@@ -254,6 +254,11 @@ struct GameDetailView: View {
                 )
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            // Admin bar lives on the entity page itself, above the tab bar;
+            // it renders nothing (zero inset) for non-admins.
+            AdminInlineToolbar()
+        }
         .task {
             await viewModel.fetchGame(id: gameId)
             if clerk.user != nil {

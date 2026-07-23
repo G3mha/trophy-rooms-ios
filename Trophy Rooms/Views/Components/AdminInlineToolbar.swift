@@ -1,23 +1,18 @@
 import SwiftUI
 
-/// Floating admin control that appears when viewing entity detail pages.
-/// Collapsed it is a single glass gear; tapping it morphs the glass into a
-/// row of entity-scoped action buttons (Liquid Glass container morph).
+/// Admin bar mounted as a bottom safe-area inset on entity detail pages.
+/// Renders nothing (zero inset) for non-admins or when no entity is set, so
+/// it never shows an empty surface.
 struct AdminInlineToolbar: View {
     @EnvironmentObject private var inlineAdminContext: InlineAdminContext
     @StateObject private var gamesViewModel = AdminGamesViewModel()
     @StateObject private var state = AdminInlineToolbarState()
-    @State private var isExpanded = false
-    @Namespace private var glassNamespace
 
     var body: some View {
-        if let entity = inlineAdminContext.currentEntity {
+        if inlineAdminContext.canAccessAdmin, let entity = inlineAdminContext.currentEntity {
             toolbar(for: entity)
                 .task {
                     await gamesViewModel.fetchPlatforms()
-                }
-                .onChange(of: entity.id) {
-                    isExpanded = false
                 }
         }
     }
@@ -31,46 +26,35 @@ struct AdminInlineToolbar: View {
             gamesViewModel: gamesViewModel
         )
 
-        GlassEffectContainer(spacing: 12) {
-            HStack(spacing: 12) {
-                if isExpanded {
-                    entityBadge(for: entity)
-                        .glassEffectID("entity", in: glassNamespace)
+        HStack(spacing: 12) {
+            Image(systemName: iconName(for: entity.type))
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
 
-                    if entity.type == .game {
-                        actionButton(icon: "pencil", tint: .blue) {
-                            collapseThen(state.presentEdit)
-                        }
-                        .glassEffectID("edit", in: glassNamespace)
-
-                        actionButton(icon: "doc.on.doc", tint: .blue) {
-                            collapseThen(state.presentClone)
-                        }
-                        .glassEffectID("clone", in: glassNamespace)
-                    }
-
-                    actionButton(icon: "trash", tint: .red) {
-                        collapseThen(state.presentDeleteConfirmation)
-                    }
-                    .glassEffectID("delete", in: glassNamespace)
-                }
-
-                Button {
-                    withAnimation(.bouncy) {
-                        isExpanded.toggle()
-                    }
-                } label: {
-                    Image(systemName: isExpanded ? "xmark" : "gearshape.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 56, height: 56)
-                        .contentTransition(.symbolEffect(.replace))
-                }
-                .buttonStyle(.plain)
-                .glassEffect(.regular.tint(.blue.opacity(0.3)).interactive(), in: .circle)
-                .glassEffectID("gear", in: glassNamespace)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Admin")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                Text(entity.title)
+                    .font(.footnote.weight(.semibold))
+                    .lineLimit(1)
             }
+
+            Spacer(minLength: 8)
+
+            if entity.type == .game {
+                accessoryButton(icon: "pencil", tint: .primary, action: state.presentEdit)
+                accessoryButton(icon: "doc.on.doc", tint: .primary, action: state.presentClone)
+            }
+
+            accessoryButton(icon: "trash", tint: .red, action: state.presentDeleteConfirmation)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .glassEffect(.regular, in: .capsule)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 4)
         .sheet(isPresented: $state.showEditSheet) {
             if let entity = inlineAdminContext.currentEntity, entity.type == .game {
                 AdminGameFormSheetWrapper(
@@ -104,40 +88,19 @@ struct AdminInlineToolbar: View {
 
     // MARK: - Pieces
 
-    private func collapseThen(_ action: @escaping () -> Void) {
-        withAnimation(.bouncy) {
-            isExpanded = false
-        }
-        action()
-    }
-
-    private func entityBadge(for entity: AdminContextEntity) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: iconName(for: entity.type))
-                .font(.system(size: 12, weight: .semibold))
-            Text(entity.title)
-                .font(.caption.weight(.semibold))
-                .lineLimit(1)
-        }
-        .padding(.horizontal, 12)
-        .frame(height: 40)
-        .frame(maxWidth: 160)
-        .glassEffect(.regular, in: .capsule)
-    }
-
-    private func actionButton(
+    private func accessoryButton(
         icon: String,
         tint: Color,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(tint)
-                .frame(width: 48, height: 48)
+                .frame(width: 36, height: 36)
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: .circle)
     }
 
     private func iconName(for type: AdminEntityType) -> String {
