@@ -148,10 +148,25 @@ struct RegionOverlayBadge: View {
     }
 }
 
-/// Condition indicators overlay for collection items (bottom)
+/// Badge color per collector condition
+extension CollectionCondition {
+    var badgeColor: Color {
+        switch self {
+        case .digital: return .blue
+        case .sealed: return .purple
+        case .cib: return .green
+        case .loose: return .orange
+        case .noManual, .noBox: return .yellow
+        case .noGame: return .red
+        case .unspecified: return .gray
+        }
+    }
+}
+
+/// Condition indicators overlay for collection items (bottom):
+/// the collector tag (CIB, Loose, Sealed, ...) plus component icons
 struct CollectionConditionOverlay: View {
-    let isSealed: Bool
-    let isComplete: Bool
+    let condition: CollectionCondition
     let hasDisc: Bool
     let hasBox: Bool
     let hasManual: Bool
@@ -160,15 +175,18 @@ struct CollectionConditionOverlay: View {
         VStack {
             Spacer()
             HStack(spacing: 2) {
-                if isSealed {
-                    conditionIcon("seal.fill", color: .purple)
-                } else {
+                if let label = condition.label {
+                    Text(label)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(condition.badgeColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                Spacer(minLength: 2)
+                if condition != .sealed && condition != .digital {
                     if hasDisc { conditionIcon("opticaldisc", color: .white) }
                     if hasBox { conditionIcon("shippingbox.fill", color: .white) }
                     if hasManual { conditionIcon("book.closed.fill", color: .white) }
-                }
-                if isComplete && !isSealed {
-                    conditionIcon("checkmark.circle.fill", color: .green)
                 }
             }
             .padding(4)

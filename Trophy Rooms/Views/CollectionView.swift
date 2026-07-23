@@ -548,7 +548,7 @@ struct CollectionView: View {
                 coverUrl
                 effectiveCoverUrl
                 releaseDate
-                includedDlc
+                digitalOnly
                 isDefault
                 achievementSetCount
             }
@@ -753,12 +753,8 @@ private struct CollectionItemRow: View {
                         Badge(text: version.name, color: .blue)
                     }
 
-                    if item.isSealed {
-                        Badge(text: "Sealed", color: .purple)
-                    }
-
-                    if item.isComplete {
-                        Badge(text: "CIB", color: .green)
+                    if let conditionText = item.condition.label {
+                        Badge(text: conditionText, color: item.condition.badgeColor)
                     }
                 }
 
@@ -1418,10 +1414,9 @@ private struct CollectionGridCell: View {
                 // Region badge (top-left)
                 RegionOverlayBadge(region: item.region)
 
-                // Condition indicators (bottom)
+                // Condition tag + component icons (bottom)
                 CollectionConditionOverlay(
-                    isSealed: item.isSealed,
-                    isComplete: item.isComplete,
+                    condition: item.condition,
                     hasDisc: item.hasDisc,
                     hasBox: item.hasBox,
                     hasManual: item.hasManual
