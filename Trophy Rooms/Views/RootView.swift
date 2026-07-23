@@ -45,6 +45,8 @@ struct RootView: View {
                 GlobalSearchSheet()
             }
         }
+        // Sidebar on iPad, floating tab bar on iPhone
+        .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.onScrollDown)
         .environmentObject(adminViewModel)
         .onAppear {
