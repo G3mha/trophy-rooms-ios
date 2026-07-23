@@ -59,7 +59,7 @@ extension AchievementSetType {
     var typeColor: Color {
         switch self {
         case .OFFICIAL: return .blue
-        case .COMMUNITY: return .green
+        case .COMPLETIONIST: return .green
         case .CUSTOM: return .purple
         }
     }
@@ -73,7 +73,6 @@ extension AchievementSetVisibility {
         switch self {
         case .PUBLIC: return .green
         case .PRIVATE: return .red
-        case .UNLISTED: return .orange
         }
     }
 }
