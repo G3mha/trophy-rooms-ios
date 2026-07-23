@@ -137,7 +137,7 @@ class CollectionViewModel: ObservableObject {
                 bundleId
                 bundle { id name coverUrl gameFamilies { id title coverUrl } }
                 platform { id name slug }
-                gameVersion { id name }
+                gameVersion { id name coverUrl }
                 gameVersionId
                 isDigital
                 hasDisc

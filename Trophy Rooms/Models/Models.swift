@@ -729,7 +729,8 @@ struct CollectionItem: Codable, Identifiable {
 
     var isBundle: Bool { bundleId != nil }
     var displayTitle: String { game?.title ?? bundle?.name ?? "Unknown" }
-    var displayCoverUrl: String? { game?.coverUrl ?? bundle?.coverUrl }
+    // The owned version's art wins over the game/bundle default
+    var displayCoverUrl: String? { gameVersion?.coverUrl ?? game?.coverUrl ?? bundle?.coverUrl }
 
     var isComplete: Bool {
         // Digital copies are considered complete by default
@@ -1646,6 +1647,7 @@ struct AdminAchievementSet: Identifiable, Decodable {
 struct GameVersionRef: Codable {
     let id: String
     let name: String
+    let coverUrl: String?
 }
 
 struct AdminSetGame: Decodable {
