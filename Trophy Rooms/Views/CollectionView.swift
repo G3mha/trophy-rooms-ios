@@ -211,18 +211,11 @@ struct CollectionView: View {
                 }
             }
         } else if collectionViewModel.collectionItems.isEmpty {
-            VStack(spacing: 16) {
-                Image(systemName: "archivebox")
-                    .font(.system(size: 48))
-                    .foregroundColor(.secondary)
-                Text("Your collection is empty")
-                    .font(.headline)
-                Text("Add physical games and bundles to track your collection")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding()
+            ContentUnavailableView(
+                "Your Collection Is Empty",
+                systemImage: "archivebox",
+                description: Text("Add physical games and bundles to track your collection")
+            )
         } else {
             VStack(spacing: 0) {
                 // Stats header
@@ -317,18 +310,11 @@ struct CollectionView: View {
                 }
             }
         } else if buylistViewModel.buylistItems.isEmpty {
-            VStack(spacing: 16) {
-                Image(systemName: "cart")
-                    .font(.system(size: 48))
-                    .foregroundColor(.secondary)
-                Text("Your buylist is empty")
-                    .font(.headline)
-                Text("Browse games, DLCs, and bundles to add them to your buylist")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding()
+            ContentUnavailableView(
+                "Your Buylist Is Empty",
+                systemImage: "cart",
+                description: Text("Browse games, DLCs, and bundles to add them to your buylist")
+            )
         } else {
             VStack(spacing: 0) {
                 // Stats bar
@@ -412,18 +398,11 @@ struct CollectionView: View {
                 }
             }
         } else if sellListViewModel.sellListItems.isEmpty {
-            VStack(spacing: 16) {
-                Image(systemName: "tag")
-                    .font(.system(size: 48))
-                    .foregroundColor(.secondary)
-                Text("Your sell list is empty")
-                    .font(.headline)
-                Text("Swipe left on collection items to add them to your sell list")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding()
+            ContentUnavailableView(
+                "Your Sell List Is Empty",
+                systemImage: "tag",
+                description: Text("Long-press collection items to add them to your sell list")
+            )
         } else {
             VStack(spacing: 0) {
                 // Stats bar

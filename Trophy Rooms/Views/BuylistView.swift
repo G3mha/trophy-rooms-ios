@@ -37,18 +37,11 @@ struct BuylistView: View {
                     }
                 }
             } else if viewModel.buylistItems.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "cart")
-                        .font(.system(size: 48))
-                        .foregroundColor(.secondary)
-                    Text("Your buylist is empty")
-                        .font(.headline)
-                    Text("Browse games, DLCs, and bundles to add them to your buylist")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
+                ContentUnavailableView(
+                    "Your Buylist Is Empty",
+                    systemImage: "cart",
+                    description: Text("Browse games, DLCs, and bundles to add them to your buylist")
+                )
             } else {
                 VStack(spacing: 0) {
                     // Stats bar

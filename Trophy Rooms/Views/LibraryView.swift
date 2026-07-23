@@ -37,18 +37,11 @@ struct LibraryView: View {
                     }
                 }
             } else if viewModel.libraryItems.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "books.vertical")
-                        .font(.system(size: 48))
-                        .foregroundColor(.secondary)
-                    Text("Your library is empty")
-                        .font(.headline)
-                    Text("Browse games and add them to your library")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
+                ContentUnavailableView(
+                    "Your Library Is Empty",
+                    systemImage: "books.vertical",
+                    description: Text("Browse games and add them to your library")
+                )
             } else {
                 VStack(spacing: 0) {
                     CollapsibleStatsBar(
