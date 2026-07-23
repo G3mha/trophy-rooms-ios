@@ -1879,6 +1879,9 @@ struct GlobalSearchItem: Identifiable, Decodable {
     let title: String
     let coverUrl: String?
     let subtitle: String?
+    let typeLabel: String?
+    let platformSlugs: [String]?
+    let releaseYear: Int?
 }
 
 struct GlobalSearchResults: Decodable {

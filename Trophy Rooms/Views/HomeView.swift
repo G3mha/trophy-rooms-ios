@@ -1136,7 +1136,24 @@ private struct SearchResultRow: View {
                     .font(.headline)
                     .lineLimit(1)
 
-                if let subtitle = item.subtitle {
+                if let slugs = item.platformSlugs, !slugs.isEmpty {
+                    // Platform icons stay compact where name lists would truncate
+                    HStack(spacing: 5) {
+                        if let typeLabel = item.typeLabel {
+                            Text(typeLabel)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        ForEach(slugs, id: \.self) { slug in
+                            PlatformIcon(slug: slug, size: 16)
+                        }
+                        if let year = item.releaseYear {
+                            Text(verbatim: "· \(year)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else if let subtitle = item.subtitle {
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)

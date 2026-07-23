@@ -57,6 +57,9 @@ class GlobalSearchViewModel: ObservableObject {
                     title
                     coverUrl
                     subtitle
+                    typeLabel
+                    platformSlugs
+                    releaseYear
                 }
                 gameCount
                 bundleCount
