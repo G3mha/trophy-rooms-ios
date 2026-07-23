@@ -67,7 +67,7 @@ class LeaderboardViewModel: ObservableObject {
             case .games:
                 let response: LeaderboardResponse = try await fetchLeaderboardByGames()
                 DispatchQueue.main.async {
-                    self.entries = response.leaderboardByGames ?? []
+                    self.entries = response.leaderboardByGamesPlayed ?? []
                     self.isLoading = false
                 }
             case .fastest:
@@ -136,7 +136,7 @@ class LeaderboardViewModel: ObservableObject {
     private func fetchLeaderboardByGames() async throws -> LeaderboardResponse {
         let query = """
         query GetLeaderboardByGames($limit: Int) {
-            leaderboardByGames(limit: $limit) {
+            leaderboardByGamesPlayed(limit: $limit) {
                 rank
                 userId
                 userName
