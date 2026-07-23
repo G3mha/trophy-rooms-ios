@@ -453,8 +453,13 @@ private struct LibraryGridCell: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
 
+    @Namespace private var zoomNamespace
+
     var body: some View {
-        NavigationLink(destination: GameDetailView(gameId: item.gameId)) {
+        NavigationLink(
+            destination: GameDetailView(gameId: item.gameId)
+                .navigationTransition(.zoom(sourceID: item.id, in: zoomNamespace))
+        ) {
             GameCoverCell(coverUrl: item.gameCoverUrl, title: item.gameTitle) {
                 StatusOverlayBadge(status: item.status)
             }
@@ -475,5 +480,6 @@ private struct LibraryGridCell: View {
                 }
             }
         }
+        .matchedTransitionSource(id: item.id, in: zoomNamespace)
     }
 }
