@@ -1160,6 +1160,7 @@ private struct CollectionItemsGrid: View {
     let onDetails: (CollectionItem) -> Void
 
     @State private var expandedBundleIds: Set<String> = []
+    @Namespace private var zoomNamespace
 
     private let columns = GameCoverGridLayout.columns(count: 3)
 
@@ -1220,12 +1221,16 @@ private struct CollectionItemsGrid: View {
                         )
                     }
                 case .bundleGame(let family, _):
-                    NavigationLink(destination: GameFamilyRouter(title: family.title)) {
+                    NavigationLink(
+                        destination: GameFamilyRouter(title: family.title)
+                            .navigationTransition(.zoom(sourceID: cell.id, in: zoomNamespace))
+                    ) {
                         GameCoverCell(coverUrl: family.coverUrl, title: family.title) {
                             // Marks the cell as coming from an expanded bundle
                             GroupIndicatorOverlay()
                         }
                     }
+                    .matchedTransitionSource(id: cell.id, in: zoomNamespace)
                     .buttonStyle(.plain)
                     .transition(.scale(scale: 0.9).combined(with: .opacity))
                 }
@@ -1421,8 +1426,13 @@ private struct CollectionGridCell: View {
     let onSell: () -> Void
     let onDelete: () -> Void
 
+    @Namespace private var zoomNamespace
+
     var body: some View {
-        NavigationLink(destination: GameDetailView(gameId: item.gameId ?? "")) {
+        NavigationLink(
+            destination: GameDetailView(gameId: item.gameId ?? "")
+                .navigationTransition(.zoom(sourceID: item.id, in: zoomNamespace))
+        ) {
             GameCoverCell(coverUrl: item.displayCoverUrl, title: item.displayTitle) {
                 // Region badge (top-left)
                 RegionOverlayBadge(region: item.region)
@@ -1459,6 +1469,7 @@ private struct CollectionGridCell: View {
                 }
             }
         }
+        .matchedTransitionSource(id: item.id, in: zoomNamespace)
     }
 }
 
