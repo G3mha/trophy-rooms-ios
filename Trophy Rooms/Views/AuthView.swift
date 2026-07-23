@@ -201,14 +201,12 @@ struct AuthView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color(red: 0.863, green: 0.078, blue: 0.235))
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                .padding(.vertical, 6)
                 .fontWeight(.semibold)
             }
+            .buttonStyle(.glassProminent)
+            .tint(.accentColor)
             .disabled(isLoading || email.isEmpty || password.isEmpty)
-            .opacity(email.isEmpty || password.isEmpty ? 0.6 : 1)
 
             // Switch mode
             HStack {
@@ -221,7 +219,7 @@ struct AuthView: View {
                         errorMessage = nil
                     }
                 }
-                .foregroundColor(Color(red: 0.863, green: 0.078, blue: 0.235))
+                .foregroundColor(Color.accentColor)
                 .fontWeight(.medium)
             }
             .font(.subheadline)
@@ -283,14 +281,12 @@ struct AuthView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color(red: 0.863, green: 0.078, blue: 0.235))
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                .padding(.vertical, 6)
                 .fontWeight(.semibold)
             }
+            .buttonStyle(.glassProminent)
+            .tint(.accentColor)
             .disabled(isLoading || verificationCode.count < 6)
-            .opacity(verificationCode.count < 6 ? 0.6 : 1)
 
             // Resend code
             HStack {
@@ -302,7 +298,7 @@ struct AuthView: View {
                         await handleResendCode()
                     }
                 }
-                .foregroundColor(Color(red: 0.863, green: 0.078, blue: 0.235))
+                .foregroundColor(Color.accentColor)
                 .fontWeight(.medium)
             }
             .font(.subheadline)
