@@ -147,6 +147,7 @@ class LibraryViewModel: ObservableObject {
                 gameVersionId
                 gameVersionName
                 status
+                bundles { id name coverUrl }
                 addedAt
                 updatedAt
             }

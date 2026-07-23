@@ -375,15 +375,11 @@ private struct LibraryGroupedGrid: View {
 
                     Section {
                         if expandedSections.isExpanded(sectionId) {
-                            LazyVGrid(columns: columns, spacing: 12) {
-                                ForEach(group.items) { item in
-                                    LibraryGridCell(
-                                        item: item,
-                                        onEdit: { onEdit(item) },
-                                        onDelete: { onDelete(item) }
-                                    )
-                                }
-                            }
+                            LibraryItemsGrid(
+                                items: group.items,
+                                onEdit: onEdit,
+                                onDelete: onDelete
+                            )
                             .padding(.horizontal)
                             .padding(.vertical, 8)
                         }
@@ -421,15 +417,11 @@ private struct LibraryFlatGrid: View {
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(items) { item in
-                    LibraryGridCell(
-                        item: item,
-                        onEdit: { onEdit(item) },
-                        onDelete: { onDelete(item) }
-                    )
-                }
-            }
+            LibraryItemsGrid(
+                items: items,
+                onEdit: onEdit,
+                onDelete: onDelete
+            )
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
@@ -438,6 +430,160 @@ private struct LibraryFlatGrid: View {
         .refreshable {
             await onRefresh()
         }
+    }
+}
+
+/// Grid of library games where entries from the same compilation bundle
+/// collapse into a stack (same interaction as the Collection grid).
+private struct LibraryItemsGrid: View {
+    let items: [LibraryItem]
+    let onEdit: (LibraryItem) -> Void
+    let onDelete: (LibraryItem) -> Void
+
+    @State private var expandedBundleIds: Set<String> = []
+
+    private let columns = GameCoverGridLayout.columns()
+
+    private enum GridCell: Identifiable {
+        case item(LibraryItem)
+        case stack(LibraryBundleRef, items: [LibraryItem])
+
+        var id: String {
+            switch self {
+            case .item(let item): return "item-\(item.id)"
+            case .stack(let bundle, _): return "stack-\(bundle.id)"
+            }
+        }
+    }
+
+    /// Items sharing a bundle (2+) collapse into one stack, keeping the
+    /// position of their first member; each item joins at most one stack.
+    private var cells: [GridCell] {
+        var bundleCounts: [String: Int] = [:]
+        for item in items {
+            for bundle in item.bundles ?? [] {
+                bundleCounts[bundle.id, default: 0] += 1
+            }
+        }
+
+        func stackBundle(for item: LibraryItem) -> LibraryBundleRef? {
+            (item.bundles ?? [])
+                .filter { bundleCounts[$0.id, default: 0] >= 2 }
+                .max { bundleCounts[$0.id, default: 0] < bundleCounts[$1.id, default: 0] }
+        }
+
+        var cells: [GridCell] = []
+        var stackedItems: [String: [LibraryItem]] = [:]
+        var stackOrder: [LibraryBundleRef] = []
+
+        for item in items {
+            if let bundle = stackBundle(for: item) {
+                if stackedItems[bundle.id] == nil {
+                    stackOrder.append(bundle)
+                }
+                stackedItems[bundle.id, default: []].append(item)
+            }
+        }
+
+        var placedStacks: Set<String> = []
+        for item in items {
+            if let bundle = stackBundle(for: item) {
+                if !placedStacks.contains(bundle.id) {
+                    placedStacks.insert(bundle.id)
+                    cells.append(.stack(bundle, items: stackedItems[bundle.id] ?? []))
+                    if expandedBundleIds.contains(bundle.id) {
+                        for member in stackedItems[bundle.id] ?? [] {
+                            cells.append(.item(member))
+                        }
+                    }
+                }
+            } else {
+                cells.append(.item(item))
+            }
+        }
+        return cells
+    }
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(cells) { cell in
+                switch cell {
+                case .item(let item):
+                    LibraryGridCell(
+                        item: item,
+                        onEdit: { onEdit(item) },
+                        onDelete: { onDelete(item) }
+                    )
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
+                case .stack(let bundle, let members):
+                    LibraryBundleStackCell(
+                        bundle: bundle,
+                        count: members.count,
+                        isExpanded: expandedBundleIds.contains(bundle.id),
+                        onToggle: {
+                            withAnimation(.snappy) {
+                                if expandedBundleIds.contains(bundle.id) {
+                                    expandedBundleIds.remove(bundle.id)
+                                } else {
+                                    expandedBundleIds.insert(bundle.id)
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/// Compilation stack in the library grid: bundle cover with cards peeking
+/// out behind, fanning open to the member games on tap.
+private struct LibraryBundleStackCell: View {
+    let bundle: LibraryBundleRef
+    let count: Int
+    let isExpanded: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.tertiarySystemFill))
+                    .aspectRatio(3 / 4, contentMode: .fit)
+                    .rotationEffect(.degrees(isExpanded ? 0 : 5))
+                    .offset(x: isExpanded ? 0 : 7, y: isExpanded ? 0 : -3)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.secondarySystemFill))
+                    .aspectRatio(3 / 4, contentMode: .fit)
+                    .rotationEffect(.degrees(isExpanded ? 0 : 2.5))
+                    .offset(x: isExpanded ? 0 : 3, y: isExpanded ? 0 : -1.5)
+
+                GameCoverCell(coverUrl: bundle.coverUrl, title: bundle.name) {
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 4) {
+                            Image(systemName: "shippingbox.fill")
+                                .font(.system(size: 10))
+                            Text("\(count)")
+                                .font(.system(size: 10, weight: .bold))
+                            Spacer()
+                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 10, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(4)
+                        .background(
+                            LinearGradient(
+                                colors: [.clear, .black.opacity(0.7)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 
