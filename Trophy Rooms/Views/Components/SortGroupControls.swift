@@ -69,31 +69,27 @@ struct SortGroupControls<T: SortOptionProtocol>: View {
 
     var body: some View {
         HStack {
-            // Sort menu
+            // Sort menu (Picker gives native checkmarks)
             Menu {
-                ForEach(Array(T.allCases), id: \.self) { option in
-                    Button {
-                        selectedSortOption = option
-                        onSortChanged()
-                    } label: {
-                        HStack {
-                            Text(option.title)
-                            if selectedSortOption == option {
-                                Image(systemName: "checkmark")
-                            }
-                        }
+                Picker("Sort by", selection: $selectedSortOption) {
+                    ForEach(Array(T.allCases), id: \.self) { option in
+                        Text(option.title).tag(option)
                     }
                 }
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up.arrow.down")
+                        .font(.caption.weight(.semibold))
                     Text(selectedSortOption.shortTitle)
                         .font(.subheadline)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(16)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .foregroundStyle(.primary)
+                .background(.fill.secondary, in: .capsule)
+            }
+            .onChange(of: selectedSortOption) {
+                onSortChanged()
             }
 
             Spacer()
@@ -104,14 +100,19 @@ struct SortGroupControls<T: SortOptionProtocol>: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: groupByPlatform ? "rectangle.3.group.fill" : "rectangle.3.group")
+                        .font(.caption.weight(.semibold))
                     Text("Group")
-                        .font(.subheadline)
+                        .font(.subheadline.weight(groupByPlatform ? .semibold : .regular))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(groupByPlatform ? Color.blue : Color(.secondarySystemBackground))
-                .foregroundColor(groupByPlatform ? .white : .primary)
-                .cornerRadius(16)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .foregroundStyle(groupByPlatform ? Color.white : .primary)
+                .background(
+                    groupByPlatform
+                        ? AnyShapeStyle(Color.accentColor)
+                        : AnyShapeStyle(.fill.secondary),
+                    in: .capsule
+                )
             }
             .buttonStyle(.plain)
         }
