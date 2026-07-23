@@ -43,7 +43,7 @@ class UserProfileViewModel: ObservableObject {
                         tier
                         achievementSet {
                             id
-                            game {
+                            gameFamily {
                                 id
                                 title
                                 coverUrl
@@ -107,7 +107,7 @@ struct UserAchievementItem: Decodable, Identifiable {
 
         struct AchievementSetWithGame: Decodable {
             let id: String
-            let game: GameBasic
+            let gameFamily: GameBasic
 
             struct GameBasic: Decodable {
                 let id: String

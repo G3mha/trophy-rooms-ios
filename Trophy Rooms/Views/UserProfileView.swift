@@ -260,7 +260,7 @@ private struct RecentAchievementRow: View {
                     }
                 }
 
-                Text(item.achievement.achievementSet.game.title)
+                Text(item.achievement.achievementSet.gameFamily.title)
                     .font(.caption)
                     .foregroundColor(.secondary)
 

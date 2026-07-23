@@ -38,20 +38,21 @@ class GameDetailViewModel: ObservableObject {
                 description
                 coverUrl
                 type
-                baseGames {
+                baseGameFamilies {
                     id
                     title
-                    coverUrl
-                    platform { id name slug }
-                }
-                derivedGames {
-                    id
-                    title
+                    slug
                     coverUrl
                     type
-                    platform { id name slug }
                 }
-                derivedGameCount
+                derivedGameFamilies {
+                    id
+                    title
+                    slug
+                    coverUrl
+                    type
+                }
+                derivedGameFamilyCount
                 trophyCount
                 releaseDate
                 developer
@@ -120,6 +121,7 @@ class GameDetailViewModel: ObservableObject {
                     dlc {
                         id
                         name
+                        slug
                         type
                     }
                     achievements {

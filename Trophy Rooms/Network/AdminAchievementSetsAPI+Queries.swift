@@ -100,6 +100,7 @@ extension AdminAchievementSetsAPI {
                 name
                 slug
                 type
+                gameFamilyId
             }
         }
         """

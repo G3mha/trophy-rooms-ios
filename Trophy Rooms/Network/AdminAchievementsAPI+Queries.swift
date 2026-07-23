@@ -9,7 +9,7 @@ extension AdminAchievementsAPI {
                 title
                 type
                 visibility
-                game {
+                gameFamily {
                     id
                     title
                 }
