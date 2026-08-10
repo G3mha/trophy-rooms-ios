@@ -5,6 +5,8 @@ import Combine
 class BuylistViewModel: ObservableObject {
     @Published var buylistItems: [BuylistItem] = []
     @Published var stats: BuylistStats?
+    /// Database user id - the public share URL is keyed by it, not the auth id
+    @Published var publicUserId: String?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedPriority: BuylistPriority?
@@ -104,6 +106,30 @@ class BuylistViewModel: ObservableObject {
             counts[key, default: 0] += 1
         }
         return counts
+    }
+
+    func fetchPublicUserId() async {
+        guard publicUserId == nil else { return }
+
+        let query = """
+        query GetMyPublicId {
+            me {
+                id
+            }
+        }
+        """
+
+        if let response: MeIdResponse = try? await NetworkService.shared.fetch(query: query) {
+            publicUserId = response.me?.id
+        }
+    }
+
+    private struct MeIdResponse: Codable {
+        let me: MeId?
+
+        struct MeId: Codable {
+            let id: String
+        }
     }
 
     func fetchBuylist(forceRefresh: Bool = false) async {

@@ -107,7 +107,7 @@ struct BuylistView: View {
         }
         .navigationBar(
             title: "Buylist",
-            shareURL: authManager.userId.map { URL(string: "https://trophyrooms.app/users/\($0)/buylist")! }
+            shareURL: viewModel.publicUserId.map { URL(string: "https://trophyrooms.org/users/\($0)/buylist")! }
         )
         .sheet(isPresented: $showAuth) {
             AuthView()
@@ -124,6 +124,7 @@ struct BuylistView: View {
             if authManager.isSignedIn {
                 await viewModel.fetchBuylist()
                 await viewModel.fetchStats()
+                await viewModel.fetchPublicUserId()
             }
         }
         .onChange(of: authManager.userId) {
@@ -131,6 +132,7 @@ struct BuylistView: View {
                 Task {
                     await viewModel.fetchBuylist()
                     await viewModel.fetchStats()
+                    await viewModel.fetchPublicUserId()
                 }
             }
         }
