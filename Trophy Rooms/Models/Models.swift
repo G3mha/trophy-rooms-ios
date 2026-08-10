@@ -670,6 +670,65 @@ struct LibraryBundleRef: Codable, Identifiable {
     let coverUrl: String?
 }
 
+// MARK: - Play Journal Models
+
+struct PlaySessionGame: Codable, Identifiable {
+    let id: String
+    let title: String
+    let coverUrl: String?
+    let platform: Platform?
+}
+
+struct PlaySession: Codable, Identifiable {
+    let id: String
+    let gameId: String
+    let game: PlaySessionGame
+    let playedOn: String
+    let minutes: Int
+    let notes: String?
+
+    /// "yyyy-MM-dd" key of the calendar day the session belongs to
+    var dayKey: String { String(playedOn.prefix(10)) }
+}
+
+struct PlayStats: Codable {
+    let totalMinutes: Int
+    let sessionCount: Int
+    let daysLogged: Int
+    let currentStreakDays: Int
+    let thisWeekMinutes: Int
+}
+
+struct PlayJournalResponse: Codable {
+    let myPlaySessions: [PlaySession]
+    let myPlayStats: PlayStats
+}
+
+struct PlaySessionMutationStatus: Decodable {
+    let success: Bool
+}
+
+struct LogPlaySessionResponse: Decodable {
+    let logPlaySession: PlaySessionMutationStatus
+}
+
+struct UpdatePlaySessionResponse: Decodable {
+    let updatePlaySession: PlaySessionMutationStatus
+}
+
+struct DeletePlaySessionResponse: Decodable {
+    let deletePlaySession: PlaySessionMutationStatus
+}
+
+/// Formats minutes as "2h 15m" / "45m"
+func formatPlayMinutes(_ minutes: Int) -> String {
+    let hours = minutes / 60
+    let mins = minutes % 60
+    if hours > 0 && mins > 0 { return "\(hours)h \(mins)m" }
+    if hours > 0 { return "\(hours)h" }
+    return "\(mins)m"
+}
+
 struct LibraryItem: Codable, Identifiable {
     let id: String
     let gameId: String

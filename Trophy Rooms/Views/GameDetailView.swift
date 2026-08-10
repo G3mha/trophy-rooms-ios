@@ -6,6 +6,7 @@ struct GameDetailView: View {
     @EnvironmentObject private var inlineAdminContext: InlineAdminContext
     @StateObject private var viewModel = GameDetailViewModel()
     @State private var showStatusPicker = false
+    @State private var showLogPlaySheet = false
     @State private var showAddToCollection = false
     @State private var showAddToBuylist = false
 
@@ -60,6 +61,11 @@ struct GameDetailView: View {
                                     } else {
                                         showAddToBuylist = true
                                     }
+                                }
+
+                                // Log Play Button
+                                GameDetailLogPlayButton {
+                                    showLogPlaySheet = true
                                 }
                             }
                         }
@@ -254,6 +260,22 @@ struct GameDetailView: View {
                 )
             }
         }
+        .sheet(isPresented: $showLogPlaySheet) {
+            if let game = viewModel.game {
+                LogPlaySheet(
+                    preselectedGame: PlaySessionGame(
+                        id: game.id,
+                        title: game.title,
+                        coverUrl: game.coverUrl,
+                        platform: game.platform
+                    )
+                ) {
+                    Task {
+                        await viewModel.checkGameStatus(gameId: gameId)
+                    }
+                }
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             // Admin bar lives on the entity page itself, above the tab bar;
             // it renders nothing (zero inset) for non-admins.
@@ -377,6 +399,30 @@ private struct CollectionButton: View {
             .frame(maxWidth: .infinity)
             .background(itemCount > 0 ? Color.orange.opacity(0.15) : Color(.secondarySystemBackground))
             .foregroundColor(itemCount > 0 ? .orange : .primary)
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct GameDetailLogPlayButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: "clock.arrow.circlepath")
+                Text("Log Play Session")
+                    .fontWeight(.medium)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color(.secondarySystemBackground))
+            .foregroundColor(.primary)
             .cornerRadius(12)
         }
         .buttonStyle(.plain)

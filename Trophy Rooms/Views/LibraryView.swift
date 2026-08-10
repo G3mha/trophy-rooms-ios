@@ -107,6 +107,13 @@ struct LibraryView: View {
             }
         }
         .navigationBar(title: "Library")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink(destination: PlayJournalView()) {
+                    Image(systemName: "calendar.badge.clock")
+                }
+            }
+        }
         .sheet(isPresented: $showAuth) {
             AuthView()
         }
