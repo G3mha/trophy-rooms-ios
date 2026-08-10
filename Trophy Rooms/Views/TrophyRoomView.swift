@@ -10,16 +10,8 @@ struct TrophyRoomView: View {
     var body: some View {
         Group {
             if clerk.user == nil {
-                VStack(spacing: 16) {
-                    Image(systemName: "trophy")
-                        .font(.system(size: 48))
-                        .foregroundColor(.secondary)
-                    Text("Sign in to view your Trophy Room")
-                        .font(.headline)
-                    Button("Sign In") {
-                        showAuth = true
-                    }
-                    .buttonStyle(.borderedProminent)
+                SignInPrompt(icon: "trophy", message: "Sign in to view your Trophy Room") {
+                    showAuth = true
                 }
             } else if progressViewModel.isLoading {
                 ProgressView("Loading your progress...")

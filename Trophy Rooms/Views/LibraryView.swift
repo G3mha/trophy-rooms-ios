@@ -13,16 +13,8 @@ struct LibraryView: View {
     var body: some View {
         Group {
             if clerk.user == nil {
-                VStack(spacing: 16) {
-                    Image(systemName: "books.vertical")
-                        .font(.system(size: 48))
-                        .foregroundColor(.secondary)
-                    Text("Sign in to view your library")
-                        .font(.headline)
-                    Button("Sign In") {
-                        showAuth = true
-                    }
-                    .buttonStyle(.borderedProminent)
+                SignInPrompt(icon: "books.vertical", message: "Sign in to view your library") {
+                    showAuth = true
                 }
             } else if viewModel.isLoading {
                 ProgressView("Loading library...")

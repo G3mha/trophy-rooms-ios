@@ -179,16 +179,8 @@ struct CollectionView: View {
     // MARK: - Sign In Prompt
 
     private var signInPrompt: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "archivebox")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-            Text("Sign in to view your collection")
-                .font(.headline)
-            Button("Sign In") {
-                showAuth = true
-            }
-            .buttonStyle(.borderedProminent)
+        SignInPrompt(icon: "archivebox", message: "Sign in to view your collection") {
+            showAuth = true
         }
     }
 
