@@ -1,6 +1,6 @@
 # Trophy Rooms iOS - Development Guidelines
 
-iOS app for Trophy Rooms (Swift, SwiftUI, ClerkKit).
+iOS app for Trophy Rooms (Swift, SwiftUI, Supabase).
 
 ## Required Workflow
 
@@ -41,7 +41,7 @@ git push origin main
   placed in the source folders are picked up automatically, no pbxproj edits
   needed. Prefer existing folders - a brand-new directory created outside
   Xcode may not be seen until the project is closed and reopened
-- SourceKit diagnostics like "No such module 'ClerkKit'" in editor tooling are
+- SourceKit diagnostics like "No such module 'Supabase'" in editor tooling are
   index noise, not build errors - packages resolve fine in Xcode
 - Do NOT use `TabView(.page)` for horizontally paged content that must extend
   under the floating tab bar: the UIKit-backed pager re-applies the window's
