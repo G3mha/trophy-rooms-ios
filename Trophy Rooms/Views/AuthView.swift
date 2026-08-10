@@ -26,25 +26,38 @@ struct AuthView: View {
     @State private var showPassword = false
     @State private var currentSignUp: SignUp?
 
+    private enum Field: Hashable {
+        case email
+        case password
+        case code
+    }
+
+    @FocusState private var focusedField: Field?
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header
-                    VStack(spacing: 12) {
-                        Text("🏆")
-                            .font(.system(size: 56))
+                    VStack(spacing: 14) {
+                        Image("AuthHeroTrophies")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: 300)
+                            .accessibilityLabel("Platform trophies")
 
                         Text(headerTitle)
                             .font(.title)
                             .fontWeight(.bold)
+                            .contentTransition(.opacity)
 
                         Text(headerSubtitle)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
                     }
-                    .padding(.top, 40)
-                    .padding(.bottom, 16)
+                    .padding(.top, 24)
+                    .padding(.bottom, 8)
 
                     // Card
                     VStack(spacing: 20) {
@@ -71,6 +84,7 @@ struct AuthView: View {
                 }
             }
         }
+        .presentationDragIndicator(.visible)
     }
 
     // MARK: - Header
@@ -116,81 +130,89 @@ struct AuthView: View {
                     .frame(height: 1)
             }
 
-            // Email field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Email")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+            // Credential fields, grouped like a system login form
+            VStack(alignment: .leading, spacing: 6) {
+                VStack(spacing: 0) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "envelope")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20)
 
-                TextField("Enter your email", text: $email)
-                    .textFieldStyle(.plain)
-                    .padding(12)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(.separator), lineWidth: 1)
-                    )
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-            }
-
-            // Password field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Password")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-
-                HStack {
-                    if showPassword {
-                        TextField("Enter your password", text: $password)
-                    } else {
-                        SecureField("Enter your password", text: $password)
+                        TextField("Email", text: $email)
+                            .textFieldStyle(.plain)
+                            .textContentType(.emailAddress)
+                            .keyboardType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .focused($focusedField, equals: .email)
+                            .submitLabel(.next)
+                            .onSubmit {
+                                focusedField = .password
+                            }
                     }
+                    .padding(14)
 
-                    Button {
-                        showPassword.toggle()
-                    } label: {
-                        Image(systemName: showPassword ? "eye.slash" : "eye")
-                            .foregroundColor(.secondary)
+                    Divider()
+                        .padding(.leading, 44)
+
+                    HStack(spacing: 10) {
+                        Image(systemName: "lock")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20)
+
+                        Group {
+                            if showPassword {
+                                TextField("Password", text: $password)
+                            } else {
+                                SecureField("Password", text: $password)
+                            }
+                        }
+                        .textFieldStyle(.plain)
+                        .textContentType(mode == .signUp ? .newPassword : .password)
+                        .focused($focusedField, equals: .password)
+                        .submitLabel(.go)
+                        .onSubmit {
+                            submitCredentials()
+                        }
+
+                        Button {
+                            showPassword.toggle()
+                        } label: {
+                            Image(systemName: showPassword ? "eye.slash" : "eye")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
                     }
+                    .padding(14)
                 }
-                .textFieldStyle(.plain)
-                .padding(12)
-                .background(Color(.systemBackground))
-                .cornerRadius(8)
+                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(.separator), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(
+                            focusedField == .email || focusedField == .password
+                                ? Color.accentColor.opacity(0.6)
+                                : Color(.separator),
+                            lineWidth: 1
+                        )
                 )
-                .textContentType(mode == .signUp ? .newPassword : .password)
+                .animation(.easeOut(duration: 0.15), value: focusedField)
 
                 if mode == .signUp {
                     Text("Must be at least 8 characters")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .padding(.leading, 4)
                 }
             }
 
             // Error message
             if let error = errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                AuthErrorBanner(message: error)
             }
 
             // Submit button
             Button {
-                Task {
-                    if mode == .signIn {
-                        await handleEmailSignIn()
-                    } else {
-                        await handleEmailSignUp()
-                    }
-                }
+                submitCredentials()
             } label: {
                 HStack {
                     if isLoading {
@@ -230,40 +252,57 @@ struct AuthView: View {
 
     private var verificationView: some View {
         VStack(spacing: 24) {
-            // Code input
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Verification Code")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-
-                TextField("Enter 6-digit code", text: $verificationCode)
-                    .textFieldStyle(.plain)
-                    .padding(12)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(.separator), lineWidth: 1)
-                    )
+            // Six-digit code boxes over an invisible field, so system
+            // one-time-code autofill and the number pad both work
+            ZStack {
+                TextField("", text: $verificationCode)
                     .keyboardType(.numberPad)
-                    .multilineTextAlignment(.center)
-                    .font(.title2.monospacedDigit())
+                    .textContentType(.oneTimeCode)
+                    .focused($focusedField, equals: .code)
+                    .opacity(0.02)
                     .onChange(of: verificationCode) {
-                        // Auto-submit when 6 digits entered
+                        verificationCode = String(verificationCode.filter(\.isNumber).prefix(6))
                         if verificationCode.count == 6 {
                             Task {
                                 await handleVerification()
                             }
                         }
                     }
+
+                HStack(spacing: 8) {
+                    ForEach(0..<6, id: \.self) { index in
+                        let digits = Array(verificationCode)
+                        let isCursor = index == verificationCode.count && focusedField == .code
+
+                        Text(index < digits.count ? String(digits[index]) : " ")
+                            .font(.title2.weight(.semibold).monospacedDigit())
+                            .frame(width: 42, height: 52)
+                            .background(
+                                Color(.systemBackground),
+                                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(
+                                        isCursor ? Color.accentColor : Color(.separator),
+                                        lineWidth: isCursor ? 2 : 1
+                                    )
+                            )
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    focusedField = .code
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .onAppear {
+                focusedField = .code
             }
 
             // Error message
             if let error = errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                AuthErrorBanner(message: error)
             }
 
             // Verify button
@@ -319,6 +358,17 @@ struct AuthView: View {
     }
 
     // MARK: - Actions
+
+    private func submitCredentials() {
+        guard !email.isEmpty, !password.isEmpty else { return }
+        Task {
+            if mode == .signIn {
+                await handleEmailSignIn()
+            } else {
+                await handleEmailSignUp()
+            }
+        }
+    }
 
     private func handleEmailSignIn() async {
         guard !email.isEmpty, !password.isEmpty else { return }
@@ -425,6 +475,24 @@ struct AuthView: View {
             return clerkError.localizedDescription
         }
         return error.localizedDescription
+    }
+}
+
+// MARK: - Error Banner
+
+private struct AuthErrorBanner: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+            Text(message)
+        }
+        .font(.caption)
+        .foregroundStyle(.red)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 
