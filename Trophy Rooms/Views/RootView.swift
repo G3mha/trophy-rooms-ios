@@ -1,5 +1,4 @@
 import SwiftUI
-import ClerkKit
 
 enum AppTab: Hashable {
     case home
@@ -56,7 +55,7 @@ struct RootView: View {
             await adminViewModel.checkAdminStatus()
             inlineAdminContext.adminViewModel = adminViewModel
         }
-        .onReceive(NotificationCenter.default.publisher(for: .init("ClerkUserDidChange"))) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .init("AuthUserDidChange"))) { _ in
             Task {
                 await adminViewModel.checkAdminStatus()
                 inlineAdminContext.adminViewModel = adminViewModel

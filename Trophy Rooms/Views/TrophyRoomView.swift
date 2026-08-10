@@ -1,15 +1,14 @@
 import SwiftUI
-import ClerkKit
 
 struct TrophyRoomView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var progressViewModel = GameProgressViewModel()
     @StateObject private var statsViewModel = StatsViewModel()
     @State private var showAuth = false
 
     var body: some View {
         Group {
-            if clerk.user == nil {
+            if !authManager.isSignedIn {
                 SignInPrompt(icon: "trophy", message: "Sign in to view your Trophy Room") {
                     showAuth = true
                 }
@@ -101,13 +100,13 @@ struct TrophyRoomView: View {
             AuthView()
         }
         .task {
-            if clerk.user != nil {
+            if authManager.isSignedIn {
                 await progressViewModel.fetchGameProgress()
                 await statsViewModel.fetchStats()
             }
         }
-        .onChange(of: clerk.user?.id) {
-            if clerk.user != nil {
+        .onChange(of: authManager.userId) {
+            if authManager.isSignedIn {
                 Task {
                     await progressViewModel.fetchGameProgress()
                     await statsViewModel.fetchStats()

@@ -1,6 +1,5 @@
 import SwiftUI
 import Combine
-import ClerkKit
 
 struct ConvertToCollectionSheet: View {
     @Environment(\.dismiss) private var dismiss

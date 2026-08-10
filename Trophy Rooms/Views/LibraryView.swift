@@ -1,8 +1,7 @@
 import SwiftUI
-import ClerkKit
 
 struct LibraryView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var viewModel = LibraryViewModel()
     @StateObject private var expandedSections = ExpandedSectionsState()
     @State private var showAuth = false
@@ -12,7 +11,7 @@ struct LibraryView: View {
 
     var body: some View {
         Group {
-            if clerk.user == nil {
+            if !authManager.isSignedIn {
                 SignInPrompt(icon: "books.vertical", message: "Sign in to view your library") {
                     showAuth = true
                 }
@@ -130,12 +129,12 @@ struct LibraryView: View {
             }
         }
         .task {
-            if clerk.user != nil {
+            if authManager.isSignedIn {
                 await viewModel.fetchLibrary()
             }
         }
-        .onChange(of: clerk.user?.id) {
-            if clerk.user != nil {
+        .onChange(of: authManager.userId) {
+            if authManager.isSignedIn {
                 Task {
                     await viewModel.fetchLibrary(forceRefresh: true)
                 }

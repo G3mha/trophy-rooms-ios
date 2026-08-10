@@ -2,18 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CLERK_PUBLISHABLE_KEY</key>
-	<string>$(CLERK_PUBLISHABLE_KEY)</string>
+	<key>SUPABASE_URL</key>
+	<string>$(SUPABASE_URL)</string>
+	<key>SUPABASE_PUBLISHABLE_KEY</key>
+	<string>$(SUPABASE_PUBLISHABLE_KEY)</string>
 	<key>GRAPHQL_URL</key>
 	<string>$(GRAPHQL_URL)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>clerk</string>
+			<string>trophyrooms</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>clerk.trophyrooms.org</string>
+				<string>trophyrooms</string>
 			</array>
 		</dict>
 	</array>

@@ -1,5 +1,4 @@
 import SwiftUI
-import ClerkKit
 import AuthenticationServices
 
 enum AuthMode {
@@ -13,7 +12,7 @@ enum AuthStep {
 }
 
 struct AuthView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var mode: AuthMode = .signIn
@@ -33,7 +32,6 @@ struct AuthView: View {
     private var isLoading: Bool { loadingAction != nil }
     @State private var errorMessage: String?
     @State private var showPassword = false
-    @State private var currentSignUp: SignUp?
 
     private enum Field: Hashable {
         case email
@@ -397,18 +395,10 @@ struct AuthView: View {
         errorMessage = nil
 
         do {
-            let signIn = try await clerk.auth.signInWithPassword(
-                identifier: email,
-                password: password
-            )
-
-            if signIn.status == .complete {
-                dismiss()
-            } else {
-                errorMessage = "Sign in incomplete. Please try again."
-            }
+            try await authManager.signIn(email: email, password: password)
+            dismiss()
         } catch {
-            errorMessage = parseClerkError(error)
+            errorMessage = error.localizedDescription
         }
 
         loadingAction = nil
@@ -421,54 +411,44 @@ struct AuthView: View {
         errorMessage = nil
 
         do {
-            var signUp = try await clerk.auth.signUp(
-                emailAddress: email,
-                password: password
-            )
-
-            signUp = try await signUp.sendEmailCode()
-            currentSignUp = signUp
-
-            withAnimation {
-                step = .verification
+            let needsVerification = try await authManager.signUp(email: email, password: password)
+            if needsVerification {
+                withAnimation {
+                    step = .verification
+                }
+            } else {
+                dismiss()
             }
         } catch {
-            errorMessage = parseClerkError(error)
+            errorMessage = error.localizedDescription
         }
 
         loadingAction = nil
     }
 
     private func handleVerification() async {
-        guard verificationCode.count == 6, var signUp = currentSignUp else { return }
+        guard verificationCode.count == 6 else { return }
 
         loadingAction = .credentials
         errorMessage = nil
 
         do {
-            signUp = try await signUp.verifyEmailCode(verificationCode)
-
-            if signUp.status == .complete {
-                dismiss()
-            } else {
-                errorMessage = "Verification incomplete. Please try again."
-            }
+            try await authManager.verifyEmailCode(email: email, code: verificationCode)
+            dismiss()
         } catch {
-            errorMessage = parseClerkError(error)
+            errorMessage = error.localizedDescription
         }
 
         loadingAction = nil
     }
 
     private func handleResendCode() async {
-        guard var signUp = currentSignUp else { return }
         errorMessage = nil
 
         do {
-            signUp = try await signUp.sendEmailCode()
-            currentSignUp = signUp
+            try await authManager.resendSignupCode(email: email)
         } catch {
-            errorMessage = parseClerkError(error)
+            errorMessage = error.localizedDescription
         }
     }
 
@@ -477,14 +457,12 @@ struct AuthView: View {
         errorMessage = nil
 
         do {
-            // Clerk runs the native ASAuthorization flow and routes to
-            // sign-in or sign-up automatically
-            _ = try await clerk.auth.signInWithApple()
+            try await authManager.signInWithApple()
             dismiss()
         } catch let error as ASAuthorizationError where error.code == .canceled {
             // User dismissed the Apple sheet - not an error
         } catch {
-            errorMessage = parseClerkError(error)
+            errorMessage = error.localizedDescription
         }
 
         loadingAction = nil
@@ -495,24 +473,15 @@ struct AuthView: View {
         errorMessage = nil
 
         do {
-            if mode == .signIn {
-                _ = try await clerk.auth.signInWithOAuth(provider: .google)
-            } else {
-                _ = try await clerk.auth.signUpWithOAuth(provider: .google)
-            }
+            try await authManager.signInWithGoogle()
             dismiss()
+        } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
+            // User closed the browser sheet - not an error
         } catch {
-            errorMessage = parseClerkError(error)
+            errorMessage = error.localizedDescription
         }
 
         loadingAction = nil
-    }
-
-    private func parseClerkError(_ error: Error) -> String {
-        if let clerkError = error as? ClerkAPIError {
-            return clerkError.localizedDescription
-        }
-        return error.localizedDescription
     }
 }
 

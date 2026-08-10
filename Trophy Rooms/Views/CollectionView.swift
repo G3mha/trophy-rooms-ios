@@ -1,5 +1,4 @@
 import SwiftUI
-import ClerkKit
 
 private enum CollectionTab: Int, Hashable {
     case collection = 0
@@ -8,7 +7,7 @@ private enum CollectionTab: Int, Hashable {
 }
 
 struct CollectionView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var collectionViewModel = CollectionViewModel()
     @StateObject private var buylistViewModel = BuylistViewModel()
     @StateObject private var sellListViewModel = SellListViewModel()
@@ -62,7 +61,7 @@ struct CollectionView: View {
 
     var body: some View {
         Group {
-            if clerk.user == nil {
+            if !authManager.isSignedIn {
                 signInPrompt
             } else {
                 VStack(spacing: 0) {
@@ -153,7 +152,7 @@ struct CollectionView: View {
             }
         }
         .task {
-            if clerk.user != nil {
+            if authManager.isSignedIn {
                 // Fetch all data once on initial load - ViewModels will use cache and skip if already loaded
                 await collectionViewModel.fetchCollection()
                 await buylistViewModel.fetchBuylist()
@@ -162,8 +161,8 @@ struct CollectionView: View {
                 await sellListViewModel.fetchStats()
             }
         }
-        .onChange(of: clerk.user?.id) {
-            if clerk.user != nil {
+        .onChange(of: authManager.userId) {
+            if authManager.isSignedIn {
                 Task {
                     // Force refresh when user changes
                     await collectionViewModel.fetchCollection(forceRefresh: true)

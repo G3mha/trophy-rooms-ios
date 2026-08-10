@@ -1,8 +1,7 @@
 import SwiftUI
-import ClerkKit
 
 struct BundlesView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var viewModel = BundlesViewModel()
     @State private var selectedType: BundleType?
 

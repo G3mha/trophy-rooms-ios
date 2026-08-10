@@ -1,8 +1,7 @@
 import SwiftUI
-import ClerkKit
 
 struct GameFamilyView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var viewModel = GameFamilyViewModel()
     @State private var showAuth = false
 

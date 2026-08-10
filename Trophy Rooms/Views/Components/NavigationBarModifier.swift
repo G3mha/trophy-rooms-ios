@@ -1,9 +1,7 @@
 import SwiftUI
-import ClerkKit
-import ClerkKitUI
 
 struct NavigationBarModifier: ViewModifier {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     let title: String
     var showAuthBinding: Binding<Bool>?
     var shareURL: URL?
@@ -15,7 +13,7 @@ struct NavigationBarModifier: ViewModifier {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if clerk.user != nil {
+                if authManager.isSignedIn {
                     if shareURL != nil {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button {
@@ -30,7 +28,7 @@ struct NavigationBarModifier: ViewModifier {
                         Button {
                             showUserMenu = true
                         } label: {
-                            ProfileImage(imageUrl: clerk.user?.imageUrl)
+                            ProfileImage(imageUrl: authManager.avatarURL)
                         }
                     }
                 } else if let binding = showAuthBinding {
@@ -80,7 +78,7 @@ private struct ProfileImage: View {
 
 // User menu sheet
 private struct UserMenuSheet: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var adminViewModel: AdminViewModel
     @EnvironmentObject private var adminPresentationContext: AdminPresentationContext
@@ -94,22 +92,18 @@ private struct UserMenuSheet: View {
             List {
                 // Profile header section
                 Section {
-                    if let user = clerk.user {
+                    if authManager.isSignedIn {
                         VStack(spacing: 16) {
-                            ProfileImage(imageUrl: user.imageUrl, size: 80)
+                            ProfileImage(imageUrl: authManager.avatarURL, size: 80)
 
                             VStack(spacing: 4) {
-                                if let firstName = user.firstName, let lastName = user.lastName {
-                                    Text("\(firstName) \(lastName)")
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                } else if let firstName = user.firstName {
-                                    Text(firstName)
+                                if let name = authManager.displayName {
+                                    Text(name)
                                         .font(.title2)
                                         .fontWeight(.semibold)
                                 }
 
-                                Text(user.primaryEmailAddress?.emailAddress ?? "")
+                                Text(authManager.userEmail ?? "")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
@@ -204,12 +198,8 @@ private struct UserMenuSheet: View {
 
     private func signOut() async {
         isSigningOut = true
-        do {
-            try await clerk.auth.signOut()
-            dismiss()
-        } catch {
-            print("Sign out error: \(error)")
-        }
+        await authManager.signOut()
+        dismiss()
         isSigningOut = false
     }
 
@@ -231,9 +221,9 @@ private struct UserMenuSheet: View {
         do {
             let response: DeleteMyAccountResponse = try await NetworkService.shared.fetch(query: mutation)
             if response.deleteMyAccount.success {
-                // Backend removed both app data and the Clerk identity;
+                // Backend removed both app data and the auth identity;
                 // drop the local session and close the sheet
-                try? await clerk.auth.signOut()
+                await authManager.signOut()
                 dismiss()
             } else {
                 deleteErrorMessage = response.deleteMyAccount.error?.message ?? "Could not delete your account. Please try again."

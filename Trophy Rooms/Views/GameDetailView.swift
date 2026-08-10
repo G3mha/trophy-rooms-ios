@@ -1,8 +1,7 @@
 import SwiftUI
-import ClerkKit
 
 struct GameDetailView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @EnvironmentObject private var inlineAdminContext: InlineAdminContext
     @StateObject private var viewModel = GameDetailViewModel()
     @State private var showStatusPicker = false
@@ -31,7 +30,7 @@ struct GameDetailView: View {
                         }
 
                         // Library status and Collection buttons (authenticated only)
-                        if clerk.user != nil {
+                        if authManager.isSignedIn {
                             VStack(spacing: 12) {
                                 // Library Status Button
                                 GameStatusButton(
@@ -99,7 +98,7 @@ struct GameDetailView: View {
                         ForEach(game.achievementSets) { set in
                             AchievementSetView(
                                 achievementSet: set,
-                                isAuthenticated: clerk.user != nil,
+                                isAuthenticated: authManager.isSignedIn,
                                 onToggle: { achievement in
                                     Task {
                                         await viewModel.toggleAchievement(achievement)
@@ -146,7 +145,7 @@ struct GameDetailView: View {
                                     DLCCard(
                                         dlc: dlc,
                                         isOwnershipLoading: viewModel.isDlcOwnershipLoading.contains(dlc.id),
-                                        isAuthenticated: clerk.user != nil,
+                                        isAuthenticated: authManager.isSignedIn,
                                         onToggleOwnership: {
                                             Task {
                                                 await viewModel.toggleDlcOwnership(dlcId: dlc.id)
@@ -183,7 +182,7 @@ struct GameDetailView: View {
         .navigationTitle("Game Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if clerk.user != nil {
+            if authManager.isSignedIn {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         ForEach(GameStatus.allCases, id: \.self) { status in
@@ -283,7 +282,7 @@ struct GameDetailView: View {
         }
         .task {
             await viewModel.fetchGame(id: gameId)
-            if clerk.user != nil {
+            if authManager.isSignedIn {
                 await viewModel.checkGameStatus(gameId: gameId)
                 await viewModel.fetchCollectionForGame(gameId: gameId)
                 await viewModel.checkBuylist(gameId: gameId)

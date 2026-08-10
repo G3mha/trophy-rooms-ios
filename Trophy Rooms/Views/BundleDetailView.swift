@@ -1,8 +1,7 @@
 import SwiftUI
-import ClerkKit
 
 struct BundleDetailView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var viewModel = BundleDetailViewModel()
     @StateObject private var platformsViewModel = PlatformsViewModel.shared
     @State private var showingPlatformPicker = false
@@ -20,7 +19,7 @@ struct BundleDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         // Header
-                        BundleHeader(bundle: bundle, isAuthenticated: clerk.user != nil)
+                        BundleHeader(bundle: bundle, isAuthenticated: authManager.isSignedIn)
 
                         // Available platforms section
                         if !bundle.platforms.isEmpty {
@@ -28,7 +27,7 @@ struct BundleDetailView: View {
                         }
 
                         // Ownership section (authenticated only)
-                        if clerk.user != nil {
+                        if authManager.isSignedIn {
                             BundleOwnershipSection(
                                 bundle: bundle,
                                 isLoading: viewModel.isOwnershipLoading,

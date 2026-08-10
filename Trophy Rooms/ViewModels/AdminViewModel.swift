@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import ClerkKit
 
 class AdminViewModel: ObservableObject {
     private enum CacheKeys {
@@ -39,7 +38,7 @@ class AdminViewModel: ObservableObject {
             self.errorMessage = nil
         }
 
-        guard Clerk.shared.user != nil else {
+        guard await AuthManager.shared.isSignedIn else {
             DispatchQueue.main.async {
                 self.reset()
                 self.isLoading = false

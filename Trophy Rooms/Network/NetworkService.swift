@@ -1,5 +1,4 @@
 import Foundation
-import ClerkKit
 
 class NetworkService {
     static let shared = NetworkService()
@@ -21,18 +20,16 @@ class NetworkService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         // Set auth token with timeout to prevent hanging
-        if let session = Clerk.shared.session {
-            do {
-                let token = try await withTimeout(seconds: 5) {
-                    try await session.getToken()
-                }
-                if let token = token {
-                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-                }
-            } catch {
-                // If token fetch fails or times out, continue without auth
-                print("NetworkService: Token fetch failed or timed out: \(error)")
+        do {
+            let token = try await withTimeout(seconds: 5) {
+                await AuthManager.shared.accessToken()
             }
+            if let token = token {
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            }
+        } catch {
+            // If token fetch fails or times out, continue without auth
+            print("NetworkService: Token fetch failed or timed out: \(error)")
         }
 
         let body: [String: Any] = [

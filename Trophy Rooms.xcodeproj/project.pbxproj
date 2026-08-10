@@ -8,9 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		EB454BB72F6735F10033B7C6 /* TrophyRoomsIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = EB454BB62F6735F00033B7C6 /* TrophyRoomsIcon.icon */; };
-		EB454BBA2F6737260033B7C6 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = EB454BB92F6737260033B7C6 /* ClerkKit */; };
-		EB454BBC2F6737260033B7C6 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = EB454BBB2F6737260033B7C6 /* ClerkKitUI */; };
 		EB454BBE2F6737270033B7C6 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = EB454BBF2F6737270033B7C6 /* Kingfisher */; };
+		EB78D08E3029957900A0D76D /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = EB78D08D3029957900A0D76D /* Supabase */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,9 +60,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EB454BBA2F6737260033B7C6 /* ClerkKit in Frameworks */,
-				EB454BBC2F6737260033B7C6 /* ClerkKitUI in Frameworks */,
 				EB454BBE2F6737270033B7C6 /* Kingfisher in Frameworks */,
+				EB78D08E3029957900A0D76D /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,9 +132,8 @@
 			);
 			name = "Trophy Rooms";
 			packageProductDependencies = (
-				EB454BB92F6737260033B7C6 /* ClerkKit */,
-				EB454BBB2F6737260033B7C6 /* ClerkKitUI */,
 				EB454BBF2F6737270033B7C6 /* Kingfisher */,
+				EB78D08D3029957900A0D76D /* Supabase */,
 			);
 			productName = "Trophy Rooms";
 			productReference = EB7016802F549F3B0099D8C5 /* Trophy Rooms.app */;
@@ -221,8 +218,8 @@
 			mainGroup = EB7016772F549F3B0099D8C5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */,
 				EB454BC02F6737280033B7C6 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				EB78D0823029957900A0D76D /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EB7016812F549F3B0099D8C5 /* Products */;
@@ -626,12 +623,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+		EB78D0823029957900A0D76D /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/clerk/clerk-ios";
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.5;
+				minimumVersion = 2.5.1;
 			};
 		};
 		EB454BC02F6737280033B7C6 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
@@ -645,15 +642,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EB454BB92F6737260033B7C6 /* ClerkKit */ = {
+		EB78D08D3029957900A0D76D /* Supabase */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */;
-			productName = ClerkKit;
-		};
-		EB454BBB2F6737260033B7C6 /* ClerkKitUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = EB454BB82F6737260033B7C6 /* XCRemoteSwiftPackageReference "clerk-ios" */;
-			productName = ClerkKitUI;
+			package = EB78D0823029957900A0D76D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
 		};
 		EB454BBF2F6737270033B7C6 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;

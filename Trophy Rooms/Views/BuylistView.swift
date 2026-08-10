@@ -1,8 +1,7 @@
 import SwiftUI
-import ClerkKit
 
 struct BuylistView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var viewModel = BuylistViewModel()
     @StateObject private var expandedSections = ExpandedSectionsState()
     @State private var showAuth = false
@@ -11,7 +10,7 @@ struct BuylistView: View {
 
     var body: some View {
         Group {
-            if clerk.user == nil {
+            if !authManager.isSignedIn {
                 VStack(spacing: 16) {
                     Image(systemName: "cart")
                         .font(.system(size: 48))
@@ -108,7 +107,7 @@ struct BuylistView: View {
         }
         .navigationBar(
             title: "Buylist",
-            shareURL: clerk.user.map { URL(string: "https://trophyrooms.app/users/\($0.id)/buylist")! }
+            shareURL: authManager.userId.map { URL(string: "https://trophyrooms.app/users/\($0)/buylist")! }
         )
         .sheet(isPresented: $showAuth) {
             AuthView()
@@ -122,13 +121,13 @@ struct BuylistView: View {
             }
         }
         .task {
-            if clerk.user != nil {
+            if authManager.isSignedIn {
                 await viewModel.fetchBuylist()
                 await viewModel.fetchStats()
             }
         }
-        .onChange(of: clerk.user?.id) {
-            if clerk.user != nil {
+        .onChange(of: authManager.userId) {
+            if authManager.isSignedIn {
                 Task {
                     await viewModel.fetchBuylist()
                     await viewModel.fetchStats()

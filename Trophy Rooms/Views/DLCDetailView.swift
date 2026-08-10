@@ -1,8 +1,7 @@
 import SwiftUI
-import ClerkKit
 
 struct DLCDetailView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var viewModel = DLCDetailViewModel()
     let dlcId: String
 
@@ -20,7 +19,7 @@ struct DLCDetailView: View {
                         DLCHeader(dlc: dlc)
 
                         // Ownership section (authenticated only)
-                        if clerk.user != nil {
+                        if authManager.isSignedIn {
                             DLCOwnershipCard(
                                 isOwned: dlc.isOwned ?? false,
                                 isLoading: viewModel.isOwnershipLoading,

@@ -1,15 +1,13 @@
 import SwiftUI
-import ClerkKit
-import ClerkKitUI
 
 struct StatsView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var viewModel = StatsViewModel()
     @State private var showAuth = false
 
     var body: some View {
         Group {
-            if clerk.user == nil {
+            if !authManager.isSignedIn {
                 VStack(spacing: 16) {
                     Text("Sign in to view your stats")
                         .font(.headline)
@@ -37,10 +35,10 @@ struct StatsView: View {
         .navigationTitle("Your Stats")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                if clerk.user != nil {
-                    UserButton()
-                        .frame(width: 30, height: 30)
-                        .clipShape(Circle())
+                if authManager.isSignedIn {
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.secondary)
                 }
             }
         }

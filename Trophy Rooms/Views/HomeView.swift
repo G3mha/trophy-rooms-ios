@@ -1,5 +1,4 @@
 import SwiftUI
-import ClerkKit
 
 private enum HomeTab: Int, Hashable {
     case games = 0
@@ -8,7 +7,7 @@ private enum HomeTab: Int, Hashable {
 }
 
 struct HomeView: View {
-    @Environment(Clerk.self) private var clerk
+    @EnvironmentObject private var authManager: AuthManager
     @StateObject private var gameListViewModel = GameListViewModel()
     @StateObject private var leaderboardViewModel = LeaderboardViewModel()
     @StateObject private var activityViewModel = ActivityViewModel()
