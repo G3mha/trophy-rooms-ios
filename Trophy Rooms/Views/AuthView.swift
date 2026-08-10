@@ -21,7 +21,16 @@ struct AuthView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var verificationCode = ""
-    @State private var isLoading = false
+    private enum LoadingAction {
+        case apple
+        case google
+        case credentials
+    }
+
+    @State private var loadingAction: LoadingAction?
+
+    /// Any auth flow in flight (used to disable all controls)
+    private var isLoading: Bool { loadingAction != nil }
     @State private var errorMessage: String?
     @State private var showPassword = false
     @State private var currentSignUp: SignUp?
@@ -109,11 +118,22 @@ struct AuthView: View {
 
     private var formView: some View {
         VStack(spacing: 20) {
-            // Google Sign In
-            GoogleSignInButton(isLoading: isLoading) {
-                Task {
-                    await handleGoogleSignIn()
+            VStack(spacing: 12) {
+                // Apple Sign In (required alongside third-party login, guideline 4.8)
+                AppleSignInButton(isLoading: loadingAction == .apple) {
+                    Task {
+                        await handleAppleSignIn()
+                    }
                 }
+                .disabled(isLoading)
+
+                // Google Sign In
+                GoogleSignInButton(isLoading: loadingAction == .google) {
+                    Task {
+                        await handleGoogleSignIn()
+                    }
+                }
+                .disabled(isLoading)
             }
 
             // Divider
@@ -215,7 +235,7 @@ struct AuthView: View {
                 submitCredentials()
             } label: {
                 HStack {
-                    if isLoading {
+                    if loadingAction == .credentials {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
@@ -312,7 +332,7 @@ struct AuthView: View {
                 }
             } label: {
                 HStack {
-                    if isLoading {
+                    if loadingAction == .credentials {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
@@ -373,7 +393,7 @@ struct AuthView: View {
     private func handleEmailSignIn() async {
         guard !email.isEmpty, !password.isEmpty else { return }
 
-        isLoading = true
+        loadingAction = .credentials
         errorMessage = nil
 
         do {
@@ -391,13 +411,13 @@ struct AuthView: View {
             errorMessage = parseClerkError(error)
         }
 
-        isLoading = false
+        loadingAction = nil
     }
 
     private func handleEmailSignUp() async {
         guard !email.isEmpty, !password.isEmpty else { return }
 
-        isLoading = true
+        loadingAction = .credentials
         errorMessage = nil
 
         do {
@@ -416,13 +436,13 @@ struct AuthView: View {
             errorMessage = parseClerkError(error)
         }
 
-        isLoading = false
+        loadingAction = nil
     }
 
     private func handleVerification() async {
         guard verificationCode.count == 6, var signUp = currentSignUp else { return }
 
-        isLoading = true
+        loadingAction = .credentials
         errorMessage = nil
 
         do {
@@ -437,7 +457,7 @@ struct AuthView: View {
             errorMessage = parseClerkError(error)
         }
 
-        isLoading = false
+        loadingAction = nil
     }
 
     private func handleResendCode() async {
@@ -452,8 +472,26 @@ struct AuthView: View {
         }
     }
 
+    private func handleAppleSignIn() async {
+        loadingAction = .apple
+        errorMessage = nil
+
+        do {
+            // Clerk runs the native ASAuthorization flow and routes to
+            // sign-in or sign-up automatically
+            _ = try await clerk.auth.signInWithApple()
+            dismiss()
+        } catch let error as ASAuthorizationError where error.code == .canceled {
+            // User dismissed the Apple sheet - not an error
+        } catch {
+            errorMessage = parseClerkError(error)
+        }
+
+        loadingAction = nil
+    }
+
     private func handleGoogleSignIn() async {
-        isLoading = true
+        loadingAction = .google
         errorMessage = nil
 
         do {
@@ -467,7 +505,7 @@ struct AuthView: View {
             errorMessage = parseClerkError(error)
         }
 
-        isLoading = false
+        loadingAction = nil
     }
 
     private func parseClerkError(_ error: Error) -> String {
@@ -493,6 +531,48 @@ private struct AuthErrorBanner: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
         .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+// MARK: - Apple Sign In Button
+// Follows Apple's HIG for custom Sign in with Apple buttons: system logo,
+// adaptive black-on-white / white-on-black, same prominence as other providers.
+
+struct AppleSignInButton: View {
+    @Environment(\.colorScheme) private var colorScheme
+    let isLoading: Bool
+    let action: () -> Void
+
+    private var fillColor: Color {
+        colorScheme == .dark ? .white : .black
+    }
+
+    private var textColor: Color {
+        colorScheme == .dark ? .black : .white
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: textColor))
+                } else {
+                    Image(systemName: "applelogo")
+                        .font(.system(size: 17, weight: .medium))
+
+                    Text("Sign in with Apple")
+                        .font(.system(size: 16, weight: .medium))
+                }
+            }
+            .foregroundColor(textColor)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity)
+            .frame(height: 40)
+            .background(fillColor)
+            .cornerRadius(8)
+        }
+        .disabled(isLoading)
     }
 }
 
@@ -529,15 +609,15 @@ struct GoogleSignInButton: View {
             HStack(spacing: 12) {
                 if isLoading {
                     ProgressView()
-                        .frame(width: 20, height: 20)
+                        .tint(textColor)
                 } else {
                     GoogleLogo()
                         .frame(width: 20, height: 20)
-                }
 
-                Text("Continue with Google")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(textColor)
+                    Text("Continue with Google")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(textColor)
+                }
             }
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
