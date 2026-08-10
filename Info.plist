@@ -8,6 +8,8 @@
 	<string>$(SUPABASE_PUBLISHABLE_KEY)</string>
 	<key>GRAPHQL_URL</key>
 	<string>$(GRAPHQL_URL)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
