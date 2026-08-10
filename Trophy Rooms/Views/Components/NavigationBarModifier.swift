@@ -85,6 +85,9 @@ private struct UserMenuSheet: View {
     @EnvironmentObject private var adminViewModel: AdminViewModel
     @EnvironmentObject private var adminPresentationContext: AdminPresentationContext
     @State private var isSigningOut = false
+    @State private var isDeletingAccount = false
+    @State private var showDeleteConfirmation = false
+    @State private var deleteErrorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -152,8 +155,44 @@ private struct UserMenuSheet: View {
                             Spacer()
                         }
                     }
-                    .disabled(isSigningOut)
+                    .disabled(isSigningOut || isDeletingAccount)
                 }
+
+                // Account deletion (App Store guideline 5.1.1 requires in-app deletion)
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            if isDeletingAccount {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            } else {
+                                Text("Delete Account")
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(isSigningOut || isDeletingAccount)
+                } footer: {
+                    if let deleteErrorMessage {
+                        Text(deleteErrorMessage)
+                            .foregroundStyle(.red)
+                    } else {
+                        Text("Permanently deletes your account, collection, library, and play history.")
+                    }
+                }
+            }
+            .alert("Delete Account?", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete Everything", role: .destructive) {
+                    Task {
+                        await deleteAccount()
+                    }
+                }
+            } message: {
+                Text("This permanently deletes your account and all of your collection, library, trophy, and play journal data. This cannot be undone.")
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Account")
@@ -172,6 +211,51 @@ private struct UserMenuSheet: View {
             print("Sign out error: \(error)")
         }
         isSigningOut = false
+    }
+
+    private func deleteAccount() async {
+        isDeletingAccount = true
+        deleteErrorMessage = nil
+
+        let mutation = """
+        mutation DeleteMyAccount {
+            deleteMyAccount {
+                success
+                error {
+                    message
+                }
+            }
+        }
+        """
+
+        do {
+            let response: DeleteMyAccountResponse = try await NetworkService.shared.fetch(query: mutation)
+            if response.deleteMyAccount.success {
+                // Backend removed both app data and the Clerk identity;
+                // drop the local session and close the sheet
+                try? await clerk.auth.signOut()
+                dismiss()
+            } else {
+                deleteErrorMessage = response.deleteMyAccount.error?.message ?? "Could not delete your account. Please try again."
+            }
+        } catch {
+            deleteErrorMessage = error.localizedDescription
+        }
+
+        isDeletingAccount = false
+    }
+}
+
+private struct DeleteMyAccountResponse: Decodable {
+    let deleteMyAccount: DeleteMyAccountResult
+
+    struct DeleteMyAccountResult: Decodable {
+        let success: Bool
+        let error: MutationError?
+    }
+
+    struct MutationError: Decodable {
+        let message: String
     }
 }
 
