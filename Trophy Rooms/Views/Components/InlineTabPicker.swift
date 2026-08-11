@@ -22,7 +22,7 @@ struct InlineTabPicker<Tab: Hashable>: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(Color(UIColor.systemBackground))
+        .background(Color.clear)
     }
 }
 
