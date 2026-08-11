@@ -17,10 +17,10 @@ struct BundleBadge: View {
 extension BundleType {
     var badgeColor: Color {
         switch self {
-        case .BUNDLE: return .blue
-        case .SEASON_PASS: return .orange
-        case .COLLECTION: return .purple
-        case .SUBSCRIPTION: return .green
+        case .BUNDLE: return Cabinet.Tint.info
+        case .SEASON_PASS: return Cabinet.Tint.warm
+        case .COLLECTION: return Cabinet.Tint.violet
+        case .SUBSCRIPTION: return Cabinet.Tint.positive
         }
     }
 }

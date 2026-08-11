@@ -62,7 +62,7 @@ struct DLCCard: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -84,11 +84,11 @@ struct DLCTypeBadge: View {
     var badgeColor: Color {
         switch type {
         case .DLC:
-            return .blue
+            return Cabinet.Tint.info
         case .EXPANSION:
-            return .purple
+            return Cabinet.Tint.violet
         case .FREE_UPDATE:
-            return .green
+            return Cabinet.Tint.positive
         }
     }
 }

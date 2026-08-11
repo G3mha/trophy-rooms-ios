@@ -18,12 +18,12 @@ struct GameTypeBadge: View {
 extension GameType {
     var badgeColor: Color {
         switch self {
-        case .BASE_GAME: return .blue
-        case .FANGAME: return .orange
-        case .ROM_HACK: return .purple
-        case .MOD: return .pink
-        case .DLC: return .green
-        case .EXPANSION: return .teal
+        case .BASE_GAME: return Cabinet.Tint.info
+        case .FANGAME: return Cabinet.Tint.warm
+        case .ROM_HACK: return Cabinet.Tint.violet
+        case .MOD: return Cabinet.Tint.violet
+        case .DLC: return Cabinet.Tint.positive
+        case .EXPANSION: return Cabinet.Tint.info
         }
     }
 

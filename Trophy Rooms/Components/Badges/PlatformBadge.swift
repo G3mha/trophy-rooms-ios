@@ -27,7 +27,7 @@ struct GameVersionBadge: View {
         TypeBadge(
             name,
             icon: "square.stack.3d.up",
-            color: .indigo
+            color: Cabinet.Tint.violet
         )
     }
 }

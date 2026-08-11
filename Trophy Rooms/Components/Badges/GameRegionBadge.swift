@@ -18,10 +18,10 @@ struct GameRegionBadge: View {
 extension GameRegion {
     var badgeColor: Color {
         switch self {
-        case .NTSC_U: return .blue
-        case .PAL: return .green
-        case .NTSC_J: return .red
-        case .OTHER: return .gray
+        case .NTSC_U: return Cabinet.Tint.info
+        case .PAL: return Cabinet.Tint.positive
+        case .NTSC_J: return Cabinet.Tint.alert
+        case .OTHER: return Cabinet.Tint.muted
         }
     }
 }

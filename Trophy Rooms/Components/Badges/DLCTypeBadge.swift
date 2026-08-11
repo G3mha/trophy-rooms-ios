@@ -17,9 +17,9 @@ struct DLCBadge: View {
 extension DLCType {
     var badgeColor: Color {
         switch self {
-        case .DLC: return .blue
-        case .EXPANSION: return .purple
-        case .FREE_UPDATE: return .green
+        case .DLC: return Cabinet.Tint.info
+        case .EXPANSION: return Cabinet.Tint.violet
+        case .FREE_UPDATE: return Cabinet.Tint.positive
         }
     }
 }

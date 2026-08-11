@@ -108,11 +108,11 @@ struct StatusOverlayBadge: View {
 
     var statusColor: Color {
         switch status {
-        case .BACKLOG: return .blue
-        case .PLAYING: return .green
-        case .PAUSED: return .orange
-        case .COMPLETED: return .purple
-        case .DROPPED: return .gray
+        case .BACKLOG: return Cabinet.Tint.info
+        case .PLAYING: return Cabinet.Tint.positive
+        case .PAUSED: return Cabinet.Tint.warm
+        case .COMPLETED: return Cabinet.Tint.violet
+        case .DROPPED: return Cabinet.Tint.muted
         }
     }
 }
@@ -124,13 +124,7 @@ struct RegionOverlayBadge: View {
     var body: some View {
         VStack {
             HStack {
-                Text(region.shortName)
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 3)
-                    .background(regionColor)
-                    .cornerRadius(4)
+                Tag(region.shortName, tint: regionColor, style: .overlay)
                     .padding(4)
                 Spacer()
             }
@@ -140,10 +134,10 @@ struct RegionOverlayBadge: View {
 
     var regionColor: Color {
         switch region {
-        case .NTSC_U: return .blue
-        case .PAL: return .green
-        case .NTSC_J: return .red
-        case .OTHER: return .gray
+        case .NTSC_U: return Cabinet.Tint.info
+        case .PAL: return Cabinet.Tint.positive
+        case .NTSC_J: return Cabinet.Tint.alert
+        case .OTHER: return Cabinet.Tint.muted
         }
     }
 }
@@ -152,13 +146,13 @@ struct RegionOverlayBadge: View {
 extension CollectionCondition {
     var badgeColor: Color {
         switch self {
-        case .digital: return .blue
-        case .sealed: return .purple
-        case .cib: return .green
-        case .loose: return .orange
-        case .noManual, .noBox: return .yellow
-        case .noGame: return .red
-        case .unspecified: return .gray
+        case .digital: return Cabinet.Tint.info
+        case .sealed: return Cabinet.Tint.violet
+        case .cib: return Cabinet.Tint.positive
+        case .loose: return Cabinet.Tint.warm
+        case .noManual, .noBox: return Cabinet.Tint.amber
+        case .noGame: return Cabinet.Tint.alert
+        case .unspecified: return Cabinet.Tint.muted
         }
     }
 }
@@ -238,9 +232,9 @@ struct PriorityOverlayBadge: View {
 
     var priorityColor: Color {
         switch priority {
-        case .HIGH: return .red
-        case .MEDIUM: return .orange
-        case .LOW: return .green
+        case .HIGH: return Cabinet.Tint.alert
+        case .MEDIUM: return Cabinet.Tint.warm
+        case .LOW: return Cabinet.Tint.positive
         }
     }
 }
@@ -267,9 +261,9 @@ struct ItemTypeOverlayBadge: View {
 
     var itemTypeColor: Color {
         switch itemType {
-        case .GAME: return .blue
-        case .DLC: return .purple
-        case .BUNDLE: return .pink
+        case .GAME: return Cabinet.Tint.info
+        case .DLC: return Cabinet.Tint.violet
+        case .BUNDLE: return Cabinet.Tint.violet
         }
     }
 }
@@ -297,12 +291,12 @@ struct ConditionOverlayBadge: View {
 
     var conditionColor: Color {
         switch condition {
-        case .MINT: return .green
-        case .NEAR_MINT: return .teal
-        case .VERY_GOOD: return .blue
-        case .GOOD: return .orange
-        case .FAIR: return .red
-        case .POOR: return .gray
+        case .MINT: return Cabinet.Tint.positive
+        case .NEAR_MINT: return Cabinet.Tint.info
+        case .VERY_GOOD: return Cabinet.Tint.info
+        case .GOOD: return Cabinet.Tint.warm
+        case .FAIR: return Cabinet.Tint.alert
+        case .POOR: return Cabinet.Tint.muted
         }
     }
 }
@@ -452,7 +446,7 @@ struct PlatformGridSectionHeader: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
-            .background(Color(.systemBackground))
+            .background(Cabinet.canvas)
         }
         .buttonStyle(.plain)
     }

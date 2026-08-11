@@ -18,11 +18,11 @@ struct GameStatusBadge: View {
 extension GameStatus {
     var badgeColor: Color {
         switch self {
-        case .BACKLOG: return .blue
-        case .PLAYING: return .green
-        case .PAUSED: return .orange
-        case .COMPLETED: return .purple
-        case .DROPPED: return .gray
+        case .BACKLOG: return Cabinet.Tint.info
+        case .PLAYING: return Cabinet.Tint.positive
+        case .PAUSED: return Cabinet.Tint.warm
+        case .COMPLETED: return Cabinet.Tint.violet
+        case .DROPPED: return Cabinet.Tint.muted
         }
     }
 }
