@@ -5,44 +5,59 @@ class GameListViewModel: ObservableObject {
     @Published var games: [GameSummary] = []
     @Published var platforms: [Platform] = []
     @Published var isLoading = false
+    /// Appending the next page - kept separate from `isLoading` so the grid
+    /// stays on screen instead of being replaced by a full-page spinner
+    @Published var isLoadingMore = false
+    /// Synchronous re-entrancy latch for loadNextPage - see the note there
+    private var isFetchingMore = false
     @Published var errorMessage: String?
 
     // Pagination state
     @Published var currentPage: Int = 1
     @Published var totalPages: Int = 1
     @Published var totalCount: Int = 0
-    @Published var pageSize: Int = 25
+    /// Fetch batch size for infinite scroll - an implementation detail,
+    /// not a user-facing setting
+    private let pageSize = 25
 
     var hasNextPage: Bool { currentPage < totalPages }
-    var hasPreviousPage: Bool { currentPage > 1 }
 
     // Group games by title for consolidated display
     var gameGroups: [GameGroup] {
         groupGamesByTitle(games)
     }
 
+    /// Groups platform rows into one entry per game family, preserving the
+    /// order the server returned them in.
+    ///
+    /// Do NOT re-sort here. The server already ordered the page per the user's
+    /// Sort By choice, and with infinite scroll a client-side sort inserts each
+    /// new page throughout the existing list instead of appending to the end -
+    /// which reshuffles content above the viewport and makes the scroll jump.
     private func groupGamesByTitle(_ games: [GameSummary]) -> [GameGroup] {
-        // Group by gameFamilyId if available, otherwise by normalized title
         var groups: [String: [GameSummary]] = [:]
+        var keyOrder: [String] = []
 
         for game in games {
             let key = game.gameFamilyId ?? game.title.trimmingCharacters(in: .whitespaces).lowercased()
             if groups[key] == nil {
                 groups[key] = []
+                keyOrder.append(key)
             }
             groups[key]?.append(game)
         }
 
-        return groups.map { (key, gameList) in
+        return keyOrder.compactMap { key -> GameGroup? in
+            guard let gameList = groups[key], let first = gameList.first else { return nil }
             let platforms = gameList.compactMap { $0.platform }
-            let slug = gameList[0].title
+            let slug = first.title
                 .lowercased()
                 .replacingOccurrences(of: " ", with: "-")
                 .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
 
             return GameGroup(
-                gameFamilyId: gameList[0].gameFamilyId,
-                title: gameList[0].title,
+                gameFamilyId: first.gameFamilyId,
+                title: first.title,
                 slug: slug,
                 games: gameList,
                 platforms: platforms,
@@ -50,7 +65,7 @@ class GameListViewModel: ObservableObject {
                 totalAchievementCount: gameList.reduce(0) { $0 + $1.achievementCount },
                 totalTrophyCount: gameList.reduce(0) { $0 + $1.trophyCount }
             )
-        }.sorted { $0.title.lowercased() < $1.title.lowercased() }
+        }
     }
 
     func fetchPlatforms() async {
