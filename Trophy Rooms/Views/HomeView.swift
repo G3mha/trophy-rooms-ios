@@ -20,7 +20,6 @@ struct HomeView: View {
     @State private var sortOption: SortOption = .mostAchievements
     @State private var minAchievementCount = 0
     @State private var gameTypeFilter: GameTypeFilter = .all
-    @State private var selectedPageSize = 25
     @State private var showFilters = false
     @State private var selectedTab: HomeTab = .games
 
@@ -37,7 +36,6 @@ struct HomeView: View {
         if sortOption != .mostAchievements { count += 1 }
         if minAchievementCount > 0 { count += 1 }
         if gameTypeFilter != .all { count += 1 }
-        if selectedPageSize != 25 { count += 1 }
         return count
     }
 
@@ -147,8 +145,7 @@ struct HomeView: View {
                 achievementFilter: $achievementFilter,
                 sortOption: $sortOption,
                 minAchievementCount: $minAchievementCount,
-                gameTypeFilter: $gameTypeFilter,
-                selectedPageSize: $selectedPageSize
+                gameTypeFilter: $gameTypeFilter
             )
         }
         .onChange(of: searchText) {
@@ -208,18 +205,6 @@ struct HomeView: View {
                 )
             }
         }
-        .onChange(of: selectedPageSize) {
-            Task {
-                await gameListViewModel.setPageSize(
-                    selectedPageSize,
-                    search: searchText,
-                    platformId: selectedPlatformId,
-                    hasAchievements: achievementFilter.boolValue,
-                    orderBy: sortOption.graphqlValue,
-                    type: gameTypeFilter.graphqlValue
-                )
-            }
-        }
         .task {
             await gameListViewModel.fetchPlatforms()
             await gameListViewModel.fetchGames(
@@ -251,6 +236,24 @@ private struct GamesGridTab: View {
 
     private let columns = GameCoverGridLayout.columns()
 
+    /// Sits in the last grid cell; appearing means the user reached the end
+    private var loadMoreFooter: some View {
+        ProgressView()
+            .controlSize(.small)
+            .tint(Cabinet.brass)
+            .frame(height: 88)
+            .frame(maxWidth: .infinity)
+            .task(id: viewModel.games.count) {
+                await viewModel.loadNextPage(
+                    search: searchText,
+                    platformId: selectedPlatformId,
+                    hasAchievements: achievementFilter.boolValue,
+                    orderBy: sortOption.graphqlValue,
+                    type: gameTypeFilter.graphqlValue
+                )
+            }
+    }
+
     var body: some View {
         if viewModel.isLoading && viewModel.games.isEmpty {
             VStack {
@@ -268,10 +271,11 @@ private struct GamesGridTab: View {
         } else {
             ScrollView {
                 VStack(spacing: 0) {
-                    // Game count header
+                    // Total, not the loaded count - with infinite scroll a
+                    // running tally of what happens to be on screen is noise
                     if viewModel.totalCount > 0 {
                         HStack {
-                            Text("\(filteredGameGroups.count) titles")
+                            Text("\(viewModel.totalCount.formatted()) games")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                             Spacer()
@@ -314,48 +318,20 @@ private struct GamesGridTab: View {
                     .padding(.horizontal)
                     .padding(.vertical, 12)
 
-                    // Pagination
-                    if viewModel.totalPages > 1 {
-                        PaginationControls(
-                            currentPage: viewModel.currentPage,
-                            totalPages: viewModel.totalPages,
-                            isLoading: viewModel.isLoading,
-                            onPrevious: {
-                                Task {
-                                    await viewModel.goToPreviousPage(
-                                        search: searchText,
-                                        platformId: selectedPlatformId,
-                                        hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue,
-                                        type: gameTypeFilter.graphqlValue
-                                    )
-                                }
-                            },
-                            onNext: {
-                                Task {
-                                    await viewModel.goToNextPage(
-                                        search: searchText,
-                                        platformId: selectedPlatformId,
-                                        hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue,
-                                        type: gameTypeFilter.graphqlValue
-                                    )
-                                }
-                            },
-                            onGoToPage: { page in
-                                Task {
-                                    await viewModel.goToPage(
-                                        page,
-                                        search: searchText,
-                                        platformId: selectedPlatformId,
-                                        hasAchievements: achievementFilter.boolValue,
-                                        orderBy: sortOption.graphqlValue,
-                                        type: gameTypeFilter.graphqlValue
-                                    )
-                                }
-                            }
-                        )
-                        .padding(.bottom)
+                    // Infinite scroll: the grid keeps growing as you reach the
+                    // end. Page numbers are meaningless in a 47k-title catalog -
+                    // finding a specific game is search's job.
+                    // Lives outside the grid at a fixed height so appending a
+                    // page never reflows the row the spinner was sitting in.
+                    if viewModel.hasNextPage {
+                        loadMoreFooter
+                    }
+
+                    if !viewModel.hasNextPage && viewModel.totalCount > 0 {
+                        Text("\(viewModel.totalCount.formatted()) games")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .padding(.bottom, 16)
                     }
                 }
             }
@@ -817,129 +793,7 @@ private struct ActivityRow: View {
 
 // MARK: - Pagination Controls
 
-private struct PaginationControls: View {
-    let currentPage: Int
-    let totalPages: Int
-    let isLoading: Bool
-    let onPrevious: () -> Void
-    let onNext: () -> Void
-    let onGoToPage: (Int) -> Void
 
-    @State private var showPagePicker = false
-
-    var body: some View {
-        HStack(spacing: 16) {
-            Button(action: onPrevious) {
-                Image(systemName: "chevron.left")
-                    .font(.body.weight(.semibold))
-                    .frame(width: 44, height: 44)
-            }
-            .disabled(currentPage <= 1 || isLoading)
-            .opacity(currentPage <= 1 ? 0.3 : 1)
-
-            Spacer()
-
-            Button {
-                showPagePicker = true
-            } label: {
-                HStack(spacing: 4) {
-                    if isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    } else {
-                        Text("Page \(currentPage) of \(totalPages)")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                }
-                .foregroundStyle(.primary)
-            }
-            .disabled(isLoading)
-
-            Spacer()
-
-            Button(action: onNext) {
-                Image(systemName: "chevron.right")
-                    .font(.body.weight(.semibold))
-                    .frame(width: 44, height: 44)
-            }
-            .disabled(currentPage >= totalPages || isLoading)
-            .opacity(currentPage >= totalPages ? 0.3 : 1)
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.bar)
-        .sheet(isPresented: $showPagePicker) {
-            PagePickerSheet(
-                currentPage: currentPage,
-                totalPages: totalPages,
-                onSelect: { page in
-                    showPagePicker = false
-                    onGoToPage(page)
-                }
-            )
-            .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
-        }
-    }
-}
-
-private struct PagePickerSheet: View {
-    let currentPage: Int
-    let totalPages: Int
-    let onSelect: (Int) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedPage: Int
-
-    init(currentPage: Int, totalPages: Int, onSelect: @escaping (Int) -> Void) {
-        self.currentPage = currentPage
-        self.totalPages = totalPages
-        self.onSelect = onSelect
-        self._selectedPage = State(initialValue: currentPage)
-    }
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Text("Go to Page")
-                    .font(.headline)
-
-                Picker("Page", selection: $selectedPage) {
-                    ForEach(1...totalPages, id: \.self) { page in
-                        Text("\(page)").tag(page)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(height: 150)
-
-                Button {
-                    onSelect(selectedPage)
-                } label: {
-                    Text("Go to Page \(selectedPage)")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.accentColor)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                }
-                .padding(.horizontal)
-
-                Spacer()
-            }
-            .padding(.top)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
 
 // MARK: - Game Row Views
 
@@ -1177,7 +1031,6 @@ private struct GameFiltersSheet: View {
     @Binding var sortOption: SortOption
     @Binding var minAchievementCount: Int
     @Binding var gameTypeFilter: GameTypeFilter
-    @Binding var selectedPageSize: Int
 
     var body: some View {
         NavigationStack {
@@ -1217,12 +1070,6 @@ private struct GameFiltersSheet: View {
                             Text(option.title).tag(option)
                         }
                     }
-
-                    Picker("Results Per Page", selection: $selectedPageSize) {
-                        ForEach(PageSizeOption.allCases) { option in
-                            Text(option.title).tag(option.rawValue)
-                        }
-                    }
                 } header: {
                     Text("Display")
                 }
@@ -1231,10 +1078,9 @@ private struct GameFiltersSheet: View {
                     Button("Reset Filters") {
                         selectedPlatformId = ""
                         achievementFilter = .all
-                        sortOption = .titleAsc
+                        sortOption = .mostAchievements
                         minAchievementCount = 0
                         gameTypeFilter = .all
-                        selectedPageSize = 25
                     }
                     .foregroundColor(.red)
                 }

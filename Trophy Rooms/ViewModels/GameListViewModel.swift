@@ -91,9 +91,13 @@ class GameListViewModel: ObservableObject {
         }
     }
 
-    func fetchGames(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil, page: Int = 1) async {
+    func fetchGames(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil, page: Int = 1, append: Bool = false) async {
         DispatchQueue.main.async {
-            self.isLoading = true
+            if append {
+                self.isLoadingMore = true
+            } else {
+                self.isLoading = true
+            }
             self.errorMessage = nil
         }
 
@@ -154,19 +158,49 @@ class GameListViewModel: ObservableObject {
         do {
             let response: GamesPageResponse = try await NetworkService.shared.fetch(query: query, variables: variables)
             DispatchQueue.main.async {
-                self.games = response.gamesPage.items
+                if append {
+                    // Guard against duplicates: ordering ties across page
+                    // boundaries can return the same row twice
+                    let existing = Set(self.games.map(\.id))
+                    self.games += response.gamesPage.items.filter { !existing.contains($0.id) }
+                } else {
+                    self.games = response.gamesPage.items
+                }
                 self.currentPage = response.gamesPage.page
                 self.totalPages = response.gamesPage.totalPages
                 self.totalCount = response.gamesPage.totalCount
                 self.isLoading = false
+                self.isLoadingMore = false
             }
         } catch {
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
+                self.isLoadingMore = false
             }
             print("Error fetching games: \(error)")
         }
+    }
+
+    /// Appends the next page for infinite scroll. Safe to call repeatedly -
+    /// it no-ops while a load is in flight or when the catalog is exhausted.
+    func loadNextPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
+        // The published flags are set inside DispatchQueue.main.async, so they
+        // can't gate re-entrancy: two callers would both pass the guard before
+        // either assignment lands. This flag flips synchronously.
+        guard hasNextPage, !isLoading, !isFetchingMore else { return }
+        isFetchingMore = true
+        defer { isFetchingMore = false }
+
+        await fetchGames(
+            search: search,
+            platformId: platformId,
+            hasAchievements: hasAchievements,
+            orderBy: orderBy,
+            type: type,
+            page: currentPage + 1,
+            append: true
+        )
     }
 
     func goToNextPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
@@ -174,21 +208,8 @@ class GameListViewModel: ObservableObject {
         await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: currentPage + 1)
     }
 
-    func goToPreviousPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
-        guard hasPreviousPage else { return }
-        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: currentPage - 1)
-    }
 
-    func goToPage(_ page: Int, search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
-        let targetPage = max(1, min(page, totalPages))
-        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: targetPage)
-    }
 
-    func setPageSize(_ newSize: Int, search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
-        pageSize = newSize
-        // Reset to page 1 when changing page size
-        await fetchGames(search: search, platformId: platformId, hasAchievements: hasAchievements, orderBy: orderBy, type: type, page: 1)
-    }
 }
 
 // MARK: - Page Size Options
