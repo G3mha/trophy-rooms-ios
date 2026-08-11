@@ -80,13 +80,13 @@ private struct ProfileHeader: View {
 
             // Quick stats
             HStack(spacing: 32) {
-                QuickStat(value: "\(user.trophyCount)", label: "Trophies", icon: "trophy.fill", color: .orange)
-                QuickStat(value: "\(user.achievementCount)", label: "Achievements", icon: "star.fill", color: .yellow)
-                QuickStat(value: "\(user.gamesWithAchievementsCount)", label: "Games", icon: "gamecontroller.fill", color: .blue)
+                QuickStat(value: "\(user.trophyCount)", label: "Trophies", icon: "trophy.fill", color: Cabinet.Tint.warm)
+                QuickStat(value: "\(user.achievementCount)", label: "Achievements", icon: "star.fill", color: Cabinet.Tint.amber)
+                QuickStat(value: "\(user.gamesWithAchievementsCount)", label: "Games", icon: "gamecontroller.fill", color: Cabinet.Tint.info)
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(16)
     }
 
@@ -132,10 +132,10 @@ private struct StatsGrid: View {
                 .font(.headline)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                StatCell(title: "Total Points", value: "\(stats.totalPoints)", icon: "star.circle.fill", color: .yellow)
-                StatCell(title: "Completion Rate", value: String(format: "%.1f%%", stats.completionRate), icon: "percent", color: .green)
-                StatCell(title: "Avg Points/Game", value: "\(Int(stats.averagePointsPerGame))", icon: "chart.line.uptrend.xyaxis", color: .blue)
-                StatCell(title: "Games Played", value: "\(user.gamesWithAchievementsCount)", icon: "gamecontroller", color: .purple)
+                StatCell(title: "Total Points", value: "\(stats.totalPoints)", icon: "star.circle.fill", color: Cabinet.Tint.amber)
+                StatCell(title: "Completion Rate", value: String(format: "%.1f%%", stats.completionRate), icon: "percent", color: Cabinet.Tint.positive)
+                StatCell(title: "Avg Points/Game", value: "\(Int(stats.averagePointsPerGame))", icon: "chart.line.uptrend.xyaxis", color: Cabinet.Tint.info)
+                StatCell(title: "Games Played", value: "\(user.gamesWithAchievementsCount)", icon: "gamecontroller", color: Cabinet.Tint.violet)
             }
 
             // Tier breakdown
@@ -146,7 +146,7 @@ private struct StatsGrid: View {
                 TierStat(tier: .BRONZE, count: stats.bronzeCount)
             }
             .padding()
-            .background(Color(.secondarySystemBackground))
+            .background(Cabinet.card)
             .cornerRadius(12)
         }
     }
@@ -176,7 +176,7 @@ private struct StatCell: View {
             Spacer()
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -277,7 +277,7 @@ private struct RecentAchievementRow: View {
                 .foregroundColor(.blue)
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 

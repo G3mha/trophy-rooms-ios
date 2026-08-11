@@ -122,8 +122,8 @@ private struct StatsHeader: View {
     var body: some View {
         HStack(spacing: 16) {
             TrophyRoomStatCard(title: "Trophies", value: stats.totalTrophies, icon: "trophy.fill", color: Color.accentColor)
-            TrophyRoomStatCard(title: "Achievements", value: stats.totalAchievements, icon: "star.fill", color: .yellow)
-            TrophyRoomStatCard(title: "Games", value: stats.totalGamesPlayed, icon: "gamecontroller.fill", color: .blue)
+            TrophyRoomStatCard(title: "Achievements", value: stats.totalAchievements, icon: "star.fill", color: Cabinet.Tint.amber)
+            TrophyRoomStatCard(title: "Games", value: stats.totalGamesPlayed, icon: "gamecontroller.fill", color: Cabinet.Tint.info)
         }
     }
 }
@@ -148,7 +148,7 @@ private struct TrophyRoomStatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -188,7 +188,7 @@ private struct CompletedGameCard: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -243,7 +243,7 @@ private struct GameProgressCard: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }

@@ -65,7 +65,7 @@ private struct StatRow: View {
                 .bold()
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }

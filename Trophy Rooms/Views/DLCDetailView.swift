@@ -90,6 +90,7 @@ struct DLCDetailView: View {
                 Text("DLC not found")
             }
         }
+        .cabinetCanvas()
         .navigationTitle("DLC Details")
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -192,11 +193,11 @@ private struct DLCTypeBadgeLarge: View {
     var badgeColor: Color {
         switch type {
         case .DLC:
-            return .blue
+            return Cabinet.Tint.info
         case .EXPANSION:
-            return .purple
+            return Cabinet.Tint.violet
         case .FREE_UPDATE:
-            return .green
+            return Cabinet.Tint.positive
         }
     }
 }
@@ -229,7 +230,7 @@ private struct DLCOwnershipCard: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(isOwned ? Color.green.opacity(0.15) : Color(.secondarySystemBackground))
+                .background(isOwned ? Color.green.opacity(0.15) : Cabinet.card)
                 .foregroundColor(.primary)
                 .cornerRadius(8)
             }
@@ -277,7 +278,7 @@ private struct DLCParentGameRow: View {
                 .foregroundStyle(.tertiary)
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -306,7 +307,7 @@ private struct DLCAchievementSetRow: View {
             Spacer()
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -353,7 +354,7 @@ private struct DLCBundleRow: View {
                 .foregroundStyle(.tertiary)
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -377,13 +378,13 @@ private struct BundleTypeBadgeSmall: View {
     var badgeColor: Color {
         switch type {
         case .BUNDLE:
-            return .blue
+            return Cabinet.Tint.info
         case .SEASON_PASS:
-            return .purple
+            return Cabinet.Tint.violet
         case .COLLECTION:
-            return .orange
+            return Cabinet.Tint.warm
         case .SUBSCRIPTION:
-            return .green
+            return Cabinet.Tint.positive
         }
     }
 }

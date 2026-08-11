@@ -280,7 +280,7 @@ private struct PlatformChip: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(16)
     }
 }

@@ -58,7 +58,7 @@ struct CollapsibleStatsBar: View {
                 }
             }
         }
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
     }
 }
 
@@ -84,7 +84,7 @@ struct StatCard: View {
         }
         .frame(width: 76)
         .padding(.vertical, 8)
-        .background(Color(.systemBackground))
+        .background(Cabinet.canvas)
         .cornerRadius(12)
     }
 }

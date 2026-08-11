@@ -36,11 +36,16 @@ struct BuylistView: View {
                     }
                 }
             } else if viewModel.buylistItems.isEmpty {
-                ContentUnavailableView(
-                    "Your Buylist Is Empty",
-                    systemImage: "cart",
-                    description: Text("Browse games, DLCs, and bundles to add them to your buylist")
-                )
+                VStack(spacing: 0) {
+                    Spacer()
+                    ContentUnavailableView(
+                        "Your Buylist Is Empty",
+                        systemImage: "cart",
+                        description: Text("Browse games, DLCs, and bundles to add them to your buylist")
+                    )
+                    Spacer()
+                    TrophyShelfView()
+                }
             } else {
                 VStack(spacing: 0) {
                     // Stats bar
@@ -140,12 +145,12 @@ struct BuylistView: View {
 
     private func buylistStatItems(from stats: BuylistStats) -> [StatItem] {
         [
-            StatItem(title: "Total", value: "\(stats.totalItems)", icon: "cart.fill", color: .blue),
-            StatItem(title: "Games", value: "\(stats.gameCount)", icon: "gamecontroller.fill", color: .blue),
-            StatItem(title: "Bundles", value: "\(stats.bundleCount)", icon: "shippingbox.fill", color: .orange),
-            StatItem(title: "DLCs", value: "\(stats.dlcCount)", icon: "puzzlepiece.extension.fill", color: .purple),
-            StatItem(title: "High", value: "\(stats.highPriorityCount)", icon: "exclamationmark.circle.fill", color: .red),
-            StatItem(title: "Est. Total", value: String(format: "$%.2f", stats.totalEstimatedCost), icon: "dollarsign.circle.fill", color: .green),
+            StatItem(title: "Total", value: "\(stats.totalItems)", icon: "cart.fill", color: Cabinet.Tint.info),
+            StatItem(title: "Games", value: "\(stats.gameCount)", icon: "gamecontroller.fill", color: Cabinet.Tint.info),
+            StatItem(title: "Bundles", value: "\(stats.bundleCount)", icon: "shippingbox.fill", color: Cabinet.Tint.warm),
+            StatItem(title: "DLCs", value: "\(stats.dlcCount)", icon: "puzzlepiece.extension.fill", color: Cabinet.Tint.violet),
+            StatItem(title: "High", value: "\(stats.highPriorityCount)", icon: "exclamationmark.circle.fill", color: Cabinet.Tint.alert),
+            StatItem(title: "Est. Total", value: String(format: "$%.2f", stats.totalEstimatedCost), icon: "dollarsign.circle.fill", color: Cabinet.Tint.positive),
         ]
     }
 
@@ -242,17 +247,17 @@ private struct BuylistFilterView: View {
 
     func priorityColor(for priority: BuylistPriority) -> Color {
         switch priority {
-        case .HIGH: return .red
-        case .MEDIUM: return .orange
-        case .LOW: return .green
+        case .HIGH: return Cabinet.Tint.alert
+        case .MEDIUM: return Cabinet.Tint.warm
+        case .LOW: return Cabinet.Tint.positive
         }
     }
 
     func itemTypeColor(for itemType: BuylistItemType) -> Color {
         switch itemType {
-        case .GAME: return .blue
-        case .DLC: return .purple
-        case .BUNDLE: return .pink
+        case .GAME: return Cabinet.Tint.info
+        case .DLC: return Cabinet.Tint.violet
+        case .BUNDLE: return Cabinet.Tint.violet
         }
     }
 }
@@ -339,14 +344,7 @@ struct PriorityBadge: View {
     let priority: BuylistPriority
 
     var body: some View {
-        Text(priorityMarker)
-            .font(.caption)
-            .fontWeight(.bold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(priorityColor.opacity(0.15))
-            .foregroundColor(priorityColor)
-            .cornerRadius(8)
+        Tag(priorityMarker, tint: priorityColor)
     }
 
     var priorityMarker: String {
@@ -359,9 +357,9 @@ struct PriorityBadge: View {
 
     var priorityColor: Color {
         switch priority {
-        case .HIGH: return .red
-        case .MEDIUM: return .orange
-        case .LOW: return .green
+        case .HIGH: return Cabinet.Tint.alert
+        case .MEDIUM: return Cabinet.Tint.warm
+        case .LOW: return Cabinet.Tint.positive
         }
     }
 }
@@ -370,25 +368,14 @@ struct ItemTypeBadge: View {
     let itemType: BuylistItemType
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: itemType.iconName)
-                .font(.caption2)
-            Text(itemType.displayName)
-                .font(.caption)
-                .fontWeight(.medium)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(itemTypeColor.opacity(0.15))
-        .foregroundColor(itemTypeColor)
-        .cornerRadius(8)
+        Tag(itemType.displayName, icon: itemType.iconName, tint: itemTypeColor)
     }
 
     var itemTypeColor: Color {
         switch itemType {
-        case .GAME: return .blue
-        case .DLC: return .purple
-        case .BUNDLE: return .pink
+        case .GAME: return Cabinet.Tint.info
+        case .DLC: return Cabinet.Tint.violet
+        case .BUNDLE: return Cabinet.Tint.violet
         }
     }
 }

@@ -93,6 +93,7 @@ struct GameFamilyView: View {
                             }
                         }
                         .padding(.vertical, 8)
+                        .listRowBackground(Cabinet.card)
                     }
 
                     // Platform Versions Section
@@ -118,12 +119,17 @@ struct GameFamilyView: View {
                                 }
                                 .padding(.vertical, 4)
                             }
+                            .listRowBackground(Cabinet.card)
                         }
                     }
                 }
                 .listStyle(.insetGrouped)
+                // The list's opaque grouped background hides the cabinet
+                // canvas the navigation stack provides
+                .scrollContentBackground(.hidden)
             }
         }
+        .cabinetCanvas()
         .navigationTitle("Game Versions")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAuth) {

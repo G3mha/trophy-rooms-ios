@@ -27,6 +27,7 @@ struct PlayJournalView: View {
                 journalList
             }
         }
+        .cabinetCanvas()
         .navigationTitle("Play Journal")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -65,6 +66,7 @@ struct PlayJournalView: View {
                 Section {
                     ForEach(group.sessions) { session in
                         PlaySessionRow(session: session)
+                            .listRowBackground(Color.clear)
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 editingSession = session
@@ -94,6 +96,7 @@ struct PlayJournalView: View {
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .contentMargins(.bottom, 40, for: .scrollContent)
         .refreshable {
             await viewModel.fetch()
@@ -152,7 +155,7 @@ private struct PlayStatsHeader: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Cabinet.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 

@@ -28,11 +28,16 @@ struct LibraryView: View {
                     }
                 }
             } else if viewModel.libraryItems.isEmpty {
-                ContentUnavailableView(
-                    "Your Library Is Empty",
-                    systemImage: "books.vertical",
-                    description: Text("Browse games and add them to your library")
-                )
+                VStack(spacing: 0) {
+                    Spacer()
+                    ContentUnavailableView(
+                        "Your Library Is Empty",
+                        systemImage: "books.vertical",
+                        description: Text("Browse games and add them to your library")
+                    )
+                    Spacer()
+                    TrophyShelfView()
+                }
             } else {
                 VStack(spacing: 0) {
                     CollapsibleStatsBar(
@@ -143,7 +148,7 @@ struct LibraryView: View {
     }
 
     private func libraryStatItems(totalItems: Int, statusCounts: [GameStatus: Int]) -> [StatItem] {
-        var items = [StatItem(title: "Total", value: "\(totalItems)", icon: "books.vertical.fill", color: .blue)]
+        var items = [StatItem(title: "Total", value: "\(totalItems)", icon: "books.vertical.fill", color: Cabinet.Tint.info)]
 
         for status in GameStatus.allCases {
             let count = statusCounts[status] ?? 0
@@ -162,11 +167,11 @@ struct LibraryView: View {
 
     private func statusColor(for status: GameStatus) -> Color {
         switch status {
-        case .BACKLOG: return .blue
-        case .PLAYING: return .green
-        case .PAUSED: return .orange
-        case .COMPLETED: return .purple
-        case .DROPPED: return .gray
+        case .BACKLOG: return Cabinet.Tint.info
+        case .PLAYING: return Cabinet.Tint.positive
+        case .PAUSED: return Cabinet.Tint.warm
+        case .COMPLETED: return Cabinet.Tint.violet
+        case .DROPPED: return Cabinet.Tint.muted
         }
     }
 
@@ -242,11 +247,11 @@ private struct LibraryFilterView: View {
 
     func statusColor(for status: GameStatus) -> Color {
         switch status {
-        case .BACKLOG: return .blue
-        case .PLAYING: return .green
-        case .PAUSED: return .orange
-        case .COMPLETED: return .purple
-        case .DROPPED: return .gray
+        case .BACKLOG: return Cabinet.Tint.info
+        case .PLAYING: return Cabinet.Tint.positive
+        case .PAUSED: return Cabinet.Tint.warm
+        case .COMPLETED: return Cabinet.Tint.violet
+        case .DROPPED: return Cabinet.Tint.muted
         }
     }
 }
@@ -291,18 +296,7 @@ struct PlatformBadge: View {
     let name: String
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "gamecontroller")
-                .font(.caption2)
-            Text(name)
-                .font(.caption)
-                .fontWeight(.medium)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.secondary.opacity(0.15))
-        .foregroundColor(.secondary)
-        .cornerRadius(8)
+        Tag(name, icon: "gamecontroller", tint: Cabinet.brass)
     }
 }
 
@@ -310,27 +304,16 @@ struct StatusBadge: View {
     let status: GameStatus
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: status.iconName)
-                .font(.caption2)
-            Text(status.displayName)
-                .font(.caption)
-                .fontWeight(.medium)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(statusColor.opacity(0.15))
-        .foregroundColor(statusColor)
-        .cornerRadius(8)
+        Tag(status.displayName, icon: status.iconName, tint: statusColor)
     }
 
     var statusColor: Color {
         switch status {
-        case .BACKLOG: return .blue
-        case .PLAYING: return .green
-        case .PAUSED: return .orange
-        case .COMPLETED: return .purple
-        case .DROPPED: return .gray
+        case .BACKLOG: return Cabinet.Tint.info
+        case .PLAYING: return Cabinet.Tint.positive
+        case .PAUSED: return Cabinet.Tint.warm
+        case .COMPLETED: return Cabinet.Tint.violet
+        case .DROPPED: return Cabinet.Tint.muted
         }
     }
 }
@@ -339,18 +322,7 @@ struct VersionBadge: View {
     let name: String
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "square.stack.3d.up")
-                .font(.caption2)
-            Text(name)
-                .font(.caption)
-                .fontWeight(.medium)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.indigo.opacity(0.15))
-        .foregroundColor(.indigo)
-        .cornerRadius(8)
+        Tag(name, icon: "square.stack.3d.up", tint: Cabinet.brass)
     }
 }
 

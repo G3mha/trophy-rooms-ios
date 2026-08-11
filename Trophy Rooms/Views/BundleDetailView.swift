@@ -91,6 +91,7 @@ struct BundleDetailView: View {
                 Text("Bundle not found")
             }
         }
+        .cabinetCanvas()
         .navigationTitle("Bundle Details")
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -200,13 +201,13 @@ private struct BundleTypeBadgeLarge: View {
     var badgeColor: Color {
         switch type {
         case .BUNDLE:
-            return .blue
+            return Cabinet.Tint.info
         case .SEASON_PASS:
-            return .purple
+            return Cabinet.Tint.violet
         case .COLLECTION:
-            return .orange
+            return Cabinet.Tint.warm
         case .SUBSCRIPTION:
-            return .green
+            return Cabinet.Tint.positive
         }
     }
 }
@@ -228,7 +229,7 @@ private struct BundlePlatformsSection: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(Color(.secondarySystemBackground))
+                    .background(Cabinet.card)
                     .cornerRadius(8)
                 }
             }
@@ -253,7 +254,7 @@ private struct BundleBuylistSection: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(.secondarySystemBackground))
+                .background(Cabinet.card)
                 .foregroundColor(.primary)
                 .cornerRadius(8)
             }
@@ -316,7 +317,7 @@ private struct BundleOwnershipSection: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(.secondarySystemBackground))
+                .background(Cabinet.card)
                 .foregroundColor(.primary)
                 .cornerRadius(8)
             }
@@ -470,7 +471,7 @@ private struct BundleGameFamilyRow: View {
                 .foregroundStyle(.tertiary)
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -521,7 +522,7 @@ private struct BundleDLCRow: View {
             Spacer()
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }

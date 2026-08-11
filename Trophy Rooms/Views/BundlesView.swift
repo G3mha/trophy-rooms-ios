@@ -16,22 +16,26 @@ struct BundlesView: View {
                 }
                 .pickerStyle(.menu)
             }
+            .listRowBackground(Cabinet.card)
 
             if viewModel.isLoading && viewModel.bundles.isEmpty {
                 Section {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                 }
+                .listRowBackground(Cabinet.card)
             } else if let error = viewModel.errorMessage {
                 Section {
                     Text(error)
                         .foregroundStyle(.red)
                 }
+                .listRowBackground(Cabinet.card)
             } else if viewModel.bundles.isEmpty {
                 Section {
                     Text("No bundles found")
                         .foregroundStyle(.secondary)
                 }
+                .listRowBackground(Cabinet.card)
             } else {
                 Section {
                     ForEach(viewModel.bundles) { bundle in
@@ -42,8 +46,11 @@ struct BundlesView: View {
                         }
                     }
                 }
+                .listRowBackground(Cabinet.card)
             }
         }
+        .scrollContentBackground(.hidden)
+        .cabinetCanvas()
         .navigationTitle("Bundles")
         .searchable(text: $viewModel.searchText, prompt: "Search bundles")
         .refreshable {
@@ -112,26 +119,19 @@ private struct BundleTypeTag: View {
     let type: BundleType
 
     var body: some View {
-        Text(type.displayName)
-            .font(.caption2)
-            .fontWeight(.medium)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(badgeColor.opacity(0.2))
-            .foregroundStyle(badgeColor)
-            .cornerRadius(4)
+        Tag(type.displayName, tint: badgeColor)
     }
 
     var badgeColor: Color {
         switch type {
         case .BUNDLE:
-            return .blue
+            return Cabinet.Tint.info
         case .SEASON_PASS:
-            return .purple
+            return Cabinet.Tint.violet
         case .COLLECTION:
-            return .orange
+            return Cabinet.Tint.warm
         case .SUBSCRIPTION:
-            return .green
+            return Cabinet.Tint.positive
         }
     }
 }

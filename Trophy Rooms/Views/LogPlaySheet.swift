@@ -120,7 +120,7 @@ struct LogPlaySheet: View {
                         TextField("Beat the water temple... (optional)", text: $notes, axis: .vertical)
                             .lineLimit(2...4)
                             .padding(10)
-                            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .background(Cabinet.card, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
 
                     if let error = journalViewModel.errorMessage {
@@ -183,7 +183,7 @@ struct LogPlaySheet: View {
             TextField("Search your library", text: $searchText)
                 .textFieldStyle(.plain)
                 .padding(10)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .background(Cabinet.card, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .autocorrectionDisabled()
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -351,7 +351,7 @@ struct EditPlaySessionSheet: View {
                     TextField("Notes (optional)", text: $notes, axis: .vertical)
                         .lineLimit(2...4)
                         .padding(10)
-                        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .background(Cabinet.card, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                     Button {
                         isSaving = true

@@ -37,7 +37,7 @@ struct LargeBuylistButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding()
-            .background(isInBuylist ? Color.orange.opacity(0.1) : Color(.secondarySystemBackground))
+            .background(isInBuylist ? Color.orange.opacity(0.1) : Cabinet.card)
             .foregroundColor(isInBuylist ? .orange : .primary)
             .cornerRadius(12)
         }

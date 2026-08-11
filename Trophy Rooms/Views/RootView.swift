@@ -20,24 +20,28 @@ struct RootView: View {
                 NavigationStack {
                     HomeView()
                 }
+                .cabinetCanvas()
             }
 
             Tab("Trophies", systemImage: "trophy.fill", value: .trophies) {
                 NavigationStack {
                     TrophyRoomView()
                 }
+                .cabinetCanvas()
             }
 
             Tab("Library", systemImage: "books.vertical.fill", value: .library) {
                 NavigationStack {
                     LibraryView()
                 }
+                .cabinetCanvas()
             }
 
             Tab("Collection", systemImage: "square.grid.2x2.fill", value: .collection) {
                 NavigationStack {
                     CollectionView()
                 }
+                .cabinetCanvas()
             }
 
             Tab("Search", systemImage: "magnifyingglass", value: .search, role: .search) {
@@ -255,7 +259,7 @@ private struct SearchItemRow: View {
         }
         .padding(12)
         .background(
-            Color(.secondarySystemBackground),
+            Cabinet.card,
             in: RoundedRectangle(cornerRadius: 12, style: .continuous)
         )
     }
@@ -284,7 +288,7 @@ private struct SearchSkeletonList: View {
                     }
                     .padding(12)
                     .background(
-                        Color(.secondarySystemBackground),
+                        Cabinet.card,
                         in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                     )
                 }

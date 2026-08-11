@@ -202,11 +202,16 @@ struct CollectionView: View {
                 }
             }
         } else if collectionViewModel.collectionItems.isEmpty {
-            ContentUnavailableView(
-                "Your Collection Is Empty",
-                systemImage: "archivebox",
-                description: Text("Add physical games and bundles to track your collection")
-            )
+            VStack(spacing: 0) {
+                Spacer()
+                ContentUnavailableView(
+                    "Your Collection Is Empty",
+                    systemImage: "archivebox",
+                    description: Text("Add physical games and bundles to track your collection")
+                )
+                Spacer()
+                TrophyShelfView()
+            }
         } else {
             VStack(spacing: 0) {
                 // Stats header
@@ -301,11 +306,16 @@ struct CollectionView: View {
                 }
             }
         } else if buylistViewModel.buylistItems.isEmpty {
-            ContentUnavailableView(
-                "Your Buylist Is Empty",
-                systemImage: "cart",
-                description: Text("Browse games, DLCs, and bundles to add them to your buylist")
-            )
+            VStack(spacing: 0) {
+                Spacer()
+                ContentUnavailableView(
+                    "Your Buylist Is Empty",
+                    systemImage: "cart",
+                    description: Text("Browse games, DLCs, and bundles to add them to your buylist")
+                )
+                Spacer()
+                TrophyShelfView()
+            }
         } else {
             VStack(spacing: 0) {
                 // Stats bar
@@ -462,9 +472,9 @@ struct CollectionView: View {
 
     private func collectionStatItems(from stats: CollectionStats) -> [StatItem] {
         var items = [
-            StatItem(title: "Total", value: "\(stats.totalItems)", icon: "archivebox.fill", color: .blue),
-            StatItem(title: "Sealed", value: "\(stats.sealedCount)", icon: "seal.fill", color: .purple),
-            StatItem(title: "Complete", value: "\(stats.completeCount)", icon: "checkmark.seal.fill", color: .green),
+            StatItem(title: "Total", value: "\(stats.totalItems)", icon: "archivebox.fill", color: Cabinet.Tint.info),
+            StatItem(title: "Sealed", value: "\(stats.sealedCount)", icon: "seal.fill", color: Cabinet.Tint.violet),
+            StatItem(title: "Complete", value: "\(stats.completeCount)", icon: "checkmark.seal.fill", color: Cabinet.Tint.positive),
         ]
 
         for regionCount in stats.byRegion {
@@ -481,30 +491,30 @@ struct CollectionView: View {
 
     private func buylistStatItems(from stats: BuylistStats) -> [StatItem] {
         [
-            StatItem(title: "Total", value: "\(stats.totalItems)", icon: "cart.fill", color: .blue),
-            StatItem(title: "Games", value: "\(stats.gameCount)", icon: "gamecontroller.fill", color: .blue),
-            StatItem(title: "Bundles", value: "\(stats.bundleCount)", icon: "shippingbox.fill", color: .orange),
-            StatItem(title: "DLCs", value: "\(stats.dlcCount)", icon: "puzzlepiece.extension.fill", color: .purple),
-            StatItem(title: "High", value: "\(stats.highPriorityCount)", icon: "exclamationmark.circle.fill", color: .red),
-            StatItem(title: "Est. Total", value: String(format: "$%.2f", stats.totalEstimatedCost), icon: "dollarsign.circle.fill", color: .green),
+            StatItem(title: "Total", value: "\(stats.totalItems)", icon: "cart.fill", color: Cabinet.Tint.info),
+            StatItem(title: "Games", value: "\(stats.gameCount)", icon: "gamecontroller.fill", color: Cabinet.Tint.info),
+            StatItem(title: "Bundles", value: "\(stats.bundleCount)", icon: "shippingbox.fill", color: Cabinet.Tint.warm),
+            StatItem(title: "DLCs", value: "\(stats.dlcCount)", icon: "puzzlepiece.extension.fill", color: Cabinet.Tint.violet),
+            StatItem(title: "High", value: "\(stats.highPriorityCount)", icon: "exclamationmark.circle.fill", color: Cabinet.Tint.alert),
+            StatItem(title: "Est. Total", value: String(format: "$%.2f", stats.totalEstimatedCost), icon: "dollarsign.circle.fill", color: Cabinet.Tint.positive),
         ]
     }
 
     private func sellListStatItems(from stats: SellListStats) -> [StatItem] {
         [
-            StatItem(title: "For Sale", value: "\(stats.activeCount)", icon: "tag.fill", color: .orange),
-            StatItem(title: "Sold", value: "\(stats.soldCount)", icon: "checkmark.seal.fill", color: .green),
-            StatItem(title: "Asking", value: String(format: "$%.2f", stats.totalAskingValue), icon: "dollarsign.circle", color: .blue),
-            StatItem(title: "Revenue", value: String(format: "$%.2f", stats.totalSoldValue), icon: "dollarsign.circle.fill", color: .green),
+            StatItem(title: "For Sale", value: "\(stats.activeCount)", icon: "tag.fill", color: Cabinet.Tint.warm),
+            StatItem(title: "Sold", value: "\(stats.soldCount)", icon: "checkmark.seal.fill", color: Cabinet.Tint.positive),
+            StatItem(title: "Asking", value: String(format: "$%.2f", stats.totalAskingValue), icon: "dollarsign.circle", color: Cabinet.Tint.info),
+            StatItem(title: "Revenue", value: String(format: "$%.2f", stats.totalSoldValue), icon: "dollarsign.circle.fill", color: Cabinet.Tint.positive),
         ]
     }
 
     private func regionColor(for region: GameRegion) -> Color {
         switch region {
-        case .NTSC_U: return .blue
-        case .PAL: return .green
-        case .NTSC_J: return .red
-        case .OTHER: return .gray
+        case .NTSC_U: return Cabinet.Tint.info
+        case .PAL: return Cabinet.Tint.positive
+        case .NTSC_J: return Cabinet.Tint.alert
+        case .OTHER: return Cabinet.Tint.muted
         }
     }
 
@@ -708,17 +718,17 @@ private struct BuylistFilterBar: View {
 
     func priorityColor(for priority: BuylistPriority) -> Color {
         switch priority {
-        case .HIGH: return .red
-        case .MEDIUM: return .orange
-        case .LOW: return .green
+        case .HIGH: return Cabinet.Tint.alert
+        case .MEDIUM: return Cabinet.Tint.warm
+        case .LOW: return Cabinet.Tint.positive
         }
     }
 
     func itemTypeColor(for itemType: BuylistItemType) -> Color {
         switch itemType {
-        case .GAME: return .blue
-        case .DLC: return .purple
-        case .BUNDLE: return .pink
+        case .GAME: return Cabinet.Tint.info
+        case .DLC: return Cabinet.Tint.violet
+        case .BUNDLE: return Cabinet.Tint.violet
         }
     }
 }
@@ -741,7 +751,7 @@ private struct CollectionItemRow: View {
                     RegionBadge(region: item.region)
 
                     if let version = item.gameVersion {
-                        Badge(text: version.name, color: .blue)
+                        Badge(text: version.name, color: Cabinet.Tint.info)
                     }
 
                     if let conditionText = item.condition.label {
@@ -787,22 +797,15 @@ private struct RegionBadge: View {
     let region: GameRegion
 
     var body: some View {
-        Text(region.displayName)
-            .font(.caption)
-            .fontWeight(.medium)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(regionColor.opacity(0.15))
-            .foregroundColor(regionColor)
-            .cornerRadius(4)
+        Tag(region.displayName, tint: regionColor)
     }
 
     var regionColor: Color {
         switch region {
-        case .NTSC_U: return .blue
-        case .PAL: return .green
-        case .NTSC_J: return .red
-        case .OTHER: return .gray
+        case .NTSC_U: return Cabinet.Tint.info
+        case .PAL: return Cabinet.Tint.positive
+        case .NTSC_J: return Cabinet.Tint.alert
+        case .OTHER: return Cabinet.Tint.muted
         }
     }
 }
@@ -936,12 +939,12 @@ private struct SellListFilterBar: View {
 
     func conditionColor(for condition: ItemCondition) -> Color {
         switch condition {
-        case .MINT: return .green
-        case .NEAR_MINT: return .teal
-        case .VERY_GOOD: return .blue
-        case .GOOD: return .orange
-        case .FAIR: return .red
-        case .POOR: return .gray
+        case .MINT: return Cabinet.Tint.positive
+        case .NEAR_MINT: return Cabinet.Tint.info
+        case .VERY_GOOD: return Cabinet.Tint.info
+        case .GOOD: return Cabinet.Tint.warm
+        case .FAIR: return Cabinet.Tint.alert
+        case .POOR: return Cabinet.Tint.muted
         }
     }
 }
@@ -967,7 +970,7 @@ private struct SellListItemRow: View {
 
                     // Status badge
                     if item.status == .SOLD {
-                        Badge(text: "Sold", color: .green)
+                        Badge(text: "Sold", color: Cabinet.Tint.positive)
                     }
                 }
 
@@ -1011,24 +1014,17 @@ private struct ConditionBadge: View {
     let condition: ItemCondition
 
     var body: some View {
-        Text(condition.shortName)
-            .font(.caption)
-            .fontWeight(.bold)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(conditionColor.opacity(0.15))
-            .foregroundColor(conditionColor)
-            .cornerRadius(4)
+        Tag(condition.shortName, tint: conditionColor)
     }
 
     var conditionColor: Color {
         switch condition {
-        case .MINT: return .green
-        case .NEAR_MINT: return .teal
-        case .VERY_GOOD: return .blue
-        case .GOOD: return .orange
-        case .FAIR: return .red
-        case .POOR: return .gray
+        case .MINT: return Cabinet.Tint.positive
+        case .NEAR_MINT: return Cabinet.Tint.info
+        case .VERY_GOOD: return Cabinet.Tint.info
+        case .GOOD: return Cabinet.Tint.warm
+        case .FAIR: return Cabinet.Tint.alert
+        case .POOR: return Cabinet.Tint.muted
         }
     }
 }
