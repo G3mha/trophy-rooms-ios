@@ -16,7 +16,8 @@ struct HomeView: View {
     @State private var searchText = ""
     @State private var selectedPlatformId = ""
     @State private var achievementFilter: AchievementFilter = .all
-    @State private var sortOption: SortOption = .titleAsc
+    // Curated games first - alphabetical puts ASCII-symbol titles on top
+    @State private var sortOption: SortOption = .mostAchievements
     @State private var minAchievementCount = 0
     @State private var gameTypeFilter: GameTypeFilter = .all
     @State private var selectedPageSize = 25
@@ -33,7 +34,7 @@ struct HomeView: View {
         var count = 0
         if !selectedPlatformId.isEmpty { count += 1 }
         if achievementFilter != .all { count += 1 }
-        if sortOption != .titleAsc { count += 1 }
+        if sortOption != .mostAchievements { count += 1 }
         if minAchievementCount > 0 { count += 1 }
         if gameTypeFilter != .all { count += 1 }
         if selectedPageSize != 25 { count += 1 }
@@ -478,7 +479,7 @@ private struct LeaderboardTypeChip: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(isSelected ? Color.blue : Color(.secondarySystemBackground))
+            .background(isSelected ? Color.blue : Cabinet.card)
             .foregroundColor(isSelected ? .white : .primary)
             .cornerRadius(16)
         }
@@ -502,7 +503,7 @@ private struct LeaderboardPreview: View {
                 }
             }
         }
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -557,7 +558,7 @@ private struct FastestCompletionsPreview: View {
                 }
             }
         }
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
@@ -698,7 +699,7 @@ private struct ActivityFilterChip: View {
                 .fontWeight(isSelected ? .semibold : .regular)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.orange : Color(.secondarySystemBackground))
+                .background(isSelected ? Color.orange : Cabinet.card)
                 .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(16)
         }
@@ -721,7 +722,7 @@ private struct ActivityPreview: View {
                 }
             }
         }
-        .background(Color(.secondarySystemBackground))
+        .background(Cabinet.card)
         .cornerRadius(12)
     }
 }
