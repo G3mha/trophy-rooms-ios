@@ -19,33 +19,34 @@ struct RootView: View {
             Tab("Home", systemImage: "house.fill", value: .home) {
                 NavigationStack {
                     HomeView()
+                        .cabinetCanvas()
                 }
-                .cabinetCanvas()
             }
 
             Tab("Trophies", systemImage: "trophy.fill", value: .trophies) {
                 NavigationStack {
                     TrophyRoomView()
+                        .cabinetCanvas()
                 }
-                .cabinetCanvas()
             }
 
             Tab("Library", systemImage: "books.vertical.fill", value: .library) {
                 NavigationStack {
                     LibraryView()
+                        .cabinetCanvas()
                 }
-                .cabinetCanvas()
             }
 
             Tab("Collection", systemImage: "square.grid.2x2.fill", value: .collection) {
                 NavigationStack {
                     CollectionView()
+                        .cabinetCanvas()
                 }
-                .cabinetCanvas()
             }
 
             Tab("Search", systemImage: "magnifyingglass", value: .search, role: .search) {
                 GlobalSearchSheet()
+                    .cabinetCanvas()
             }
         }
         // Sidebar on iPad, floating tab bar on iPhone
