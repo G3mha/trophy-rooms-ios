@@ -48,3 +48,9 @@ git push origin main
   bottom safe area inside each page. Use a paging `ScrollView`
   (`.scrollTargetBehavior(.paging)` + `containerRelativeFrame`) instead - see
   HomeView/CollectionView
+
+## Visual Identity
+
+All visual/branding work follows the "trophy cabinet" design system: see
+`.claude/skills/trophy-cabinet-design/SKILL.md`. In-app: keep data UI native
+and dark; the identity enters via accents (empty states, auth sheet, headers).
