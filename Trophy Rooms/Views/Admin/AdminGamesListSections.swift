@@ -7,65 +7,27 @@ struct AdminGamesPaginationSection: View {
     var body: some View {
         if viewModel.totalCount > 0 {
             Section {
-                HStack(spacing: 16) {
-                    Button {
-                        Task { await viewModel.goToFirstPage() }
-                    } label: {
-                        Image(systemName: "chevron.backward.2")
-                    }
-                    .disabled(viewModel.currentPage == 1 || viewModel.isLoading)
-
-                    Button {
-                        Task { await viewModel.goToPreviousPage() }
-                    } label: {
-                        Image(systemName: "chevron.backward")
-                    }
-                    .disabled(!viewModel.canGoPrevious)
-
-                    Spacer()
-
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    } else {
-                        Text("Page \(viewModel.currentPage) of \(viewModel.totalPages)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    Button {
-                        Task { await viewModel.goToNextPage() }
-                    } label: {
-                        Image(systemName: "chevron.forward")
-                    }
-                    .disabled(!viewModel.canGoNext)
-
-                    Button {
-                        Task { await viewModel.goToLastPage() }
-                    } label: {
-                        Image(systemName: "chevron.forward.2")
-                    }
-                    .disabled(viewModel.currentPage == viewModel.totalPages || viewModel.isLoading)
+                PaginationBar(
+                    currentPage: viewModel.currentPage,
+                    totalPages: viewModel.totalPages,
+                    totalCount: viewModel.totalCount,
+                    itemNoun: "games",
+                    isLoading: viewModel.isLoading,
+                    showsEndJumps: true
+                ) { page in
+                    Task { await viewModel.goToPage(page) }
                 }
-                .buttonStyle(.borderless)
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
 
-                HStack {
-                    Text("\(viewModel.totalCount) games total")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-
-                    Spacer()
-
-                    Picker("Per page", selection: $selectedPageSize) {
-                        ForEach(PageSizeOption.allCases) { option in
-                            Text(option.title).tag(option.rawValue)
-                        }
+                Picker("Per page", selection: $selectedPageSize) {
+                    ForEach(PageSizeOption.allCases) { option in
+                        Text(option.title).tag(option.rawValue)
                     }
-                    .pickerStyle(.menu)
-                    .font(.caption)
                 }
+                .pickerStyle(.menu)
+                .font(.caption)
+                .listRowBackground(Cabinet.card)
             }
         }
     }
