@@ -46,16 +46,24 @@ struct AuthView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header
-                    VStack(spacing: 14) {
+                    VStack(spacing: 10) {
                         Image("AuthHeroTrophies")
                             .resizable()
                             .scaledToFit()
                             .frame(maxWidth: 300)
                             .accessibilityLabel("Platform trophies")
 
+                        Text(headerKicker)
+                            .font(Cabinet.script(26))
+                            .foregroundStyle(Cabinet.brass)
+                            .rotationEffect(.degrees(-2.5))
+                            .contentTransition(.opacity)
+
                         Text(headerTitle)
-                            .font(.title)
-                            .fontWeight(.bold)
+                            .font(Cabinet.display(30))
+                            .textCase(.uppercase)
+                            .foregroundStyle(Cabinet.bone)
+                            .shadow(color: Cabinet.shadowRed, radius: 0, x: 3, y: 3)
                             .contentTransition(.opacity)
 
                         Text(headerSubtitle)
@@ -75,7 +83,7 @@ struct AuthView: View {
                         }
                     }
                     .padding(24)
-                    .background(Color(.secondarySystemBackground))
+                    .background(Cabinet.card)
                     .cornerRadius(16)
                     .padding(.horizontal, 24)
 
@@ -95,6 +103,14 @@ struct AuthView: View {
     }
 
     // MARK: - Header
+
+    private var headerKicker: String {
+        switch (mode, step) {
+        case (.signIn, _): return "Your trophy room awaits"
+        case (.signUp, .form): return "Start your trophy room"
+        case (.signUp, .verification): return "Almost there"
+        }
+    }
 
     private var headerTitle: String {
         switch (mode, step) {
@@ -203,7 +219,7 @@ struct AuthView: View {
                     }
                     .padding(14)
                 }
-                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(Cabinet.canvas, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .stroke(
@@ -296,7 +312,7 @@ struct AuthView: View {
                             .font(.title2.weight(.semibold).monospacedDigit())
                             .frame(width: 42, height: 52)
                             .background(
-                                Color(.systemBackground),
+                                Cabinet.canvas,
                                 in: RoundedRectangle(cornerRadius: 10, style: .continuous)
                             )
                             .overlay(
