@@ -426,6 +426,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = TrophyRoomsIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "Trophy Rooms/Trophy Rooms.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = F35MJXTR84;
@@ -445,7 +446,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				CODE_SIGN_ENTITLEMENTS = "Trophy Rooms/Trophy Rooms.entitlements";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.trophyrooms.Trophy-Rooms";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -465,6 +465,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = TrophyRoomsIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "Trophy Rooms/Trophy Rooms.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = F35MJXTR84;
@@ -484,7 +485,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				CODE_SIGN_ENTITLEMENTS = "Trophy Rooms/Trophy Rooms.entitlements";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.trophyrooms.Trophy-Rooms";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -623,14 +623,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		EB78D0823029957900A0D76D /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/supabase-community/supabase-swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.5.1;
-			};
-		};
 		EB454BC02F6737280033B7C6 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher";
@@ -639,18 +631,26 @@
 				minimumVersion = 8.0.0;
 			};
 		};
+		EB78D0823029957900A0D76D /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EB78D08D3029957900A0D76D /* Supabase */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = EB78D0823029957900A0D76D /* XCRemoteSwiftPackageReference "supabase-swift" */;
-			productName = Supabase;
-		};
 		EB454BBF2F6737270033B7C6 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = EB454BC02F6737280033B7C6 /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
+		};
+		EB78D08D3029957900A0D76D /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EB78D0823029957900A0D76D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

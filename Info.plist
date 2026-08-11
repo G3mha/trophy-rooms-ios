@@ -10,6 +10,11 @@
 	<string>$(GRAPHQL_URL)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Anton-Regular.ttf</string>
+		<string>Yellowtail-Regular.ttf</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
