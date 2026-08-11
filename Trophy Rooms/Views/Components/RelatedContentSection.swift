@@ -26,29 +26,29 @@ struct RelatedContentSection<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack {
-                Label(title, systemImage: systemImage)
-                    .font(.headline)
+        // Flat editorial group: brass eyebrow + rows on the canvas, so the
+        // achievement plaque card stays the page's only "special" object
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 7) {
+                Image(systemName: systemImage)
+                    .font(.caption)
+                    .foregroundStyle(Cabinet.brass)
 
-                Spacer()
+                Text(title.uppercased())
+                    .font(.caption.weight(.bold))
+                    .tracking(1.6)
+                    .foregroundStyle(Cabinet.bone.opacity(0.85))
 
-                Text(countLabel ?? "\(count)")
+                Text("· \(countLabel ?? "\(count)")")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(4)
+
+                Spacer()
             }
 
-            // Content
             content()
         }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .padding(.vertical, 6)
     }
 }
 
@@ -87,7 +87,7 @@ struct RelatedItemRow<Badge: View, Subtitle: View, Trailing: View>: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Cover image
+            // Cover image with the cabinet's brass edge
             CachedImageFixed(
                 url: coverUrl,
                 width: coverSize.width,
@@ -95,19 +95,22 @@ struct RelatedItemRow<Badge: View, Subtitle: View, Trailing: View>: View {
                 cornerRadius: coverCornerRadius,
                 placeholderIcon: placeholderIcon
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: coverCornerRadius, style: .continuous)
+                    .stroke(Cabinet.brass.opacity(0.25), lineWidth: 1)
+            )
 
-            // Content
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .lineLimit(1)
-
-                    badge()
-                }
+            // Content - the tag sits on its own line under the title so long
+            // titles get the full width and nothing reads cramped
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .lineLimit(2)
 
                 subtitle()
+
+                badge()
             }
 
             Spacer()

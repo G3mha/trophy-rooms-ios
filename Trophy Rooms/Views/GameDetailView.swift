@@ -86,15 +86,8 @@ struct GameDetailView: View {
                             }
                         }
 
-                        // Game Versions Section
-                        if let versions = game.versions, !versions.isEmpty {
-                            GameVersionsSectionView(
-                                versions: versions,
-                                gameFamilyCoverUrl: game.coverUrl
-                            )
-                        }
-
-                        // Achievement Sets
+                        // Achievement Sets - the page's main event, ahead of
+                        // edition/bundle metadata
                         ForEach(game.achievementSets) { set in
                             AchievementSetView(
                                 achievementSet: set,
@@ -104,6 +97,14 @@ struct GameDetailView: View {
                                         await viewModel.toggleAchievement(achievement)
                                     }
                                 }
+                            )
+                        }
+
+                        // Game Versions Section
+                        if let versions = game.versions, !versions.isEmpty {
+                            GameVersionsSectionView(
+                                versions: versions,
+                                gameFamilyCoverUrl: game.coverUrl
                             )
                         }
 
@@ -179,6 +180,7 @@ struct GameDetailView: View {
                 Text("Game not found")
             }
         }
+        .cabinetCanvas()
         .navigationTitle("Game Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -349,7 +351,7 @@ private struct GameStatusButton: View {
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(currentStatus != nil ? statusColor.opacity(0.15) : Color(.secondarySystemBackground))
+            .background(currentStatus != nil ? statusColor.opacity(0.15) : Cabinet.card)
             .foregroundColor(currentStatus != nil ? statusColor : .primary)
             .cornerRadius(12)
         }
@@ -396,7 +398,7 @@ private struct CollectionButton: View {
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(itemCount > 0 ? Color.orange.opacity(0.15) : Color(.secondarySystemBackground))
+            .background(itemCount > 0 ? Color.orange.opacity(0.15) : Cabinet.card)
             .foregroundColor(itemCount > 0 ? .orange : .primary)
             .cornerRadius(12)
         }
@@ -420,7 +422,7 @@ private struct GameDetailLogPlayButton: View {
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(Color(.secondarySystemBackground))
+            .background(Cabinet.card)
             .foregroundColor(.primary)
             .cornerRadius(12)
         }
@@ -462,7 +464,7 @@ private struct GameDetailBuylistButton: View {
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(isInBuylist ? Color.purple.opacity(0.15) : Color(.secondarySystemBackground))
+            .background(isInBuylist ? Color.purple.opacity(0.15) : Cabinet.card)
             .foregroundColor(isInBuylist ? .purple : .primary)
             .cornerRadius(12)
         }
@@ -497,7 +499,12 @@ private struct GameHeader: View {
                     Color.gray
                 }
                 .frame(width: 100, height: 140)
-                .cornerRadius(8)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Cabinet.brass.opacity(0.55), lineWidth: 1.5)
+                )
+                .shadow(color: Cabinet.amber.opacity(0.18), radius: 18, y: 6)
             }
 
             VStack(alignment: .leading, spacing: 8) {
@@ -532,7 +539,7 @@ private struct GameHeader: View {
                 if totalAchievements > 0 {
                     HStack(spacing: 4) {
                         Image(systemName: "star.fill")
-                            .foregroundColor(.yellow)
+                            .foregroundColor(Cabinet.brass)
                         Text("\(totalAchievements) achievements")
                             .font(.subheadline)
                     }
@@ -552,32 +559,27 @@ private struct GameMetadata: View {
     }
 
     var body: some View {
+        // Compact fact chips - a single date no longer gets a lonely card
         if hasMetadata {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Details")
-                    .font(.headline)
-
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
                     if let releaseDate = game.releaseDate {
-                        MetadataItem(label: "Release Date", value: formatDate(releaseDate))
+                        FactChip(icon: "calendar", label: formatDate(releaseDate))
                     }
                     if let developer = game.developer {
-                        MetadataItem(label: "Developer", value: developer)
+                        FactChip(icon: "hammer.fill", label: developer)
                     }
                     if let publisher = game.publisher {
-                        MetadataItem(label: "Publisher", value: publisher)
+                        FactChip(icon: "building.2.fill", label: publisher)
                     }
                     if let genre = game.genre {
-                        MetadataItem(label: "Genre", value: genre)
+                        FactChip(icon: "tag.fill", label: genre)
                     }
                     if let esrbRating = game.esrbRating {
-                        MetadataItem(label: "Rating", value: esrbRating)
+                        FactChip(icon: "checkmark.shield.fill", label: esrbRating)
                     }
                 }
             }
-            .padding()
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
         }
     }
 
@@ -595,18 +597,22 @@ private struct GameMetadata: View {
     }
 }
 
-private struct MetadataItem: View {
+private struct FactChip: View {
+    let icon: String
     let label: String
-    let value: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label)
+        HStack(spacing: 6) {
+            Image(systemName: icon)
                 .font(.caption)
-                .foregroundColor(.secondary)
-            Text(value)
-                .font(.subheadline)
+                .foregroundStyle(Cabinet.brass)
+            Text(label)
+                .font(.caption.weight(.medium))
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Capsule().fill(Cabinet.card))
+        .overlay(Capsule().stroke(Cabinet.brass.opacity(0.18), lineWidth: 1))
     }
 }
 
@@ -662,12 +668,10 @@ private struct AchievementSetView: View {
         case "COMPLETIONIST":
             return .orange
         default:
-            return dominantTier?.accentColor ?? Color(.systemGray3)
+            // Official/tier sets speak the cabinet's brass, not raw tier gold -
+            // tier colors stay on the individual achievement badges
+            return dominantTier != nil ? Cabinet.brass : Color(.systemGray3)
         }
-    }
-
-    var accentGlowColor: Color {
-        accentColor.opacity(0.28)
     }
 
     var showsVisibilityChip: Bool {
@@ -717,11 +721,7 @@ private struct AchievementSetView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
-                                AchievementSetChip(
-                                    label: displayType,
-                                    systemImage: achievementSet.type.uppercased() == "CUSTOM" ? "paintpalette.fill" : "rosette",
-                                    tint: achievementSet.type.uppercased() == "CUSTOM" ? .purple : accentColor
-                                )
+                                PlaqueBadge(label: displayType, tint: accentColor)
                                 if showsVisibilityChip {
                                     AchievementSetChip(
                                         label: displayVisibility,
@@ -770,28 +770,29 @@ private struct AchievementSetView: View {
                     }
                 }
 
-                AchievementSetProgressBar(
-                    progress: completionFraction,
-                    accentColor: accentColor
-                )
-                .allowsHitTesting(false)
+                VStack(alignment: .leading, spacing: 8) {
+                    AchievementSetProgressBar(
+                        progress: completionFraction,
+                        accentColor: accentColor
+                    )
 
-                HStack(spacing: 10) {
-                    AchievementSetSummaryPill(
-                        title: "Progress",
-                        value: "\(completedCount)/\(totalCount)",
-                        tint: accentColor
-                    )
-                    AchievementSetSummaryPill(
-                        title: "Points",
-                        value: "\(earnedPoints)/\(totalPoints) pts",
-                        tint: .yellow
-                    )
-                    AchievementSetSummaryPill(
-                        title: "Complete",
-                        value: completionPercentText,
-                        tint: completedCount == totalCount && totalCount > 0 ? .green : accentColor
-                    )
+                    HStack(spacing: 5) {
+                        Text("\(completedCount) of \(totalCount) unlocked")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("·")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(completionPercentText)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(
+                                completedCount == totalCount && totalCount > 0 ? .green : accentColor
+                            )
+                        Spacer()
+                        Text("\(earnedPoints)/\(totalPoints) pts")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Cabinet.brass)
+                    }
                 }
                 .allowsHitTesting(false)
             }
@@ -819,39 +820,31 @@ private struct AchievementSetView: View {
                         )
                     }
                 }
-                .transition(.move(edge: .top).combined(with: .opacity))
+                // Plain fade: a move transition slides ghost rows across
+                // neighboring cards while the container resizes
+                .transition(.opacity)
             }
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Cabinet.card)
         )
-        .overlay(alignment: .top) {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [accentGlowColor, accentGlowColor.opacity(0)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .frame(height: 72)
-                .mask(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                )
-        }
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(accentColor.opacity(0.25), lineWidth: 1)
+                .stroke(accentColor.opacity(0.20), lineWidth: 1)
         )
         .overlay(alignment: .top) {
-            Capsule()
-                .fill(accentColor.opacity(0.92))
-                .frame(width: 84, height: 5)
-                .padding(.top, 10)
+            // Lit shelf edge: a thin light falling across the card's top lip
+            LinearGradient(
+                colors: [.clear, accentColor.opacity(0.7), .clear],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 2)
+            .padding(.horizontal, 24)
         }
-        .shadow(color: accentGlowColor.opacity(0.25), radius: 16, y: 8)
+        .shadow(color: Color.black.opacity(0.35), radius: 14, y: 8)
     }
 }
 
@@ -903,7 +896,7 @@ private struct AchievementRow: View {
                     AchievementSetChip(
                         label: "\(achievement.points) pts",
                         systemImage: "star.fill",
-                        tint: .yellow,
+                        tint: Cabinet.brass,
                         compact: true
                     )
 
@@ -990,53 +983,44 @@ private struct AchievementSetChip: View {
     var compact: Bool = false
 
     var body: some View {
-        HStack(spacing: compact ? 4 : 5) {
-            Image(systemName: systemImage)
-                .font(compact ? .caption2 : .caption)
-            Text(label)
-                .font(compact ? .caption2 : .caption)
-                .fontWeight(.medium)
-                .lineLimit(1)
-        }
-        .foregroundStyle(tint)
-        .padding(.horizontal, compact ? 8 : 10)
-        .padding(.vertical, compact ? 5 : 6)
-        .background(
-            Capsule()
-                .fill(tint.opacity(0.14))
-        )
+        Tag(label, icon: systemImage, tint: tint)
     }
 }
 
-private struct AchievementSetSummaryPill: View {
-    let title: String
-    let value: String
-    let tint: Color
+/// Engraved brass nameplate - the cabinet identity's label motif. Tinted
+/// gradients cover the non-official set types while keeping the plate shape.
+private struct PlaqueBadge: View {
+    let label: String
+    var tint: Color = Cabinet.brass
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title.uppercased())
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 9)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(0.05))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(tint.opacity(0.18), lineWidth: 1)
-        )
+        Text(label.uppercased())
+            .font(.caption2.weight(.bold))
+            .tracking(1.8)
+            .foregroundStyle(Color(red: 0.20, green: 0.14, blue: 0.06))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [tint.opacity(0.95), tint.opacity(0.72), tint.opacity(0.58)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .stroke(Color.black.opacity(0.35), lineWidth: 1)
+            )
+            .overlay(alignment: .top) {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(Color.white.opacity(0.30))
+                    .frame(height: 1)
+                    .padding(.horizontal, 3)
+                    .padding(.top, 1)
+            }
     }
 }
 
@@ -1048,7 +1032,7 @@ private struct AchievementSetProgressBar: View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.white.opacity(0.07))
+                    .fill(Cabinet.ink.opacity(0.45))
 
                 Capsule()
                     .fill(
@@ -1061,7 +1045,7 @@ private struct AchievementSetProgressBar: View {
                     .frame(width: geometry.size.width * max(0, min(progress, 1)))
             }
         }
-        .frame(height: 8)
+        .frame(height: 10)
     }
 }
 
@@ -1232,62 +1216,57 @@ private struct GameVersionsSectionView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Game Versions")
-                    .font(.headline)
-                Spacer()
-                Text("\(versions.count)")
+        // Flat editorial group matching RelatedContentSection
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 7) {
+                Image(systemName: "square.stack.3d.up")
+                    .font(.caption)
+                    .foregroundStyle(Cabinet.brass)
+                Text("GAME VERSIONS")
+                    .font(.caption.weight(.bold))
+                    .tracking(1.6)
+                    .foregroundStyle(Cabinet.bone.opacity(0.85))
+                Text("· \(versions.count)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(4)
+                Spacer()
             }
 
             ForEach(versions) { version in
                 HStack(spacing: 12) {
-                    if let coverUrl = coverUrlForVersion(version),
-                       let url = URL(string: coverUrl) {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Color.gray.opacity(0.3)
-                        }
-                        .frame(width: 40, height: 56)
-                        .cornerRadius(4)
-                    } else {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.3))
+                    Group {
+                        if let coverUrl = coverUrlForVersion(version),
+                           let url = URL(string: coverUrl) {
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } placeholder: {
+                                Color.gray.opacity(0.3)
+                            }
                             .frame(width: 40, height: 56)
-                            .overlay {
-                                Image(systemName: "square.stack.3d.up")
-                                    .font(.caption)
-                                    .foregroundStyle(.gray)
-                            }
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
-                            Text(version.name)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .lineLimit(1)
-
-                            if version.isDefault {
-                                Text("Default")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.blue.opacity(0.2))
-                                    .foregroundStyle(.blue)
-                                    .clipShape(Capsule())
-                            }
+                        } else {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 40, height: 56)
+                                .overlay {
+                                    Image(systemName: "square.stack.3d.up")
+                                        .font(.caption)
+                                        .foregroundStyle(.gray)
+                                }
                         }
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(Cabinet.brass.opacity(0.25), lineWidth: 1)
+                    )
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(version.name)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .lineLimit(2)
 
                         if let dlcCount = version.dlcCount, dlcCount > 0 {
                             Text("\(dlcCount) DLC\(dlcCount == 1 ? "" : "s") included")
@@ -1301,6 +1280,11 @@ private struct GameVersionsSectionView: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
+
+                        // Tag on its own line, never crowding the name
+                        if version.isDefault {
+                            Tag("Default")
+                        }
                     }
 
                     Spacer()
@@ -1308,8 +1292,6 @@ private struct GameVersionsSectionView: View {
                 .padding(.vertical, 8)
             }
         }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .padding(.vertical, 6)
     }
 }
