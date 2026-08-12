@@ -5,10 +5,27 @@ import SwiftUI
 /// signed-out states.
 struct TrophyShelfView: View {
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // An elliptical gradient is fully transparent at its own boundary
-            // by construction, so no frame edge can ever expose a cut line -
-            // the pool of light simply dissolves into the canvas on all sides
+        // The trophies must drive the layout height. Putting the glow in the
+        // background rather than as a ZStack sibling stops the 190pt gradient
+        // from sizing the view - otherwise the silhouettes overflow the frame
+        // and collide with whatever follows them.
+        HStack(alignment: .bottom, spacing: 26) {
+            TrophySilhouette(kind: .cup)
+                .frame(width: 58, height: 100)
+            TrophySilhouette(kind: .star)
+                .frame(width: 36, height: 70)
+            TrophySilhouette(kind: .medal)
+                .frame(width: 44, height: 53)
+            TrophySilhouette(kind: .obelisk)
+                .frame(width: 34, height: 63)
+            TrophySilhouette(kind: .cup)
+                .frame(width: 48, height: 83)
+        }
+        .foregroundStyle(Cabinet.ink)
+        .background(alignment: .bottom) {
+            // An elliptical gradient is fully transparent at its own boundary,
+            // so no frame edge can ever expose a cut line - the pool of light
+            // simply dissolves into the canvas on all sides
             EllipticalGradient(
                 gradient: Gradient(stops: [
                     .init(color: Cabinet.amber.opacity(0.22), location: 0),
@@ -21,22 +38,7 @@ struct TrophyShelfView: View {
             )
             .frame(width: 420, height: 190)
             .offset(y: 26)
-
-            HStack(alignment: .bottom, spacing: 26) {
-                TrophySilhouette(kind: .cup)
-                    .frame(width: 58, height: 100)
-                TrophySilhouette(kind: .star)
-                    .frame(width: 36, height: 70)
-                TrophySilhouette(kind: .medal)
-                    .frame(width: 44, height: 53)
-                TrophySilhouette(kind: .obelisk)
-                    .frame(width: 34, height: 63)
-                TrophySilhouette(kind: .cup)
-                    .frame(width: 48, height: 83)
-            }
-            .foregroundStyle(Cabinet.ink)
         }
-        .frame(height: 130)
         .frame(maxWidth: .infinity)
         .accessibilityHidden(true)
     }
