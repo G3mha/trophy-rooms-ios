@@ -14,7 +14,7 @@ struct GameDetailView: View {
     var body: some View {
         Group {
             if viewModel.isLoading {
-                ProgressView("Loading game...")
+                CabinetLoadingView("Loading game...")
             } else if let error = viewModel.errorMessage {
                 Text("Error: \(error)")
                     .foregroundColor(.red)

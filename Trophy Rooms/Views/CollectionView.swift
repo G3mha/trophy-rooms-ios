@@ -64,25 +64,21 @@ struct CollectionView: View {
             if !authManager.isSignedIn {
                 signInPrompt
             } else {
-                VStack(spacing: 0) {
-                    // Tab picker
-                    InlineTabPicker(selectedTab: $selectedTab, tabs: collectionTabs)
-
                     // Tab content — a paging ScrollView instead of TabView(.page):
                     // the UIKit-backed pager re-applies the window's bottom safe area
                     // inside each page, keeping content from reaching the screen bottom.
                     ScrollView(.horizontal) {
                         LazyHStack(spacing: 0) {
                             collectionContent
-                                .containerRelativeFrame([.horizontal, .vertical])
+                                .containerRelativeFrame(.horizontal)
                                 .id(CollectionTab.collection)
 
                             buylistContent
-                                .containerRelativeFrame([.horizontal, .vertical])
+                                .containerRelativeFrame(.horizontal)
                                 .id(CollectionTab.buylist)
 
                             sellListContent
-                                .containerRelativeFrame([.horizontal, .vertical])
+                                .containerRelativeFrame(.horizontal)
                                 .id(CollectionTab.sellList)
                         }
                         .scrollTargetLayout()
@@ -90,12 +86,18 @@ struct CollectionView: View {
                     .scrollTargetBehavior(.paging)
                     .scrollIndicators(.hidden)
                     .scrollPosition(id: pagedTabSelection)
-                }
                 // Extend under the floating tab bar so page content can scroll beneath it.
                 .ignoresSafeArea(.container, edges: .bottom)
             }
         }
         .navigationBar(title: "Collection")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if authManager.isSignedIn {
+                    InlineTabPicker(selectedTab: $selectedTab, tabs: collectionTabs)
+                }
+            }
+        }
         .navigationDestination(item: $bundleDetailTarget) { target in
             BundleDetailView(bundleId: target.id)
         }

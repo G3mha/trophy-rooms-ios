@@ -69,10 +69,6 @@ struct HomeView: View {
                 GlobalSearchResultsView(viewModel: globalSearchViewModel)
             } else {
                 // MARK: - Tabbed Content
-                VStack(spacing: 0) {
-                    // Tab picker
-                    InlineTabPicker(selectedTab: $selectedTab, tabs: homeTabs)
-
                     // Tab content — a paging ScrollView instead of TabView(.page):
                     // the UIKit-backed pager re-applies the window's bottom safe area
                     // inside each page, keeping content from reaching the screen bottom.
@@ -86,19 +82,21 @@ struct HomeView: View {
                                 selectedPlatformId: selectedPlatformId,
                                 achievementFilter: achievementFilter,
                                 sortOption: sortOption,
-                                gameTypeFilter: gameTypeFilter
+                                gameTypeFilter: gameTypeFilter,
+                                activeFilterCount: activeFilterCount,
+                                onOpenFilters: { showFilters = true }
                             )
-                            .containerRelativeFrame([.horizontal, .vertical])
+                            .containerRelativeFrame(.horizontal)
                             .id(HomeTab.games)
 
                             // MARK: - Leaderboard Tab
                             LeaderboardTab(viewModel: leaderboardViewModel)
-                                .containerRelativeFrame([.horizontal, .vertical])
+                                .containerRelativeFrame(.horizontal)
                                 .id(HomeTab.leaderboard)
 
                             // MARK: - Activity Tab
                             ActivityTab(viewModel: activityViewModel)
-                                .containerRelativeFrame([.horizontal, .vertical])
+                                .containerRelativeFrame(.horizontal)
                                 .id(HomeTab.activity)
                         }
                         .scrollTargetLayout()
@@ -106,7 +104,6 @@ struct HomeView: View {
                     .scrollTargetBehavior(.paging)
                     .scrollIndicators(.hidden)
                     .scrollPosition(id: pagedTabSelection)
-                }
                 // Extend under the floating tab bar so page content can scroll beneath it.
                 .ignoresSafeArea(.container, edges: .bottom)
             }
@@ -114,25 +111,7 @@ struct HomeView: View {
         .navigationBar(title: "Home", showAuth: $showAuth)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                if selectedTab == .games {
-                    Button {
-                        showFilters = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "line.3.horizontal.decrease.circle")
-                            if activeFilterCount > 0 {
-                                Text("\(activeFilterCount)")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.accentColor)
-                                    .foregroundColor(.white)
-                                    .clipShape(Capsule())
-                            }
-                        }
-                    }
-                }
+                InlineTabPicker(selectedTab: $selectedTab, tabs: homeTabs)
             }
         }
         .sheet(isPresented: $showAuth) {
@@ -231,6 +210,8 @@ private struct GamesGridTab: View {
     let achievementFilter: AchievementFilter
     let sortOption: SortOption
     let gameTypeFilter: GameTypeFilter
+    let activeFilterCount: Int
+    let onOpenFilters: () -> Void
 
     @Namespace private var zoomNamespace
 
@@ -281,6 +262,28 @@ private struct GamesGridTab: View {
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                             Spacer()
+                            // Sits with the content it filters, now that the
+                            // section pill owns the toolbar's leading slot
+                            Button(action: onOpenFilters) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "line.3.horizontal.decrease")
+                                        .font(.system(size: 12, weight: .semibold))
+                                    Text("Filter")
+                                        .font(.subheadline.weight(.medium))
+                                    if activeFilterCount > 0 {
+                                        Text("\(activeFilterCount)")
+                                            .font(.caption2.weight(.bold))
+                                            .foregroundStyle(.white)
+                                            .frame(minWidth: 16, minHeight: 16)
+                                            .background(Circle().fill(Color.accentColor))
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .glassEffect(.regular, in: .capsule)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(activeFilterCount > 0 ? Color.accentColor : .secondary)
                         }
                         .padding(.horizontal)
                         .padding(.top, 8)
