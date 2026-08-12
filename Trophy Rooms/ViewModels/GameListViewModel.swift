@@ -173,6 +173,17 @@ class GameListViewModel: ObservableObject {
                 self.isLoadingMore = false
             }
         } catch {
+            // Swiping between the paged tabs tears down the lazy view, which
+            // cancels any in-flight append. That is normal lifecycle, not a
+            // failure - surfacing it would replace the grid with an error.
+            if error is CancellationError || (error as? URLError)?.code == .cancelled {
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    self.isLoadingMore = false
+                }
+                return
+            }
+
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false

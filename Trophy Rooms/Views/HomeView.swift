@@ -258,10 +258,12 @@ private struct GamesGridTab: View {
         if viewModel.isLoading && viewModel.games.isEmpty {
             VStack {
                 Spacer()
-                ProgressView("Loading games...")
+                CabinetLoadingView("Loading games...")
                 Spacer()
             }
-        } else if let error = viewModel.errorMessage {
+        } else if let error = viewModel.errorMessage, viewModel.games.isEmpty {
+            // Only when there is nothing to show: a failed append must never
+            // replace a grid the user has already scrolled through
             VStack {
                 Spacer()
                 Text("Error: \(error)")
