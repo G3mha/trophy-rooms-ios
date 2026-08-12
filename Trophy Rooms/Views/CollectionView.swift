@@ -178,7 +178,7 @@ struct CollectionView: View {
     // MARK: - Sign In Prompt
 
     private var signInPrompt: some View {
-        SignInPrompt(icon: "archivebox", message: "Sign in to view your collection") {
+        SignInPrompt(message: "Sign in to view your collection") {
             showAuth = true
         }
     }
@@ -202,16 +202,10 @@ struct CollectionView: View {
                 }
             }
         } else if collectionViewModel.collectionItems.isEmpty {
-            VStack(spacing: 0) {
-                Spacer()
-                ContentUnavailableView(
-                    "Your Collection Is Empty",
-                    systemImage: "archivebox",
-                    description: Text("Add physical games and bundles to track your collection")
-                )
-                Spacer()
-                TrophyShelfView()
-            }
+            CabinetEmptyState(
+                title: "Your Collection Is Empty",
+                message: "Add physical games and bundles to track your collection"
+            )
         } else {
             VStack(spacing: 0) {
                 // Stats header
@@ -306,16 +300,10 @@ struct CollectionView: View {
                 }
             }
         } else if buylistViewModel.buylistItems.isEmpty {
-            VStack(spacing: 0) {
-                Spacer()
-                ContentUnavailableView(
-                    "Your Buylist Is Empty",
-                    systemImage: "cart",
-                    description: Text("Browse games, DLCs, and bundles to add them to your buylist")
-                )
-                Spacer()
-                TrophyShelfView()
-            }
+            CabinetEmptyState(
+                title: "Your Buylist Is Empty",
+                message: "Browse games, DLCs, and bundles to add them to your buylist"
+            )
         } else {
             VStack(spacing: 0) {
                 // Stats bar

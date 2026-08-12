@@ -28,16 +28,10 @@ struct LibraryView: View {
                     }
                 }
             } else if viewModel.libraryItems.isEmpty {
-                VStack(spacing: 0) {
-                    Spacer()
-                    ContentUnavailableView(
-                        "Your Library Is Empty",
-                        systemImage: "books.vertical",
-                        description: Text("Browse games and add them to your library")
-                    )
-                    Spacer()
-                    TrophyShelfView()
-                }
+                CabinetEmptyState(
+                    title: "Your Library Is Empty",
+                    message: "Browse games and add them to your library"
+                )
             } else {
                 VStack(spacing: 0) {
                     CollapsibleStatsBar(

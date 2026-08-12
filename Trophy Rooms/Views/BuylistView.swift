@@ -28,16 +28,10 @@ struct BuylistView: View {
                     }
                 }
             } else if viewModel.buylistItems.isEmpty {
-                VStack(spacing: 0) {
-                    Spacer()
-                    ContentUnavailableView(
-                        "Your Buylist Is Empty",
-                        systemImage: "cart",
-                        description: Text("Browse games, DLCs, and bundles to add them to your buylist")
-                    )
-                    Spacer()
-                    TrophyShelfView()
-                }
+                CabinetEmptyState(
+                    title: "Your Buylist Is Empty",
+                    message: "Browse games, DLCs, and bundles to add them to your buylist"
+                )
             } else {
                 VStack(spacing: 0) {
                     // Stats bar

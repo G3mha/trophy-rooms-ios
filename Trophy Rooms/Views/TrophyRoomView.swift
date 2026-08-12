@@ -75,18 +75,11 @@ struct TrophyRoomView: View {
 
                         // Empty state
                         if progressViewModel.completedGames.isEmpty && progressViewModel.inProgressGames.isEmpty {
-                            VStack(spacing: 16) {
-                                Image(systemName: "gamecontroller")
-                                    .font(.system(size: 48))
-                                    .foregroundColor(.secondary)
-                                Text("No progress yet")
-                                    .font(.headline)
-                                Text("Start completing achievements to track your progress!")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .padding(.vertical, 40)
+                            CabinetEmptyState(
+                                title: "No progress yet",
+                                message: "Start completing achievements to track your progress!"
+                            )
+                            .padding(.vertical, 24)
                         }
                     }
                     .padding()

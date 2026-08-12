@@ -1,22 +1,19 @@
 import SwiftUI
 
-/// Signed-out placeholder for tabs that need an account. The icon sits in a
-/// fixed frame so different SF Symbol glyph proportions can't shift the
-/// spacing between icon and text from one tab to another. The trophy shelf
-/// beneath carries the cabinet identity.
+/// Signed-out placeholder for tabs that need an account.
+///
+/// The trophy shelf IS the emblem here, standing in for the grey SF Symbol a
+/// zero state would normally use - one focal image rather than a generic glyph
+/// up top plus a decorative band at the bottom.
 struct SignInPrompt: View {
-    let icon: String
     let message: String
     let onSignIn: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 18) {
             Spacer()
 
-            Image(systemName: icon)
-                .font(.system(size: 44))
-                .foregroundColor(.secondary)
-                .frame(width: 56, height: 56)
+            TrophyShelfView()
 
             Text(message)
                 .font(.headline)
@@ -25,8 +22,6 @@ struct SignInPrompt: View {
                 .buttonStyle(.borderedProminent)
 
             Spacer()
-
-            TrophyShelfView()
         }
     }
 }
