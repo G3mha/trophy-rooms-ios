@@ -16,7 +16,7 @@ struct ActivityView: View {
             Group {
                 if viewModel.isLoading {
                     Spacer()
-                    ProgressView("Loading activity...")
+                    CabinetLoadingView("Loading activity...")
                     Spacer()
                 } else if let error = viewModel.errorMessage {
                     Spacer()

@@ -82,6 +82,12 @@ struct CabinetCanvas: View {
 
 extension View {
     /// Applies the cabinet canvas behind a screen's content
+    /// Applies the cabinet canvas behind a screen's content.
+    ///
+    /// Note: a background sizes to its host, so content that does not fill the
+    /// screen leaves the rest black. Views used as a whole-screen state (see
+    /// `CabinetLoadingView`) fill themselves rather than forcing a fill here -
+    /// forcing it globally breaks layout for hosts inside scroll views.
     func cabinetCanvas() -> some View {
         background(CabinetCanvas())
     }

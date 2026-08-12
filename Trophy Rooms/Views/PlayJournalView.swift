@@ -10,7 +10,7 @@ struct PlayJournalView: View {
     var body: some View {
         Group {
             if viewModel.isLoading && !viewModel.hasLoadedOnce {
-                ProgressView("Loading journal...")
+                CabinetLoadingView("Loading journal...")
             } else if viewModel.sessions.isEmpty {
                 ContentUnavailableView {
                     Label("No Play Sessions", systemImage: "gamecontroller")

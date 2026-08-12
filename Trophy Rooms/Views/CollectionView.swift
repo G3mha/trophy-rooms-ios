@@ -190,7 +190,7 @@ struct CollectionView: View {
         let showLoading = collectionViewModel.isLoading || !collectionViewModel.hasLoadedOnce
 
         if showLoading {
-            ProgressView("Loading collection...")
+            CabinetLoadingView("Loading collection...")
         } else if let error = collectionViewModel.errorMessage {
             VStack(spacing: 16) {
                 Text("Error: \(error)")
@@ -293,7 +293,7 @@ struct CollectionView: View {
     @ViewBuilder
     private var buylistContent: some View {
         if buylistViewModel.isLoading {
-            ProgressView("Loading buylist...")
+            CabinetLoadingView("Loading buylist...")
         } else if let error = buylistViewModel.errorMessage {
             VStack(spacing: 16) {
                 Text("Error: \(error)")
@@ -386,7 +386,7 @@ struct CollectionView: View {
     @ViewBuilder
     private var sellListContent: some View {
         if sellListViewModel.isLoading {
-            ProgressView("Loading sell list...")
+            CabinetLoadingView("Loading sell list...")
         } else if let error = sellListViewModel.errorMessage {
             VStack(spacing: 16) {
                 Text("Error: \(error)")

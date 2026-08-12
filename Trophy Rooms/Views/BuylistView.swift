@@ -11,19 +11,11 @@ struct BuylistView: View {
     var body: some View {
         Group {
             if !authManager.isSignedIn {
-                VStack(spacing: 16) {
-                    Image(systemName: "cart")
-                        .font(.system(size: 48))
-                        .foregroundColor(.secondary)
-                    Text("Sign in to view your buylist")
-                        .font(.headline)
-                    Button("Sign In") {
-                        showAuth = true
-                    }
-                    .buttonStyle(.borderedProminent)
+                SignInPrompt(message: "Sign in to view your buylist") {
+                    showAuth = true
                 }
             } else if viewModel.isLoading {
-                ProgressView("Loading buylist...")
+                CabinetLoadingView("Loading buylist...")
             } else if let error = viewModel.errorMessage {
                 VStack(spacing: 16) {
                     Text("Error: \(error)")

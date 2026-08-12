@@ -17,7 +17,7 @@ struct StatsView: View {
                     .buttonStyle(.borderedProminent)
                 }
             } else if viewModel.isLoading {
-                ProgressView("Loading stats...")
+                CabinetLoadingView("Loading stats...")
             } else if let stats = viewModel.stats {
                 VStack(spacing: 16) {
                     StatRow(title: "Trophies", value: stats.totalTrophies)

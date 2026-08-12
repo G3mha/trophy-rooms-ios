@@ -12,11 +12,11 @@ struct LibraryView: View {
     var body: some View {
         Group {
             if !authManager.isSignedIn {
-                SignInPrompt(icon: "books.vertical", message: "Sign in to view your library") {
+                SignInPrompt(message: "Sign in to view your library") {
                     showAuth = true
                 }
             } else if viewModel.isLoading {
-                ProgressView("Loading library...")
+                CabinetLoadingView("Loading library...")
             } else if let error = viewModel.errorMessage {
                 VStack(spacing: 16) {
                     Text("Error: \(error)")

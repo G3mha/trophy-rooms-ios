@@ -879,7 +879,7 @@ private struct GlobalSearchResultsView: View {
             if viewModel.isLoading {
                 VStack {
                     Spacer()
-                    ProgressView("Searching...")
+                    CabinetLoadingView("Searching...")
                     Spacer()
                 }
             } else if let error = viewModel.errorMessage {

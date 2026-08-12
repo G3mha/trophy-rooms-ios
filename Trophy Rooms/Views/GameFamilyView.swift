@@ -10,7 +10,7 @@ struct GameFamilyView: View {
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.games.isEmpty {
-                ProgressView("Loading game versions...")
+                CabinetLoadingView("Loading game versions...")
             } else if let error = viewModel.errorMessage {
                 VStack(spacing: 16) {
                     Text("Error: \(error)")

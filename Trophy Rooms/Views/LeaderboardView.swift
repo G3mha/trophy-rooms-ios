@@ -17,7 +17,7 @@ struct LeaderboardView: View {
             Group {
                 if viewModel.isLoading {
                     Spacer()
-                    ProgressView("Loading leaderboard...")
+                    CabinetLoadingView("Loading leaderboard...")
                     Spacer()
                 } else if let error = viewModel.errorMessage {
                     Spacer()

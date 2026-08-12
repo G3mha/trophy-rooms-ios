@@ -13,7 +13,7 @@ struct GameFamilyRouter: View {
     var body: some View {
         Group {
             if isLoading {
-                ProgressView("Loading...")
+                CabinetLoadingView("Loading...")
             } else if let error = errorMessage {
                 VStack(spacing: 16) {
                     Text("Error: \(error)")

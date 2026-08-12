@@ -9,11 +9,11 @@ struct TrophyRoomView: View {
     var body: some View {
         Group {
             if !authManager.isSignedIn {
-                SignInPrompt(icon: "trophy", message: "Sign in to view your Trophy Room") {
+                SignInPrompt(message: "Sign in to view your Trophy Room") {
                     showAuth = true
                 }
             } else if progressViewModel.isLoading {
-                ProgressView("Loading your progress...")
+                CabinetLoadingView("Loading your progress...")
             } else if let error = progressViewModel.errorMessage {
                 Text("Error: \(error)")
                     .foregroundColor(.red)
