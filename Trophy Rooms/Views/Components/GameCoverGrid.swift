@@ -344,14 +344,14 @@ struct SoldStatusOverlay: View {
                                 .font(.system(size: 9, weight: .semibold))
                         }
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(Cabinet.inkOn(Cabinet.Tint.positive))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     Spacer()
                 }
                 .background(
                     LinearGradient(
-                        colors: [.clear, .green.opacity(0.85)],
+                        colors: [.clear, Cabinet.Tint.positive.opacity(0.92)],
                         startPoint: .top,
                         endPoint: .bottom
                     )
@@ -371,10 +371,10 @@ struct PriceOverlay: View {
             HStack {
                 Text(String(format: "$%.0f", price))
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Cabinet.inkOn(Cabinet.Tint.amber))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(Color.orange.opacity(0.9))
+                    .background(Cabinet.Tint.amber.opacity(0.95))
                     .cornerRadius(4)
                     .padding(4)
                 Spacer()
