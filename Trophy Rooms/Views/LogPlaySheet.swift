@@ -262,6 +262,7 @@ struct DurationPicker: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Decrease by 15 minutes")
 
                 Spacer()
 
@@ -280,6 +281,20 @@ struct DurationPicker: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Increase by 15 minutes")
+            }
+            // Collapse the -/value/+ trio into one adjustable element so
+            // VoiceOver users swipe up and down to set the duration instead of
+            // hunting between two separate buttons.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("How long")
+            .accessibilityValue(formatPlayMinutes(minutes))
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: minutes = min(1440, minutes + 15)
+                case .decrement: minutes = max(15, minutes - 15)
+                @unknown default: break
+                }
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
