@@ -922,6 +922,9 @@ private struct AchievementRow: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(isCompleted ? "Mark as not earned" : "Mark as earned")
+                .accessibilityValue(achievement.title)
+                .accessibilityAddTraits(isCompleted ? [.isSelected] : [])
             }
         }
         .padding(12)

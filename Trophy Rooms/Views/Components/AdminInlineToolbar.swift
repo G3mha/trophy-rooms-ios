@@ -44,11 +44,11 @@ struct AdminInlineToolbar: View {
             Spacer(minLength: 8)
 
             if entity.type == .game {
-                accessoryButton(icon: "pencil", tint: .primary, action: state.presentEdit)
-                accessoryButton(icon: "doc.on.doc", tint: .primary, action: state.presentClone)
+                accessoryButton(icon: "pencil", label: "Edit", tint: .primary, action: state.presentEdit)
+                accessoryButton(icon: "doc.on.doc", label: "Duplicate", tint: .primary, action: state.presentClone)
             }
 
-            accessoryButton(icon: "trash", tint: .red, action: state.presentDeleteConfirmation)
+            accessoryButton(icon: "trash", label: "Delete", tint: .red, action: state.presentDeleteConfirmation)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -90,6 +90,7 @@ struct AdminInlineToolbar: View {
 
     private func accessoryButton(
         icon: String,
+        label: String,
         tint: Color,
         action: @escaping () -> Void
     ) -> some View {
@@ -101,6 +102,7 @@ struct AdminInlineToolbar: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private func iconName(for type: AdminEntityType) -> String {

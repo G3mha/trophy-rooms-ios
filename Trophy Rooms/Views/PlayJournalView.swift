@@ -37,6 +37,7 @@ struct PlayJournalView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel("Log a play session")
             }
         }
         .sheet(isPresented: $showLogSheet) {

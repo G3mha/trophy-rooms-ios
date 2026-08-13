@@ -21,6 +21,7 @@ struct NavigationBarModifier: ViewModifier {
                             } label: {
                                 Image(systemName: "square.and.arrow.up")
                             }
+                            .accessibilityLabel("Share")
                         }
                     }
 
@@ -30,6 +31,7 @@ struct NavigationBarModifier: ViewModifier {
                         } label: {
                             ProfileImage(imageUrl: authManager.avatarURL)
                         }
+                        .accessibilityLabel("Account")
                     }
                 } else if let binding = showAuthBinding {
                     ToolbarItem(placement: .topBarTrailing) {

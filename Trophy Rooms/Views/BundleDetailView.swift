@@ -300,6 +300,7 @@ private struct BundleOwnershipSection: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(isLoading)
+                        .accessibilityLabel("Remove \(platform.name)")
                     }
                     .padding()
                     .background(Color.green.opacity(0.15))
@@ -384,6 +385,12 @@ private struct BundlePlatformPickerSheet: View {
                                     Spacer()
                                 }
                             }
+                            // The checkmark is the only thing distinguishing a
+                            // selected row, so state has to reach VoiceOver as
+                            // a trait rather than an unread glyph.
+                            .accessibilityAddTraits(
+                                selectedFamilyIds.contains(family.id) ? [.isSelected] : []
+                            )
                         }
                     } header: {
                         Text("Add to Library")

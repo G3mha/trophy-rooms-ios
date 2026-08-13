@@ -16,6 +16,8 @@ struct BuylistButton: View {
             }
         }
         .disabled(isLoading)
+        .accessibilityLabel(isInBuylist ? "Remove from buylist" : "Add to buylist")
+        .accessibilityValue(isLoading ? "Updating" : "")
     }
 }
 

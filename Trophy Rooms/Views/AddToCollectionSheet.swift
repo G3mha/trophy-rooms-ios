@@ -108,6 +108,10 @@ struct AddToCollectionSheet: View {
                                     }
                                 }
                             }
+                            .accessibilityHint("Edit this copy")
+                            .accessibilityAddTraits(
+                                internalEditingItem?.id == item.id ? [.isSelected] : []
+                            )
                             .buttonStyle(.plain)
                         }
                         .onDelete { indexSet in

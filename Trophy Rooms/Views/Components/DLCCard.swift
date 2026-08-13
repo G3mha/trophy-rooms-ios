@@ -112,6 +112,8 @@ struct DLCOwnershipToggle: View {
         }
         .buttonStyle(.plain)
         .disabled(isLoading)
+        .accessibilityLabel(isOwned ? "Mark as not owned" : "Mark as owned")
+        .accessibilityAddTraits(isOwned ? [.isSelected] : [])
     }
 }
 

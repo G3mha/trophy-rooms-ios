@@ -276,6 +276,7 @@ private struct PlatformChip: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Remove \(name)")
             }
         }
         .padding(.horizontal, 10)
