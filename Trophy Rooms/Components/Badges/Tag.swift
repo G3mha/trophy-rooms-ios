@@ -24,6 +24,13 @@ struct Tag: View {
     let tint: Color
     let style: Style
 
+    /// Tags carry real information - status, condition, region - so their type
+    /// has to grow with the user's text size. A plain `.system(size:)` is
+    /// frozen; `@ScaledMetric` tracks Dynamic Type while keeping the tight
+    /// caption proportions the tag treatment depends on.
+    @ScaledMetric(relativeTo: .caption2) private var textSize: CGFloat = 10
+    @ScaledMetric(relativeTo: .caption2) private var iconSize: CGFloat = 8
+
     init(
         _ text: String,
         icon: String? = nil,
@@ -52,10 +59,10 @@ struct Tag: View {
         HStack(spacing: 4) {
             if let icon {
                 Image(systemName: icon)
-                    .font(.system(size: 8, weight: .bold))
+                    .font(.system(size: iconSize, weight: .bold))
             }
             Text(text.uppercased())
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: textSize, weight: .bold))
                 .tracking(0.7)
                 .lineLimit(1)
         }
