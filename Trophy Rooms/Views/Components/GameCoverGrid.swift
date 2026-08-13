@@ -32,8 +32,14 @@ struct GameCoverCell<Overlay: View>: View {
             aspectRatio: aspectRatio,
             cornerRadius: cornerRadius
         )
+        .accessibilityLabel(title)
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         .overlay(overlay())
+        // The cell draws cover art and nothing else - `title` is passed in but
+        // never rendered - so without this the grid is a wall of unlabelled
+        // images to VoiceOver. Combining folds the overlay badges (status,
+        // region, group) into one announcement after the title.
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -80,6 +86,8 @@ struct GroupIndicatorOverlay: View {
             }
             Spacer()
         }
+        .accessibilityElement()
+        .accessibilityLabel("Multiple editions")
     }
 }
 
@@ -104,6 +112,10 @@ struct StatusOverlayBadge: View {
             }
             Spacer()
         }
+        // Icon + colour only, no text: the status has to reach VoiceOver
+        // some other way.
+        .accessibilityElement()
+        .accessibilityLabel(status.displayName)
     }
 
     var statusColor: Color {
@@ -178,9 +190,9 @@ struct CollectionConditionOverlay: View {
                 }
                 Spacer(minLength: 2)
                 if condition != .sealed && condition != .digital {
-                    if hasDisc { conditionIcon("opticaldisc", color: .white) }
-                    if hasBox { conditionIcon("shippingbox.fill", color: .white) }
-                    if hasManual { conditionIcon("book.closed.fill", color: .white) }
+                    if hasDisc { conditionIcon("opticaldisc", label: "Has disc", color: .white) }
+                    if hasBox { conditionIcon("shippingbox.fill", label: "Has box", color: .white) }
+                    if hasManual { conditionIcon("book.closed.fill", label: "Has manual", color: .white) }
                 }
             }
             .padding(4)
@@ -194,10 +206,11 @@ struct CollectionConditionOverlay: View {
         }
     }
 
-    private func conditionIcon(_ name: String, color: Color) -> some View {
+    private func conditionIcon(_ name: String, label: String, color: Color) -> some View {
         Image(systemName: name)
             .font(.system(size: 10))
             .foregroundColor(color)
+            .accessibilityLabel(label)
     }
 }
 
@@ -220,6 +233,10 @@ struct PriorityOverlayBadge: View {
             }
             Spacer()
         }
+        // The marker is punctuation ("!!!"), which VoiceOver reads literally
+        // or skips entirely - name the priority instead.
+        .accessibilityElement()
+        .accessibilityLabel("\(priority.displayName) priority")
     }
 
     var priorityMarker: String {
@@ -257,6 +274,8 @@ struct ItemTypeOverlayBadge: View {
             }
             Spacer()
         }
+        .accessibilityElement()
+        .accessibilityLabel(itemType.displayName)
     }
 
     var itemTypeColor: Color {
@@ -287,6 +306,9 @@ struct ConditionOverlayBadge: View {
             }
             Spacer()
         }
+        // "NM"/"VG" get spelled out letter by letter; say the full grade.
+        .accessibilityElement()
+        .accessibilityLabel(condition.displayName)
     }
 
     var conditionColor: Color {
