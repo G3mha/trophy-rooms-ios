@@ -5,6 +5,11 @@ struct ProgressBar: View {
     var height: CGFloat = 8
     var backgroundColor: Color = Color(.systemGray5)
     var foregroundColor: Color = .blue
+    /// What the bar is measuring, for VoiceOver. Without it the bar is a
+    /// purely visual element and the completion it represents is unreadable.
+    var label: String = "Progress"
+
+    private var clamped: Float { min(max(progress, 0), 1) }
 
     var body: some View {
         GeometryReader { geometry in
@@ -15,11 +20,14 @@ struct ProgressBar: View {
 
                 Rectangle()
                     .fill(foregroundColor)
-                    .frame(width: geometry.size.width * CGFloat(min(max(progress, 0), 1)))
+                    .frame(width: geometry.size.width * CGFloat(clamped))
                     .cornerRadius(height / 2)
             }
         }
         .frame(height: height)
+        .accessibilityElement()
+        .accessibilityLabel(label)
+        .accessibilityValue("\(Int((clamped * 100).rounded()))%")
     }
 }
 

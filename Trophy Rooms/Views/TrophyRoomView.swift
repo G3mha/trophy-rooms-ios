@@ -221,7 +221,11 @@ private struct GameProgressCard: View {
                     .font(.headline)
                     .foregroundColor(.primary)
 
-                ProgressBar(progress: progress.percentComplete, foregroundColor: progressColor)
+                ProgressBar(
+                    progress: progress.percentComplete,
+                    foregroundColor: progressColor,
+                    label: "Achievements earned"
+                )
 
                 HStack {
                     Text("\(progress.earnedCount)/\(progress.totalCount)")
