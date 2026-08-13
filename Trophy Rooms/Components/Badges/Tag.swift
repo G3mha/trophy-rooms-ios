@@ -36,6 +36,18 @@ struct Tag: View {
         self.style = style
     }
 
+    /// The tint, raised to WCAG AA against whatever the tag sits on if it does
+    /// not already clear it. Ribbon crimson (3.04:1 on `Cabinet.card`) and warm
+    /// gray (4.12:1) are the two that need it; the rest pass untouched.
+    ///
+    /// Only the glyphs use this. The capsule fill and border below keep the
+    /// unmodified `tint`, so the tag still reads as the approved colour.
+    private var legibleTint: Color {
+        let backdrop = style == .overlay ? Cabinet.ink : Cabinet.card
+        let base = style == .overlay ? tint.opacity(0.95) : tint
+        return base.legible(on: backdrop)
+    }
+
     var body: some View {
         HStack(spacing: 4) {
             if let icon {
@@ -47,7 +59,7 @@ struct Tag: View {
                 .tracking(0.7)
                 .lineLimit(1)
         }
-        .foregroundStyle(style == .overlay ? tint.opacity(0.95) : tint)
+        .foregroundStyle(legibleTint)
         .padding(.horizontal, 7)
         .padding(.vertical, 3.5)
         .background(
