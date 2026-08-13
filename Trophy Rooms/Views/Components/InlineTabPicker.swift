@@ -20,7 +20,7 @@ struct InlineTabPicker<Tab: Hashable>: View {
                     icon: tab.icon,
                     isSelected: selectedTab == tab.value
                 ) {
-                    withAnimation(.snappy(duration: 0.25)) {
+                    Motion.animate(.snappy(duration: 0.25)) {
                         selectedTab = tab.value
                     }
                 }

@@ -1151,7 +1151,7 @@ private struct CollectionItemsGrid: View {
                             item: item,
                             isExpanded: expandedBundleIds.contains(item.id),
                             onToggle: {
-                                withAnimation(.snappy) {
+                                Motion.animate(.snappy) {
                                     if expandedBundleIds.contains(item.id) {
                                         expandedBundleIds.remove(item.id)
                                     } else {

@@ -36,7 +36,7 @@ struct ExpandableText: View {
                 .background(truncationDetector)
                 .onTapGesture {
                     if isTruncated && !isExpanded {
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        Motion.animate(.easeInOut(duration: 0.25)) {
                             isExpanded = true
                         }
                     }
@@ -50,7 +50,7 @@ struct ExpandableText: View {
                     .foregroundStyle(.primary)
                     .padding(.top, 4)
                     .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        Motion.animate(.easeInOut(duration: 0.25)) {
                             isExpanded = true
                         }
                     }

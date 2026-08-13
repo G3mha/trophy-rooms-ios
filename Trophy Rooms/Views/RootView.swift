@@ -267,6 +267,7 @@ private struct SearchItemRow: View {
 }
 
 private struct SearchSkeletonList: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pulsing = false
 
     var body: some View {
@@ -299,7 +300,11 @@ private struct SearchSkeletonList: View {
         }
         .scrollDisabled(true)
         .opacity(pulsing ? 0.5 : 1)
-        .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulsing)
-        .onAppear { pulsing = true }
+        .cabinetAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulsing)
+        // Never start the pulse under Reduce Motion: the animation is nil
+        // there, so flipping `pulsing` would dim the skeleton to 50% and
+        // leave it there rather than resting at full opacity.
+        .onAppear { pulsing = !reduceMotion }
+        .accessibilityLabel("Searching")
     }
 }

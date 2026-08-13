@@ -190,7 +190,7 @@ struct LogPlaySheet: View {
                 LazyHStack(spacing: 10) {
                     ForEach(candidates) { game in
                         Button {
-                            withAnimation(.snappy) {
+                            Motion.animate(.snappy) {
                                 selectedGame = game
                             }
                         } label: {
@@ -268,7 +268,7 @@ struct DurationPicker: View {
                 Text(formatPlayMinutes(minutes))
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .contentTransition(.numericText())
-                    .animation(.snappy, value: minutes)
+                    .cabinetAnimation(.snappy, value: minutes)
 
                 Spacer()
 
@@ -286,7 +286,7 @@ struct DurationPicker: View {
                 HStack(spacing: 8) {
                     ForEach(presets, id: \.self) { preset in
                         Button {
-                            withAnimation(.snappy) {
+                            Motion.animate(.snappy) {
                                 minutes = preset
                             }
                         } label: {

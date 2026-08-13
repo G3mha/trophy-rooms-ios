@@ -21,7 +21,7 @@ struct CollapsibleStatsBar: View {
         VStack(spacing: 0) {
             // Collapsed summary row (always visible, tappable)
             Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
+                Motion.animate(.easeInOut(duration: 0.2)) {
                     isExpanded.toggle()
                 }
             } label: {

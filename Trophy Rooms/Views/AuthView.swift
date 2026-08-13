@@ -229,7 +229,7 @@ struct AuthView: View {
                             lineWidth: 1
                         )
                 )
-                .animation(.easeOut(duration: 0.15), value: focusedField)
+                .cabinetAnimation(.easeOut(duration: 0.15), value: focusedField)
 
                 if mode == .signUp {
                     Text("Must be at least 8 characters")
@@ -270,7 +270,7 @@ struct AuthView: View {
                     .foregroundColor(.secondary)
 
                 Button(mode == .signIn ? "Sign up" : "Sign in") {
-                    withAnimation {
+                    Motion.animate {
                         mode = mode == .signIn ? .signUp : .signIn
                         errorMessage = nil
                     }
@@ -378,7 +378,7 @@ struct AuthView: View {
 
             // Back button
             Button {
-                withAnimation {
+                Motion.animate {
                     step = .form
                     verificationCode = ""
                     errorMessage = nil
@@ -429,7 +429,7 @@ struct AuthView: View {
         do {
             let needsVerification = try await authManager.signUp(email: email, password: password)
             if needsVerification {
-                withAnimation {
+                Motion.animate {
                     step = .verification
                 }
             } else {

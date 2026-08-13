@@ -799,7 +799,7 @@ private struct AchievementSetView: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 guard canExpand else { return }
-                withAnimation(.easeInOut(duration: 0.24)) {
+                Motion.animate(.easeInOut(duration: 0.24)) {
                     isExpanded.toggle()
                 }
             }

@@ -485,7 +485,7 @@ private struct LibraryItemsGrid: View {
                         count: members.count,
                         isExpanded: expandedBundleIds.contains(bundle.id),
                         onToggle: {
-                            withAnimation(.snappy) {
+                            Motion.animate(.snappy) {
                                 if expandedBundleIds.contains(bundle.id) {
                                     expandedBundleIds.remove(bundle.id)
                                 } else {

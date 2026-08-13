@@ -213,7 +213,7 @@ struct GroupedGameRow: View {
                 if group.isSingleGame {
                     onSelect(group.games[0])
                 } else {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    Motion.animate(.easeInOut(duration: 0.2)) {
                         isExpanded.toggle()
                     }
                 }
