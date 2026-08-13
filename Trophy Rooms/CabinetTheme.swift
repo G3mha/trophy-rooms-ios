@@ -39,6 +39,18 @@ enum Cabinet {
         static let muted = Color(red: 0.545, green: 0.494, blue: 0.427)    // warm gray
     }
 
+    // MARK: - Foreground on a tinted fill
+
+    /// The ink to draw on top of `fill` - dark or light, whichever reads - and
+    /// lifted to WCAG AA if the better of the two still falls short.
+    ///
+    /// Filled badges pick their background from `Tint`, and those tints are
+    /// light enough that white on them lands at 2.3-3.3:1. Dark ink clears
+    /// 5:1 or better on all of them except crimson, which wants the light one.
+    static func inkOn(_ fill: Color) -> Color {
+        fill.legibleForeground(preferring: [ink, bone])
+    }
+
     // MARK: - Surfaces
 
     /// Screen canvas: walnut-black instead of system black

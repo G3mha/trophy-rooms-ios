@@ -33,6 +33,27 @@ extension Color {
         let result = fg.blended(toWhite: high)
         return Color(red: result.r, green: result.g, blue: result.b)
     }
+
+    /// Treating this colour as a *fill*, returns whichever candidate reads best
+    /// on top of it - then lifts that choice if it still falls short.
+    ///
+    /// Badges tint their background from the semantic palette, so no single
+    /// foreground works for all of them: dark ink wins on sage, amber and
+    /// brass, while the light ink wins on crimson. Picking per fill beats
+    /// hard-coding either one.
+    func legibleForeground(
+        preferring candidates: [Color],
+        minimumRatio: Double = 4.5
+    ) -> Color {
+        guard let bg = RGB(self) else { return candidates.first ?? self }
+        let best = candidates.max { a, b in
+            let ra = RGB(a).map { ContrastCache.ratio($0, bg) } ?? 0
+            let rb = RGB(b).map { ContrastCache.ratio($0, bg) } ?? 0
+            return ra < rb
+        }
+        guard let best else { return self }
+        return best.legible(on: self, minimumRatio: minimumRatio)
+    }
 }
 
 // MARK: - Internals
