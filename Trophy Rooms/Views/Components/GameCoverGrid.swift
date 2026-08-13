@@ -103,7 +103,7 @@ struct StatusOverlayBadge: View {
                     Image(systemName: status.iconName)
                         .font(.system(size: 10, weight: .bold))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(Cabinet.inkOn(statusColor))
                 .padding(.horizontal, 6)
                 .padding(.vertical, 4)
                 .background(statusColor)
@@ -184,7 +184,7 @@ struct CollectionConditionOverlay: View {
                 if let label = condition.label {
                     Text(label)
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(condition.badgeColor)
+                        .foregroundColor(condition.badgeColor.legible(on: Cabinet.ink))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
@@ -224,7 +224,7 @@ struct PriorityOverlayBadge: View {
                 Spacer()
                 Text(priorityMarker)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Cabinet.inkOn(priorityColor))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
                     .background(priorityColor)
@@ -265,7 +265,7 @@ struct ItemTypeOverlayBadge: View {
             HStack {
                 Image(systemName: itemType.iconName)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Cabinet.inkOn(itemTypeColor))
                     .padding(5)
                     .background(itemTypeColor)
                     .cornerRadius(4)
@@ -297,7 +297,7 @@ struct ConditionOverlayBadge: View {
                 Spacer()
                 Text(condition.shortName)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Cabinet.inkOn(conditionColor))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
                     .background(conditionColor)
