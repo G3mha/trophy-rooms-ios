@@ -72,3 +72,26 @@ struct FlowLayout: Layout {
         )
     }
 }
+
+// MARK: - Tag Row
+
+/// A row of tags that wraps to the next line instead of running off the edge.
+///
+/// `Tag` is `.fixedSize()` so its text is never truncated - a half-read
+/// "NEAR MI…" is worse than no tag at all. The cost is that a plain `HStack`
+/// pushes the later tags off-screen once Dynamic Type grows them, and at the
+/// largest accessibility sizes three tags no longer fit on one line.
+///
+/// Renders identically to an `HStack` whenever the tags do fit, so this is
+/// safe to use everywhere tags appear in a row.
+struct TagRow<Content: View>: View {
+    var spacing: CGFloat = 6
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        FlowLayout(spacing: spacing) { content }
+            // Take the full width offered so the layout has a real width to
+            // wrap against rather than being sized to its own content.
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
