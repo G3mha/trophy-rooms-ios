@@ -19,6 +19,12 @@ struct PaginationBar: View {
 
     @State private var showJumpSheet = false
 
+    // The pill sizes itself from padding, not a fixed frame, so this type can
+    // grow with the user's text size without anything clipping.
+    @ScaledMetric(relativeTo: .caption2) private var kickerSize: CGFloat = 9
+    @ScaledMetric(relativeTo: .subheadline) private var pageSize: CGFloat = 15
+    @ScaledMetric(relativeTo: .footnote) private var totalSize: CGFloat = 13
+
     init(
         currentPage: Int,
         totalPages: Int,
@@ -110,16 +116,16 @@ struct PaginationBar: View {
                         .controlSize(.small)
                 } else {
                     Text("PAGE")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: kickerSize, weight: .bold))
                         .tracking(1.2)
                         .foregroundStyle(Cabinet.brass.opacity(0.75))
 
                     Text("\(currentPage)")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.system(size: pageSize, weight: .bold))
                         .foregroundStyle(Cabinet.bone)
 
                     Text("/ \(totalPages.formatted())")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: totalSize, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
             }

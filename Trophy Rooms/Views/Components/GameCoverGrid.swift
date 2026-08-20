@@ -34,7 +34,15 @@ struct GameCoverCell<Overlay: View>: View {
         )
         .accessibilityLabel(title)
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        .overlay(overlay())
+        .overlay(
+            overlay()
+                // These chips sit on artwork whose size is fixed by the grid,
+                // so they cannot grow without end - at AX5 the group indicator
+                // covered a third of the cover. They still scale, just within
+                // a ceiling, and everything they convey is also on the detail
+                // screen and read aloud by the labels below.
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        )
         // The cell draws cover art and nothing else - `title` is passed in but
         // never rendered - so without this the grid is a wall of unlabelled
         // images to VoiceOver. Combining folds the overlay badges (status,
@@ -94,6 +102,7 @@ struct GroupIndicatorOverlay: View {
 /// Status overlay badge for library items (top-right corner)
 struct StatusOverlayBadge: View {
     let status: GameStatus
+    @ScaledMetric(relativeTo: .caption2) private var chip: CGFloat = 10
 
     var body: some View {
         VStack {
@@ -101,7 +110,7 @@ struct StatusOverlayBadge: View {
                 Spacer()
                 HStack(spacing: 2) {
                     Image(systemName: status.iconName)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: chip, weight: .bold))
                 }
                 .foregroundColor(Cabinet.inkOn(statusColor))
                 .padding(.horizontal, 6)
@@ -176,6 +185,7 @@ struct CollectionConditionOverlay: View {
     let hasDisc: Bool
     let hasBox: Bool
     let hasManual: Bool
+    @ScaledMetric(relativeTo: .caption2) private var chip: CGFloat = 10
 
     var body: some View {
         VStack {
@@ -183,7 +193,7 @@ struct CollectionConditionOverlay: View {
             HStack(spacing: 2) {
                 if let label = condition.label {
                     Text(label)
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: chip * 0.9, weight: .bold))
                         .foregroundColor(condition.badgeColor.legible(on: Cabinet.ink))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -208,7 +218,7 @@ struct CollectionConditionOverlay: View {
 
     private func conditionIcon(_ name: String, label: String, color: Color) -> some View {
         Image(systemName: name)
-            .font(.system(size: 10))
+            .font(.system(size: chip))
             .foregroundColor(color)
             .accessibilityLabel(label)
     }
@@ -217,13 +227,14 @@ struct CollectionConditionOverlay: View {
 /// Priority overlay badge for buylist items (top-right corner)
 struct PriorityOverlayBadge: View {
     let priority: BuylistPriority
+    @ScaledMetric(relativeTo: .caption2) private var chip: CGFloat = 10
 
     var body: some View {
         VStack {
             HStack {
                 Spacer()
                 Text(priorityMarker)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: chip, weight: .bold))
                     .foregroundColor(Cabinet.inkOn(priorityColor))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
@@ -259,12 +270,13 @@ struct PriorityOverlayBadge: View {
 /// Item type overlay badge for buylist items (top-left corner)
 struct ItemTypeOverlayBadge: View {
     let itemType: BuylistItemType
+    @ScaledMetric(relativeTo: .caption2) private var chip: CGFloat = 10
 
     var body: some View {
         VStack {
             HStack {
                 Image(systemName: itemType.iconName)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: chip, weight: .bold))
                     .foregroundColor(Cabinet.inkOn(itemTypeColor))
                     .padding(5)
                     .background(itemTypeColor)
@@ -290,13 +302,14 @@ struct ItemTypeOverlayBadge: View {
 /// Condition overlay badge for sell list items (top-right corner)
 struct ConditionOverlayBadge: View {
     let condition: ItemCondition
+    @ScaledMetric(relativeTo: .caption2) private var chip: CGFloat = 10
 
     var body: some View {
         VStack {
             HStack {
                 Spacer()
                 Text(condition.shortName)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: chip, weight: .bold))
                     .foregroundColor(Cabinet.inkOn(conditionColor))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
@@ -327,6 +340,7 @@ struct ConditionOverlayBadge: View {
 struct SoldStatusOverlay: View {
     let isSold: Bool
     let price: Double?
+    @ScaledMetric(relativeTo: .caption2) private var chip: CGFloat = 10
 
     var body: some View {
         if isSold {
@@ -336,12 +350,12 @@ struct SoldStatusOverlay: View {
                     Spacer()
                     VStack(spacing: 2) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 12))
+                            .font(.system(size: chip * 1.2))
                         Text("SOLD")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.system(size: chip * 0.8, weight: .bold))
                         if let price = price {
                             Text(String(format: "$%.0f", price))
-                                .font(.system(size: 9, weight: .semibold))
+                                .font(.system(size: chip * 0.9, weight: .semibold))
                         }
                     }
                     .foregroundColor(Cabinet.inkOn(Cabinet.Tint.positive))
@@ -364,13 +378,14 @@ struct SoldStatusOverlay: View {
 /// Price overlay for sell list items (bottom-left)
 struct PriceOverlay: View {
     let price: Double
+    @ScaledMetric(relativeTo: .caption2) private var chip: CGFloat = 10
 
     var body: some View {
         VStack {
             Spacer()
             HStack {
                 Text(String(format: "$%.0f", price))
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: chip, weight: .bold))
                     .foregroundColor(Cabinet.inkOn(Cabinet.Tint.amber))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
