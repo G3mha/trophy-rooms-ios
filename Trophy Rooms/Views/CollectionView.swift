@@ -737,7 +737,7 @@ private struct CollectionItemRow: View {
                     .font(.headline)
                     .lineLimit(2)
 
-                HStack(spacing: 6) {
+                TagRow(spacing: 6) {
                     RegionBadge(region: item.region)
 
                     if let version = item.gameVersion {
@@ -954,7 +954,7 @@ private struct SellListItemRow: View {
                     .font(.headline)
                     .lineLimit(2)
 
-                HStack(spacing: 6) {
+                TagRow(spacing: 6) {
                     // Condition badge
                     ConditionBadge(condition: item.condition)
 

@@ -262,7 +262,7 @@ private struct LibraryItemRow: View {
                     .font(.headline)
                     .lineLimit(2)
 
-                HStack(spacing: 6) {
+                TagRow(spacing: 6) {
                     StatusBadge(status: item.status)
                     if let versionName = item.gameVersionName {
                         VersionBadge(name: versionName)

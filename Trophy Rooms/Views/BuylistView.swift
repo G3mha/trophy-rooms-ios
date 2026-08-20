@@ -268,7 +268,7 @@ struct BuylistItemRow: View {
                     .font(.headline)
                     .lineLimit(2)
 
-                HStack(spacing: 6) {
+                TagRow(spacing: 6) {
                     PriorityBadge(priority: item.priority)
                     ItemTypeBadge(itemType: item.itemType)
                 }
