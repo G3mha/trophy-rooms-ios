@@ -342,7 +342,6 @@ struct LeaderboardEntry: Codable, Identifiable {
     let rank: Int
     let userId: String
     let userName: String?
-    let userEmail: String
     let value: Int
     let secondaryValue: Int?
 
@@ -354,7 +353,6 @@ struct FastestCompletionEntry: Codable, Identifiable {
     let rank: Int
     let userId: String
     let userName: String?
-    let userEmail: String
     let gameId: String
     let gameTitle: String
     let completionTimeHours: Float
@@ -371,7 +369,6 @@ struct ActivityEntry: Codable, Identifiable {
     let type: String
     let userId: String
     let userName: String?
-    let userEmail: String
     let achievementId: String?
     let achievementTitle: String?
     let achievementTier: AchievementTier?

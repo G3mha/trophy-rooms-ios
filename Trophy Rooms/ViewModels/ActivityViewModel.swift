@@ -57,7 +57,6 @@ class ActivityViewModel: ObservableObject {
                 type
                 userId
                 userName
-                userEmail
                 achievementId
                 achievementTitle
                 achievementTier

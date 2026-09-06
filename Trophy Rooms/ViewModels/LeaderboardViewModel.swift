@@ -92,7 +92,6 @@ class LeaderboardViewModel: ObservableObject {
                 rank
                 userId
                 userName
-                userEmail
                 value
                 secondaryValue
             }
@@ -108,7 +107,6 @@ class LeaderboardViewModel: ObservableObject {
                 rank
                 userId
                 userName
-                userEmail
                 value
                 secondaryValue
             }
@@ -124,7 +122,6 @@ class LeaderboardViewModel: ObservableObject {
                 rank
                 userId
                 userName
-                userEmail
                 value
                 secondaryValue
             }
@@ -140,7 +137,6 @@ class LeaderboardViewModel: ObservableObject {
                 rank
                 userId
                 userName
-                userEmail
                 value
                 secondaryValue
             }
@@ -156,7 +152,6 @@ class LeaderboardViewModel: ObservableObject {
                 rank
                 userId
                 userName
-                userEmail
                 gameId
                 gameTitle
                 completionTimeHours
