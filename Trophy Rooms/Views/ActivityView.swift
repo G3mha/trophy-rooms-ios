@@ -108,7 +108,7 @@ private struct ActivityEntryRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(activity.userName ?? activity.userEmail)
+                    Text(activity.displayName)
                         .font(.headline)
                     Spacer()
                     Text(formattedDate)

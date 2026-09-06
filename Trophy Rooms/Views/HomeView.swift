@@ -507,7 +507,7 @@ private struct LeaderboardRow: View {
         HStack(spacing: 12) {
             RankBadge(rank: entry.rank)
 
-            Text(entry.userName ?? entry.userEmail)
+            Text(entry.displayName)
                 .font(.subheadline)
                 .foregroundColor(.primary)
                 .lineLimit(1)
@@ -565,7 +565,7 @@ private struct FastestRow: View {
             RankBadge(rank: entry.rank)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.userName ?? entry.userEmail)
+                Text(entry.displayName)
                     .font(.subheadline)
                     .foregroundColor(.primary)
                     .lineLimit(1)
@@ -759,7 +759,7 @@ private struct ActivityRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
-                    Text(activity.userName ?? activity.userEmail)
+                    Text(activity.displayName)
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)

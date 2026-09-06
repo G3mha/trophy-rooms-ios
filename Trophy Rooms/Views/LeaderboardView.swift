@@ -83,7 +83,7 @@ private struct LeaderboardEntryRow: View {
             RankBadge(rank: entry.rank)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.userName ?? entry.userEmail)
+                Text(entry.displayName)
                     .font(.headline)
                 Text(valueLabel)
                     .font(.subheadline)
@@ -137,7 +137,7 @@ private struct FastestCompletionRow: View {
             RankBadge(rank: entry.rank)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.userName ?? entry.userEmail)
+                Text(entry.displayName)
                     .font(.headline)
                 Text(entry.gameTitle)
                     .font(.subheadline)
