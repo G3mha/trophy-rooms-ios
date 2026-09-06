@@ -1094,7 +1094,6 @@ struct RemoveFromCollectionResult: Decodable {
 
 struct PublicUser: Codable, Identifiable {
     let id: String
-    let email: String
     let name: String?
     let achievementCount: Int
     let trophyCount: Int

@@ -66,17 +66,10 @@ private struct ProfileHeader: View {
                     .foregroundColor(.blue)
             }
 
-            // Name and email
-            VStack(spacing: 4) {
-                if let name = user.name {
-                    Text(name)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                }
-                Text(user.email)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
+            // Name
+            Text(playerDisplayName(user.name, id: user.id))
+                .font(.title2)
+                .fontWeight(.bold)
 
             // Quick stats
             HStack(spacing: 32) {
@@ -98,7 +91,7 @@ private struct ProfileHeader: View {
             }
             return String(name.prefix(2)).uppercased()
         }
-        return String(user.email.prefix(2)).uppercased()
+        return String(user.id.suffix(2)).uppercased()
     }
 }
 

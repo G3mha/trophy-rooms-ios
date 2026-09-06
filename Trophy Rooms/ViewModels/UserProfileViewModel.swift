@@ -17,7 +17,6 @@ class UserProfileViewModel: ObservableObject {
         query GetUserProfile($userId: ID!) {
             user(id: $userId) {
                 id
-                email
                 name
                 achievementCount
                 trophyCount
@@ -82,7 +81,6 @@ struct UserProfileQueryResponse: Decodable {
 
 struct PublicUserWithAchievements: Decodable, Identifiable {
     let id: String
-    let email: String
     let name: String?
     let achievementCount: Int
     let trophyCount: Int
