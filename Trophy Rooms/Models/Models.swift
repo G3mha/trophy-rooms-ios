@@ -323,6 +323,19 @@ struct GameBundle: Identifiable, Codable {
     let dlcCount: Int
 }
 
+// MARK: - Player Display Names
+
+/// The label to show for a user in a public list.
+///
+/// Public feeds carry only a name and an id - never an email address - so
+/// players who have not set a name get a short handle from their id instead.
+func playerDisplayName(_ name: String?, id: String) -> String {
+    if let name, !name.trimmingCharacters(in: .whitespaces).isEmpty {
+        return name
+    }
+    return "Player \(id.suffix(3).uppercased())"
+}
+
 // MARK: - Leaderboard Models
 
 struct LeaderboardEntry: Codable, Identifiable {
@@ -334,6 +347,7 @@ struct LeaderboardEntry: Codable, Identifiable {
     let secondaryValue: Int?
 
     var id: String { "\(rank)-\(userId)" }
+    var displayName: String { playerDisplayName(userName, id: userId) }
 }
 
 struct FastestCompletionEntry: Codable, Identifiable {
@@ -347,6 +361,7 @@ struct FastestCompletionEntry: Codable, Identifiable {
     let completedAt: String
 
     var id: String { "\(rank)-\(userId)-\(gameId)" }
+    var displayName: String { playerDisplayName(userName, id: userId) }
 }
 
 // MARK: - Activity Models
@@ -366,6 +381,8 @@ struct ActivityEntry: Codable, Identifiable {
     let platformName: String?
     let platformSlug: String?
     let earnedAt: String
+
+    var displayName: String { playerDisplayName(userName, id: userId) }
 }
 
 // MARK: - Buylist Models
