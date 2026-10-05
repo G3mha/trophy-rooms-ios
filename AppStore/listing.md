@@ -32,7 +32,7 @@ Leaderboards and a community activity feed show what everyone else is finishing.
 Free to use. Sign in with Apple, Google, or email — and delete your account and data from inside the app whenever you want.
 
 ## Keywords (100 max)
-backlog,achievements,completionist,retro,gaming,tracker,collector,platinum,videogame,library,cib
+backlog,achievements,completionist,retro,gaming,tracker,collector,shelf,videogame,library,cib
 
 ## Support URL
 https://trophyrooms.org
