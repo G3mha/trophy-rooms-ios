@@ -175,9 +175,9 @@ build("iphone-5-detail", IW, IH,
 # 6 - upright on the shelf, the classic cabinet frame
 build("iphone-6-home", IW, IH,
       f"""<div class="kicker" style="top:150px; left:0; width:100%; text-align:center;
-            font-size:96px; transform:rotate(-2.5deg);">Every platform</div>
+            font-size:96px; transform:rotate(-2.5deg);">38 platforms</div>
       <div class="headline" style="top:300px; left:0; width:100%; text-align:center;
-            font-size:146px;">47,000 games.<br>One search.</div>
+            font-size:146px;">28,000 games.<br>One search.</div>
       {sil('cup','left:50px; bottom:0;',215)}{sil('star','left:270px; bottom:0;',125)}
       {sil('medal','left:420px; bottom:0;',150)}{sil('cup','right:50px; bottom:0;',195)}
       {sil('obelisk','right:250px; bottom:0;',120)}
@@ -189,9 +189,9 @@ PW, PH = 2064, 2752
 
 build("ipad-1-home", PW, PH,
       f"""<div class="kicker" style="top:130px; left:0; width:100%; text-align:center;
-            font-size:96px; transform:rotate(-2deg);">Every platform</div>
+            font-size:96px; transform:rotate(-2deg);">38 platforms</div>
       <div class="headline" style="top:260px; left:0; width:100%; text-align:center;
-            font-size:132px;">47,000 games. One search.</div>
+            font-size:132px;">28,000 games. One search.</div>
       {sil('cup','left:70px; bottom:0;',215)}{sil('star','left:300px; bottom:0;',125)}
       {sil('cup','right:70px; bottom:0;',195)}{sil('medal','right:290px; bottom:0;',150)}
       {device('ipad-home.png','top:620px; left:50%; transform:translateX(-50%) rotate(-2deg);',1500,40,9)}
