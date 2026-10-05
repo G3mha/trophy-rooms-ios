@@ -909,6 +909,12 @@ struct GameEdge: Decodable {
 
 struct GamesPageResponse: Decodable {
     let gamesPage: GamesPage
+    /// Only requested with the first page - see GameListViewModel.fetchGames
+    let gameFamiliesPage: GameFamiliesCount?
+}
+
+struct GameFamiliesCount: Decodable {
+    let totalCount: Int
 }
 
 struct GamesPage: Decodable {

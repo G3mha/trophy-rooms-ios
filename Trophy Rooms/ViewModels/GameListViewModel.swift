@@ -15,6 +15,8 @@ class GameListViewModel: ObservableObject {
     // Pagination state
     @Published var currentPage: Int = 1
     @Published var totalPages: Int = 1
+    /// Games (families) matching the filters. Not gamesPage.totalCount,
+    /// which counts one row per platform edition.
     @Published var totalCount: Int = 0
     /// Fetch batch size for infinite scroll - an implementation detail,
     /// not a user-facing setting
@@ -102,7 +104,7 @@ class GameListViewModel: ObservableObject {
         }
 
         let query = """
-        query GetGamesPage($page: Int, $pageSize: Int, $filter: GamesFilterInput, $orderBy: GameOrderBy) {
+        query GetGamesPage($page: Int, $pageSize: Int, $filter: GamesFilterInput, $familyFilter: GameFamiliesFilterInput, $orderBy: GameOrderBy, $withFamilyCount: Boolean!) {
             gamesPage(page: $page, pageSize: $pageSize, filter: $filter, orderBy: $orderBy) {
                 items {
                     id
@@ -122,12 +124,18 @@ class GameListViewModel: ObservableObject {
                 pageSize
                 totalPages
             }
+            gameFamiliesPage(pageSize: 1, filter: $familyFilter) @include(if: $withFamilyCount) {
+                totalCount
+            }
         }
         """
 
+        // The family count can't change between pages of the same filters,
+        // so only the first page pays for it
         var variables: [String: Any] = [
             "page": page,
-            "pageSize": pageSize
+            "pageSize": pageSize,
+            "withFamilyCount": !append
         ]
         var filter: [String: Any] = [:]
 
@@ -148,7 +156,9 @@ class GameListViewModel: ObservableObject {
         }
 
         if !filter.isEmpty {
+            // GameFamiliesFilterInput takes the same fields
             variables["filter"] = filter
+            variables["familyFilter"] = filter
         }
 
         if let orderBy = orderBy {
@@ -168,7 +178,9 @@ class GameListViewModel: ObservableObject {
                 }
                 self.currentPage = response.gamesPage.page
                 self.totalPages = response.gamesPage.totalPages
-                self.totalCount = response.gamesPage.totalCount
+                if let familyCount = response.gameFamiliesPage?.totalCount {
+                    self.totalCount = familyCount
+                }
                 self.isLoading = false
                 self.isLoadingMore = false
             }
