@@ -8,8 +8,19 @@ class GameListViewModel: ObservableObject {
     /// Appending the next page - kept separate from `isLoading` so the grid
     /// stays on screen instead of being replaced by a full-page spinner
     @Published var isLoadingMore = false
-    /// Synchronous re-entrancy latch for loadNextPage - see the note there
-    private var isFetchingMore = false
+    /// Bumped by every fresh (page 1) fetch. A response from an older
+    /// generation - e.g. an append still in flight when the filters changed -
+    /// is dropped instead of being spliced into the new list.
+    private var generation = 0
+    /// Generation whose first page is currently in `games`
+    private var loadedGeneration = 0
+    /// Generation of the append in flight, if any. Scoped to a generation so
+    /// an abandoned append can't block the first append of a new list.
+    private var appendingGeneration: Int?
+    /// Bumped whenever a page lands. Views key infinite-scroll checks on this
+    /// rather than the row count, which can come out the same after a filter
+    /// swaps one 25-row first page for another.
+    @Published private(set) var listVersion = 0
     @Published var errorMessage: String?
 
     // Pagination state
@@ -94,6 +105,11 @@ class GameListViewModel: ObservableObject {
     }
 
     func fetchGames(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil, page: Int = 1, append: Bool = false) async {
+        if !append {
+            generation += 1
+        }
+        let requestGeneration = generation
+
         DispatchQueue.main.async {
             if append {
                 self.isLoadingMore = true
@@ -168,6 +184,7 @@ class GameListViewModel: ObservableObject {
         do {
             let response: GamesPageResponse = try await NetworkService.shared.fetch(query: query, variables: variables)
             DispatchQueue.main.async {
+                guard requestGeneration == self.generation else { return }
                 if append {
                     // Guard against duplicates: ordering ties across page
                     // boundaries can return the same row twice
@@ -175,21 +192,24 @@ class GameListViewModel: ObservableObject {
                     self.games += response.gamesPage.items.filter { !existing.contains($0.id) }
                 } else {
                     self.games = response.gamesPage.items
+                    self.loadedGeneration = requestGeneration
                 }
                 self.currentPage = response.gamesPage.page
                 self.totalPages = response.gamesPage.totalPages
                 if let familyCount = response.gameFamiliesPage?.totalCount {
                     self.totalCount = familyCount
                 }
+                self.listVersion += 1
                 self.isLoading = false
                 self.isLoadingMore = false
             }
         } catch {
-            // Swiping between the paged tabs tears down the lazy view, which
-            // cancels any in-flight append. That is normal lifecycle, not a
-            // failure - surfacing it would replace the grid with an error.
+            // A cancelled request (the view that started it went away) is
+            // normal lifecycle, not a failure - surfacing it would replace
+            // the grid with an error.
             if error is CancellationError || (error as? URLError)?.code == .cancelled {
                 DispatchQueue.main.async {
+                    guard requestGeneration == self.generation else { return }
                     self.isLoading = false
                     self.isLoadingMore = false
                 }
@@ -197,6 +217,7 @@ class GameListViewModel: ObservableObject {
             }
 
             DispatchQueue.main.async {
+                guard requestGeneration == self.generation else { return }
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
                 self.isLoadingMore = false
@@ -210,10 +231,19 @@ class GameListViewModel: ObservableObject {
     func loadNextPage(search: String?, platformId: String?, hasAchievements: Bool?, orderBy: String?, type: String? = nil) async {
         // The published flags are set inside DispatchQueue.main.async, so they
         // can't gate re-entrancy: two callers would both pass the guard before
-        // either assignment lands. This flag flips synchronously.
-        guard hasNextPage, !isLoading, !isFetchingMore else { return }
-        isFetchingMore = true
-        defer { isFetchingMore = false }
+        // either assignment lands. The generation fields flip synchronously.
+        // Appending also waits for the current list's first page, so a new
+        // filter's page N+1 can't land on top of the old list.
+        guard hasNextPage,
+              loadedGeneration == generation,
+              appendingGeneration != generation else { return }
+        let requestGeneration = generation
+        appendingGeneration = requestGeneration
+        defer {
+            if appendingGeneration == requestGeneration {
+                appendingGeneration = nil
+            }
+        }
 
         await fetchGames(
             search: search,
