@@ -214,24 +214,57 @@ private struct GamesGridTab: View {
     let onOpenFilters: () -> Void
 
     @Namespace private var zoomNamespace
+    @State private var isNearEnd = false
 
     private let columns = GameCoverGridLayout.columns()
 
-    /// Sits in the last grid cell; appearing means the user reached the end
+    /// How far above the footer scrolling starts the next fetch
+    private static let prefetchDistance: CGFloat = 600
+
+    private struct PageTrigger: Equatable {
+        let isNearEnd: Bool
+        let listVersion: Int
+    }
+
+    /// Sits below the grid; scrolling near it loads the next page.
+    ///
+    /// The plain VStack builds this footer up front, so .onAppear and .task
+    /// fire even when it is far below the fold - keyed on the row count
+    /// alone, every append triggered the next one until the whole catalog
+    /// had loaded. Loading is gated on scroll visibility instead, and
+    /// re-checked whenever a page lands in case the new rows didn't fill the
+    /// screen.
     private var loadMoreFooter: some View {
         ProgressView()
             .controlSize(.small)
             .tint(Cabinet.brass)
             .frame(height: 88)
             .frame(maxWidth: .infinity)
-            .task(id: viewModel.games.count) {
-                await viewModel.loadNextPage(
-                    search: searchText,
-                    platformId: selectedPlatformId,
-                    hasAchievements: achievementFilter.boolValue,
-                    orderBy: sortOption.graphqlValue,
-                    type: gameTypeFilter.graphqlValue
-                )
+            // Visibility is tracked on a taller zone ending at the spinner,
+            // not the spinner itself. The scroll view's bottom content margin
+            // doesn't count as visible, so a spinner resting there read as
+            // off screen and the next page never loaded. The extra height
+            // also starts the fetch a little before the end.
+            .background(alignment: .bottom) {
+                Color.clear
+                    .frame(height: Self.prefetchDistance)
+                    .onScrollVisibilityChange(threshold: 0.01) { isNearEnd = $0 }
+            }
+            .onDisappear { isNearEnd = false }
+            .onChange(of: PageTrigger(isNearEnd: isNearEnd, listVersion: viewModel.listVersion), initial: true) {
+                guard isNearEnd else { return }
+                // Unstructured on purpose: .task(id:) is cancelled whenever
+                // the trigger changes, so the zone leaving view for a frame
+                // as new rows land would abandon the append in flight.
+                Task {
+                    await viewModel.loadNextPage(
+                        search: searchText,
+                        platformId: selectedPlatformId,
+                        hasAchievements: achievementFilter.boolValue,
+                        orderBy: sortOption.graphqlValue,
+                        type: gameTypeFilter.graphqlValue
+                    )
+                }
             }
     }
 
