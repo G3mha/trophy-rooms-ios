@@ -47,11 +47,10 @@ struct AuthView: View {
                 VStack(spacing: 24) {
                     // Header
                     VStack(spacing: 10) {
-                        Image("AuthHeroTrophies")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: 300)
-                            .accessibilityLabel("Platform trophies")
+                        // Brand silhouettes, not platform logos: the app has
+                        // no PlayStation, Xbox, Steam or Nintendo integration
+                        TrophyShelfView()
+                            .padding(.bottom, 8)
 
                         Text(headerKicker)
                             .font(Cabinet.script(26))
