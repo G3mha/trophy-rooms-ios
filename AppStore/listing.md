@@ -21,7 +21,7 @@ A PLAY JOURNAL THAT KEEPS YOU HONEST
 Log what you played and for how long in a single tap. Daily entries build a streak worth protecting, and weekly and all-time totals show where your hours really went.
 
 ACHIEVEMENTS AND TROPHIES
-Follow achievement sets game by game and watch completion climb. Finish a set and the trophy lands in your room.
+Some games have achievement lists you can work through. You tick each one off yourself as you earn it, and nothing syncs from your consoles or PC stores. Finish a list and the trophy lands in your room. Only a small set of games has lists so far.
 
 BUILT ON A REAL CATALOG
 Search more than 28,000 games across 38 platforms. Cover art and release dates are already filled in, so you can add a game without typing anything.
