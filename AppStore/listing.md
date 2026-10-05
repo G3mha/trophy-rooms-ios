@@ -24,7 +24,7 @@ ACHIEVEMENTS AND TROPHIES
 Follow achievement sets game by game and watch completion climb. Finish a set and the trophy lands in your room.
 
 BUILT ON A REAL CATALOG
-Search more than 47,000 games across dozens of platforms, with cover art, release dates, editions, DLC, and bundles already mapped out. No manual data entry to get started.
+Search more than 28,000 games across 38 platforms. Cover art and release dates are already filled in, so you can add a game without typing anything.
 
 SEE WHERE YOU STAND
 Leaderboards and a community activity feed show what everyone else is finishing.
