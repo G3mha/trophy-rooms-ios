@@ -4,7 +4,7 @@
 Game library & shelf tracker
 
 ## Promotional Text (170 max)
-Your games deserve a room of their own. Track what you're playing, catalog the shelf you actually own, log every session, and watch the trophies pile up.
+Your games deserve a room of their own. Track what you're playing, catalog the shelf you actually own, log every session, and keep a record of what you've finished.
 
 ## Description (4,000 max)
 Trophy Rooms is a home for everything you've played, everything you own, and everything you're still chasing.
