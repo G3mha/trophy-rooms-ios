@@ -11,16 +11,22 @@ enum AppTab: Hashable {
 struct RootView: View {
     @State private var selectedTab: AppTab = .home
     @StateObject private var adminViewModel = AdminViewModel()
+    @EnvironmentObject private var authManager: AuthManager
     @EnvironmentObject private var inlineAdminContext: InlineAdminContext
     @EnvironmentObject private var adminPresentationContext: AdminPresentationContext
 
     var body: some View {
+        // Each tab is keyed to the signed-in user: when the account changes,
+        // its screens and view models are rebuilt from scratch, so nothing the
+        // previous account loaded (library, collection, ownership on detail
+        // pages) stays in memory for the next one.
         TabView(selection: $selectedTab) {
             Tab("Home", systemImage: "house.fill", value: .home) {
                 NavigationStack {
                     HomeView()
                         .cabinetCanvas()
                 }
+                .id(authManager.userId)
             }
 
             Tab("Trophies", systemImage: "trophy.fill", value: .trophies) {
@@ -28,6 +34,7 @@ struct RootView: View {
                     TrophyRoomView()
                         .cabinetCanvas()
                 }
+                .id(authManager.userId)
             }
 
             Tab("Library", systemImage: "books.vertical.fill", value: .library) {
@@ -35,6 +42,7 @@ struct RootView: View {
                     LibraryView()
                         .cabinetCanvas()
                 }
+                .id(authManager.userId)
             }
 
             Tab("Collection", systemImage: "square.grid.2x2.fill", value: .collection) {
@@ -42,11 +50,13 @@ struct RootView: View {
                     CollectionView()
                         .cabinetCanvas()
                 }
+                .id(authManager.userId)
             }
 
             Tab("Search", systemImage: "magnifyingglass", value: .search, role: .search) {
                 GlobalSearchSheet()
                     .cabinetCanvas()
+                    .id(authManager.userId)
             }
         }
         // Sidebar on iPad, floating tab bar on iPhone
