@@ -40,7 +40,14 @@ class NetworkService {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 30 // 30 second timeout
 
+        let requestUserId = await AuthManager.shared.userId
         let (responseData, _) = try await URLSession.shared.data(for: request)
+
+        // The account changed while this was in flight: hand the old account's
+        // data to no one, or a view model would cache it for the new account
+        guard await AuthManager.shared.userId == requestUserId else {
+            throw CancellationError()
+        }
 
         // Debug: print raw response
         #if DEBUG
