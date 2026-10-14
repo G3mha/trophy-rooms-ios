@@ -45,7 +45,19 @@ final class AuthManager: ObservableObject {
     }
 
     private func observeAuthChanges() async {
-        for await (_, session) in client.auth.authStateChanges {
+        for await (event, session) in client.auth.authStateChanges {
+            // Drop the previous account's cached data before publishing the
+            // session, so no view can read it for the new one. Sign-out and
+            // account deletion both arrive here as `.signedOut`. A nil initial
+            // session is not a sign-out: the SDK emits it when an expired token
+            // can't refresh offline but keeps the stored session, so the
+            // owner's cache stays until a different user actually signs in.
+            if event == .signedOut {
+                await CacheManager.shared.setOwner(nil)
+            } else if let session {
+                await CacheManager.shared.setOwner(session.user.id.uuidString.lowercased())
+            }
+
             self.session = session
             NotificationCenter.default.post(name: .init("AuthUserDidChange"), object: nil)
         }
