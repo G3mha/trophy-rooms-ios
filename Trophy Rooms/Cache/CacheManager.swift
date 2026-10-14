@@ -16,6 +16,9 @@ actor CacheManager {
     /// Disk cache directory
     private let cacheDirectory: URL
 
+    /// UserDefaults key for the user id the cache belongs to
+    private static let ownerKey = "cache_manager.owner_user_id"
+
     private init() {
         // Use Caches directory (system can clean when storage is low)
         let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
@@ -86,6 +89,23 @@ actor CacheManager {
     func invalidateAll() {
         memoryCache.removeAll()
         clearDiskCache()
+    }
+
+    /// Record which user the cached responses belong to, wiping everything
+    /// when that changes so the next account never sees the previous one's
+    /// data. `nil` means signed out. The owner is persisted so a relaunch
+    /// can tell whether the disk cache is still the signed-in user's; an
+    /// unknown owner (first run after upgrading) counts as a change.
+    func setOwner(_ userId: String?) {
+        let defaults = UserDefaults.standard
+        guard defaults.string(forKey: Self.ownerKey) != userId else { return }
+
+        invalidateAll()
+        if let userId {
+            defaults.set(userId, forKey: Self.ownerKey)
+        } else {
+            defaults.removeObject(forKey: Self.ownerKey)
+        }
     }
 
     // MARK: - Disk Cache Operations
