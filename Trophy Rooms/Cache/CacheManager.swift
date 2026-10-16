@@ -10,8 +10,11 @@ actor CacheManager {
         let timestamp: Date
     }
 
-    /// In-memory cache
-    private var memoryCache: [String: CacheEntry] = [:]
+    /// In-memory cache, filled from disk the first time any method touches it.
+    /// The load runs on the actor before that access continues, so a read on
+    /// a cold launch can't miss data that's on disk, and a load can never
+    /// land after a later write or wipe.
+    private lazy var memoryCache: [String: CacheEntry] = loadDiskCache()
 
     /// Disk cache directory
     private let cacheDirectory: URL
@@ -26,11 +29,6 @@ actor CacheManager {
 
         // Create directory if it doesn't exist
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
-
-        // Load existing disk cache into memory
-        Task {
-            await loadDiskCache()
-        }
     }
 
     // MARK: - Public API
@@ -110,11 +108,12 @@ actor CacheManager {
 
     // MARK: - Disk Cache Operations
 
-    private func loadDiskCache() {
+    private func loadDiskCache() -> [String: CacheEntry] {
         guard let files = try? FileManager.default.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil) else {
-            return
+            return [:]
         }
 
+        var entries: [String: CacheEntry] = [:]
         for file in files where file.pathExtension == "json" {
             guard let data = try? Data(contentsOf: file),
                   let entry = try? JSONDecoder().decode(CacheEntry.self, from: data) else {
@@ -122,8 +121,9 @@ actor CacheManager {
             }
 
             let key = file.deletingPathExtension().lastPathComponent
-            memoryCache[key] = entry
+            entries[key] = entry
         }
+        return entries
     }
 
     private func saveToDisk(key: CacheKey, entry: CacheEntry) {
