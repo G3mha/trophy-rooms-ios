@@ -633,16 +633,6 @@ private struct AchievementSetView: View {
         achievementSet.achievements.count
     }
 
-    var earnedPoints: Int {
-        achievementSet.achievements.reduce(0) { partialResult, achievement in
-            partialResult + (achievement.isCompleted == true ? achievement.points : 0)
-        }
-    }
-
-    var totalPoints: Int {
-        achievementSet.achievements.reduce(0) { $0 + $1.points }
-    }
-
     var completionFraction: Double {
         guard totalCount > 0 else { return 0 }
         return Double(completedCount) / Double(totalCount)
@@ -792,9 +782,6 @@ private struct AchievementSetView: View {
                                 completedCount == totalCount && totalCount > 0 ? .green : accentColor
                             )
                         Spacer()
-                        Text("\(earnedPoints)/\(totalPoints) pts")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(Cabinet.brass)
                     }
                 }
                 .allowsHitTesting(false)
@@ -895,19 +882,10 @@ private struct AchievementRow: View {
                         .lineLimit(2)
                 }
 
-                HStack(spacing: 8) {
-                    AchievementSetChip(
-                        label: "\(achievement.points) pts",
-                        systemImage: "star.fill",
-                        tint: Cabinet.brass,
-                        compact: true
-                    )
-
-                    if let userCount = achievement.userCount, userCount > 0 {
-                        Text("\(userCount) users")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                if let userCount = achievement.userCount, userCount > 0 {
+                    Text("\(userCount) users")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
 

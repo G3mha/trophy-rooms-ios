@@ -130,7 +130,6 @@ class GameDetailViewModel: ObservableObject {
                         title
                         description
                         iconUrl
-                        points
                         tier
                         isCompleted
                         userCount

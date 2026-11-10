@@ -160,7 +160,6 @@ struct Achievement: Identifiable, Codable {
     let title: String
     let description: String?
     let iconUrl: String?
-    let points: Int
     let tier: AchievementTier?
     let isCompleted: Bool?
     let userCount: Int?
@@ -174,7 +173,6 @@ extension Achievement {
             title: title,
             description: description,
             iconUrl: iconUrl,
-            points: points,
             tier: tier,
             isCompleted: isCompleted,
             userCount: updatedUserCount(for: isCompleted),
