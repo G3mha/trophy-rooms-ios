@@ -28,8 +28,6 @@ class GameProgressViewModel: ObservableObject {
                 gameCoverUrl
                 earnedCount
                 totalCount
-                earnedPoints
-                totalPoints
                 percentComplete
                 hasTrophy
                 trophyEarnedAt

@@ -886,8 +886,6 @@ struct GameProgress: Codable, Identifiable {
     let gameCoverUrl: String?
     let earnedCount: Int
     let totalCount: Int
-    let earnedPoints: Int
-    let totalPoints: Int
     let percentComplete: Float
     let hasTrophy: Bool
     let trophyEarnedAt: String?
