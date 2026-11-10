@@ -535,7 +535,10 @@ private struct GameHeader: View {
                     }
                 }
 
-                let totalAchievements = game.achievementSets.reduce(0) { $0 + $1.achievements.count }
+                // Only the sets that award the trophy, the rule the backend uses
+                let totalAchievements = game.achievementSets
+                    .filter { $0.countsTowardTrophy != false && ($0.type != "CUSTOM" || $0.visibility == "PUBLIC") }
+                    .reduce(0) { $0 + $1.achievements.count }
                 if totalAchievements > 0 {
                     HStack(spacing: 4) {
                         Image(systemName: "star.fill")

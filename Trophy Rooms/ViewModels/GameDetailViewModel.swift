@@ -111,6 +111,7 @@ class GameDetailViewModel: ObservableObject {
                     title
                     type
                     visibility
+                    countsTowardTrophy
                     createdByUserId
                     gameVersionId
                     gameVersion {

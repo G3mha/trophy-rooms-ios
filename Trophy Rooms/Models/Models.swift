@@ -144,6 +144,8 @@ struct AchievementSet: Identifiable, Codable {
     let title: String
     let type: String
     let visibility: String
+    // Optional because only the game detail query asks for it
+    let countsTowardTrophy: Bool?
     let gameFamilyId: String?
     let createdByUserId: String?
     let gameVersionId: String?
@@ -230,6 +232,7 @@ extension AchievementSet {
             title: title,
             type: type,
             visibility: visibility,
+            countsTowardTrophy: countsTowardTrophy,
             gameFamilyId: gameFamilyId,
             createdByUserId: createdByUserId,
             gameVersionId: gameVersionId,
