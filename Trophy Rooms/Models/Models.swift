@@ -1110,13 +1110,11 @@ struct PublicUser: Codable, Identifiable {
 }
 
 struct UserProfileStats: Codable {
-    let totalPoints: Int
     let platinumCount: Int
     let goldCount: Int
     let silverCount: Int
     let bronzeCount: Int
     let completionRate: Float
-    let averagePointsPerGame: Float
 }
 
 struct PublicUserResponse: Decodable {

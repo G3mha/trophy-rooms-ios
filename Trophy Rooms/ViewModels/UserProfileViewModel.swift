@@ -22,13 +22,11 @@ class UserProfileViewModel: ObservableObject {
                 trophyCount
                 gamesWithAchievementsCount
                 stats {
-                    totalPoints
                     platinumCount
                     goldCount
                     silverCount
                     bronzeCount
                     completionRate
-                    averagePointsPerGame
                 }
                 recentAchievements {
                     id
@@ -38,7 +36,6 @@ class UserProfileViewModel: ObservableObject {
                         title
                         description
                         iconUrl
-                        points
                         tier
                         achievementSet {
                             id
@@ -99,7 +96,6 @@ struct UserAchievementItem: Decodable, Identifiable {
         let title: String
         let description: String?
         let iconUrl: String?
-        let points: Int
         let tier: AchievementTier?
         let achievementSet: AchievementSetWithGame
 

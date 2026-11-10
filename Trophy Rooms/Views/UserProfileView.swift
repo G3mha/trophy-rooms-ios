@@ -125,9 +125,7 @@ private struct StatsGrid: View {
                 .font(.headline)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                StatCell(title: "Total Points", value: "\(stats.totalPoints)", icon: "star.circle.fill", color: Cabinet.Tint.amber)
                 StatCell(title: "Completion Rate", value: String(format: "%.1f%%", stats.completionRate), icon: "percent", color: Cabinet.Tint.positive)
-                StatCell(title: "Avg Points/Game", value: "\(Int(stats.averagePointsPerGame))", icon: "chart.line.uptrend.xyaxis", color: Cabinet.Tint.info)
                 StatCell(title: "Games Played", value: "\(user.gamesWithAchievementsCount)", icon: "gamecontroller", color: Cabinet.Tint.violet)
             }
 
@@ -263,11 +261,6 @@ private struct RecentAchievementRow: View {
             }
 
             Spacer()
-
-            Text("\(item.achievement.points)")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.blue)
         }
         .padding()
         .background(Cabinet.card)
