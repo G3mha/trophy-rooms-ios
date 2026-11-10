@@ -375,7 +375,6 @@ struct ActivityEntry: Codable, Identifiable {
     let achievementId: String?
     let achievementTitle: String?
     let achievementTier: AchievementTier?
-    let achievementPoints: Int?
     let gameFamilyId: String?
     let gameTitle: String
     let platformName: String?

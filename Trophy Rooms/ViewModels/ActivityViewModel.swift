@@ -60,7 +60,6 @@ class ActivityViewModel: ObservableObject {
                 achievementId
                 achievementTitle
                 achievementTier
-                achievementPoints
                 gameId
                 gameTitle
                 platformName
