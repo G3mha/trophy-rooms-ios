@@ -4,7 +4,6 @@ import Combine
 enum LeaderboardType: String, CaseIterable, Identifiable {
     case trophies
     case achievements
-    case points
     case games
     case fastest
 
@@ -14,7 +13,6 @@ enum LeaderboardType: String, CaseIterable, Identifiable {
         switch self {
         case .trophies: return "Trophies"
         case .achievements: return "Achievements"
-        case .points: return "Points"
         case .games: return "Games"
         case .fastest: return "Fastest"
         }
@@ -24,7 +22,6 @@ enum LeaderboardType: String, CaseIterable, Identifiable {
         switch self {
         case .trophies: return "trophy"
         case .achievements: return "star"
-        case .points: return "number"
         case .games: return "gamecontroller"
         case .fastest: return "bolt"
         }
@@ -56,12 +53,6 @@ class LeaderboardViewModel: ObservableObject {
                 let response: LeaderboardResponse = try await fetchLeaderboardByAchievements()
                 DispatchQueue.main.async {
                     self.entries = response.leaderboardByAchievements ?? []
-                    self.isLoading = false
-                }
-            case .points:
-                let response: LeaderboardResponse = try await fetchLeaderboardByPoints()
-                DispatchQueue.main.async {
-                    self.entries = response.leaderboardByPoints ?? []
                     self.isLoading = false
                 }
             case .games:
@@ -104,21 +95,6 @@ class LeaderboardViewModel: ObservableObject {
         let query = """
         query GetLeaderboardByAchievements($limit: Int) {
             leaderboardByAchievements(limit: $limit) {
-                rank
-                userId
-                userName
-                value
-                secondaryValue
-            }
-        }
-        """
-        return try await NetworkService.shared.fetch(query: query, variables: ["limit": 50])
-    }
-
-    private func fetchLeaderboardByPoints() async throws -> LeaderboardResponse {
-        let query = """
-        query GetLeaderboardByPoints($limit: Int) {
-            leaderboardByPoints(limit: $limit) {
                 rank
                 userId
                 userName

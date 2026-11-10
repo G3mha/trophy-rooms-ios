@@ -530,7 +530,6 @@ private struct LeaderboardRow: View {
         switch type {
         case .trophies: return "\(entry.value)"
         case .achievements: return "\(entry.value)"
-        case .points: return "\(entry.value) pts"
         case .games: return "\(entry.value)"
         case .fastest: return ""
         }

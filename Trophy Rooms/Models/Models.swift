@@ -1005,7 +1005,6 @@ struct MutationResult: Decodable {
 struct LeaderboardResponse: Decodable {
     let leaderboardByTrophies: [LeaderboardEntry]?
     let leaderboardByAchievements: [LeaderboardEntry]?
-    let leaderboardByPoints: [LeaderboardEntry]?
     let leaderboardByGamesPlayed: [LeaderboardEntry]?
 }
 
