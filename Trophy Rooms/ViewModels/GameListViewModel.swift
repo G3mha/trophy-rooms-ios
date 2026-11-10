@@ -75,7 +75,8 @@ class GameListViewModel: ObservableObject {
                 games: gameList,
                 platforms: platforms,
                 coverUrl: gameList.first(where: { $0.coverUrl != nil })?.coverUrl,
-                totalAchievementCount: gameList.reduce(0) { $0 + $1.achievementCount },
+                // Achievements belong to the family, so every platform repeats the same count
+                totalAchievementCount: gameList.map(\.achievementCount).max() ?? 0,
                 totalTrophyCount: gameList.reduce(0) { $0 + $1.trophyCount }
             )
         }
