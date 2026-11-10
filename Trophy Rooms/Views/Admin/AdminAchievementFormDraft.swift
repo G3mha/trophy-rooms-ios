@@ -5,19 +5,17 @@ final class AdminAchievementFormDraft: ObservableObject {
     @Published var title: String
     @Published var achievementDescription: String
     @Published var iconUrl: String
-    @Published var points: Int
     @Published var selectedTier: AchievementTier?
 
     init(achievement: AdminAchievement?) {
         self.title = achievement?.title ?? ""
         self.achievementDescription = achievement?.description ?? ""
         self.iconUrl = achievement?.iconUrl ?? ""
-        self.points = achievement?.points ?? 10
         self.selectedTier = achievement?.tier
     }
 
     var isValid: Bool {
-        !normalizedTitle.isEmpty && points >= 0
+        !normalizedTitle.isEmpty
     }
 
     var normalizedTitle: String {

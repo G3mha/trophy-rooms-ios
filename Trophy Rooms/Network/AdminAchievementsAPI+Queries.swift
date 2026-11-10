@@ -32,7 +32,6 @@ extension AdminAchievementsAPI {
                     title
                     description
                     iconUrl
-                    points
                     tier
                     achievementSetId
                 }

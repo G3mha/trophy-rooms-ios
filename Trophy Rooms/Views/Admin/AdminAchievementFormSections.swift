@@ -16,14 +16,11 @@ struct AdminAchievementDetailsSection: View {
     }
 }
 
-struct AdminAchievementPointsTierSection: View {
-    @Binding var points: Int
+struct AdminAchievementTierSection: View {
     @Binding var selectedTier: AchievementTier?
 
     var body: some View {
         Section {
-            Stepper("Points: \(points)", value: $points, in: 0...1000, step: 5)
-
             Picker("Tier", selection: $selectedTier) {
                 Text("None").tag(nil as AchievementTier?)
                 ForEach(AchievementTier.allCases, id: \.self) { tier in
@@ -31,7 +28,7 @@ struct AdminAchievementPointsTierSection: View {
                 }
             }
         } header: {
-            Text("Points & Tier")
+            Text("Tier")
         }
     }
 }

@@ -5,7 +5,6 @@ extension AdminAchievementsViewModel {
         title: String,
         description: String?,
         iconUrl: String?,
-        points: Int,
         tier: AchievementTier?,
         achievementSetId: String
     ) async -> Bool {
@@ -14,7 +13,6 @@ extension AdminAchievementsViewModel {
                 title: title,
                 description: description,
                 iconUrl: iconUrl,
-                points: points,
                 tier: tier,
                 achievementSetId: achievementSetId
             )
@@ -34,7 +32,6 @@ extension AdminAchievementsViewModel {
         title: String,
         description: String?,
         iconUrl: String?,
-        points: Int,
         tier: AchievementTier?
     ) async -> Bool {
         await performAchievementMutation(fallback: false) {
@@ -43,7 +40,6 @@ extension AdminAchievementsViewModel {
                 title: title,
                 description: description,
                 iconUrl: iconUrl,
-                points: points,
                 tier: tier
             )
             if response.updateAchievement.success {

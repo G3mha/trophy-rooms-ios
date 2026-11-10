@@ -5,7 +5,6 @@ extension AdminAchievementsAPI {
         title: String,
         description: String?,
         iconUrl: String?,
-        points: Int,
         tier: AchievementTier?,
         achievementSetId: String
     ) async throws -> CreateAchievementResponse {
@@ -18,7 +17,6 @@ extension AdminAchievementsAPI {
                     title
                     description
                     iconUrl
-                    points
                     tier
                     achievementSetId
                 }
@@ -28,7 +26,6 @@ extension AdminAchievementsAPI {
 
         var input: [String: Any] = [
             "title": title,
-            "points": points,
             "achievementSetId": achievementSetId
         ]
         if let description, !description.isEmpty {
@@ -49,7 +46,6 @@ extension AdminAchievementsAPI {
         title: String,
         description: String?,
         iconUrl: String?,
-        points: Int,
         tier: AchievementTier?
     ) async throws -> UpdateAchievementResponse {
         let mutation = """
@@ -61,7 +57,6 @@ extension AdminAchievementsAPI {
                     title
                     description
                     iconUrl
-                    points
                     tier
                     achievementSetId
                 }
@@ -70,8 +65,7 @@ extension AdminAchievementsAPI {
         """
 
         var input: [String: Any] = [
-            "title": title,
-            "points": points
+            "title": title
         ]
         if let description {
             input["description"] = description

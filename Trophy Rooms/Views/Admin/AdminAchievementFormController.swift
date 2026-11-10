@@ -19,7 +19,6 @@ struct AdminAchievementFormController {
                 title: draft.normalizedTitle,
                 description: draft.normalizedDescription,
                 iconUrl: draft.normalizedIconUrl,
-                points: draft.points,
                 tier: draft.selectedTier
             )
         }
@@ -28,7 +27,6 @@ struct AdminAchievementFormController {
             title: draft.normalizedTitle,
             description: draft.normalizedDescription,
             iconUrl: draft.normalizedIconUrl,
-            points: draft.points,
             tier: draft.selectedTier,
             achievementSetId: viewModel.selectedSetId
         )

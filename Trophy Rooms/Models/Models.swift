@@ -1746,7 +1746,6 @@ struct AdminAchievement: Identifiable, Decodable {
     let title: String
     let description: String?
     let iconUrl: String?
-    let points: Int
     let tier: AchievementTier?
     let achievementSetId: String
 }

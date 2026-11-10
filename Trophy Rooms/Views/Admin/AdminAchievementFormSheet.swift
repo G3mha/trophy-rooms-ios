@@ -25,10 +25,7 @@ struct AdminAchievementFormSheet: View {
                     description: $draft.achievementDescription
                 )
 
-                AdminAchievementPointsTierSection(
-                    points: $draft.points,
-                    selectedTier: $draft.selectedTier
-                )
+                AdminAchievementTierSection(selectedTier: $draft.selectedTier)
 
                 AdminAchievementIconSection(iconUrl: $draft.iconUrl)
 

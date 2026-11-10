@@ -116,9 +116,6 @@ private struct AdminAchievementRow: View {
                         .lineLimit(2)
                 }
                 HStack(spacing: 8) {
-                    Text("\(achievement.points) pts")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
                     if let tier = achievement.tier {
                         Text(tier.rawValue)
                             .font(.caption2)
