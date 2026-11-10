@@ -59,7 +59,6 @@ extension AdminAchievementsViewModel {
 
         let titleIndex = headers.firstIndex(of: "title") ?? headers.firstIndex(of: "name")
         let descriptionIndex = headers.firstIndex(of: "description") ?? headers.firstIndex(of: "desc")
-        let pointsIndex = headers.firstIndex(of: "points") ?? headers.firstIndex(of: "point")
         let tierIndex = headers.firstIndex(of: "tier")
         let iconUrlIndex = headers.firstIndex(of: "iconurl") ?? headers.firstIndex(of: "icon_url") ?? headers.firstIndex(of: "icon")
 
@@ -80,12 +79,6 @@ extension AdminAchievementsViewModel {
 
             if let descIdx = descriptionIndex, row.count > descIdx, !row[descIdx].isEmpty {
                 achievement["description"] = row[descIdx]
-            }
-
-            if let ptsIdx = pointsIndex, row.count > ptsIdx, let points = Int(row[ptsIdx]) {
-                achievement["points"] = points
-            } else {
-                achievement["points"] = 10
             }
 
             if let tIdx = tierIndex, row.count > tIdx, !row[tIdx].isEmpty {

@@ -15,7 +15,7 @@ struct AdminCSVImportSheet: View {
                     ContentUnavailableView(
                         "Select a CSV File",
                         systemImage: "doc.badge.plus",
-                        description: Text("Choose a CSV file with achievements to import.\n\nRequired columns: title (or name)\nOptional columns: description, points, tier, iconUrl")
+                        description: Text("Choose a CSV file with achievements to import.\n\nRequired columns: title (or name)\nOptional columns: description, tier, iconUrl")
                     )
                     .padding()
 
