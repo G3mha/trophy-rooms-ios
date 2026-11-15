@@ -77,7 +77,7 @@ extension AdminAchievementsViewModel {
             if response.bulkDeleteAchievements.success {
                 DispatchQueue.main.async {
                     self.achievements.removeAll { ids.contains($0.id) }
-                    self.successMessage = "Deleted \(response.bulkDeleteAchievements.deletedCount) trophies"
+                    self.successMessage = "Deleted \(response.bulkDeleteAchievements.deletedCount) \(response.bulkDeleteAchievements.deletedCount == 1 ? "trophy" : "trophies")"
                 }
                 return response.bulkDeleteAchievements.deletedCount
             }

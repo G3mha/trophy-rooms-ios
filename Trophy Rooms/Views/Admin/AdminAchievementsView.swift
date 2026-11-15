@@ -111,7 +111,7 @@ struct AdminAchievementsView: View {
                 Text("Are you sure you want to delete \"\(achievement.title)\"? This action cannot be undone.")
             }
         }
-        .alert("Delete \(screenState.selectedIds.count) Trophies", isPresented: $screenState.showingBulkDeleteConfirmation) {
+        .alert("Delete \(screenState.selectedIds.count) \(screenState.selectedIds.count == 1 ? "Trophy" : "Trophies")", isPresented: $screenState.showingBulkDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 Task {
@@ -120,7 +120,7 @@ struct AdminAchievementsView: View {
                 }
             }
         } message: {
-            Text("Are you sure you want to delete \(screenState.selectedIds.count) trophies? This action cannot be undone.")
+            Text("Are you sure you want to delete \(screenState.selectedIds.count) \(screenState.selectedIds.count == 1 ? "trophy" : "trophies")? This action cannot be undone.")
         }
     }
 }
