@@ -35,6 +35,9 @@ class DLCDetailViewModel: ObservableObject {
                 achievementSets {
                     id
                     title
+                    type
+                    visibility
+                    countsTowardTrophy
                     achievementCount
                 }
                 bundles {

@@ -139,7 +139,26 @@ struct GameSummary: Identifiable, Decodable, Equatable {
     }
 }
 
-struct AchievementSet: Identifiable, Codable {
+// What decides a set's role on a game or DLC screen
+protocol TrophyRoleSet {
+    var type: String { get }
+    var visibility: String { get }
+    var countsTowardTrophy: Bool? { get }
+}
+
+extension TrophyRoleSet {
+    // The rule the backend awards the trophy by (trophyEligibleSetWhere)
+    var gatesTrophy: Bool {
+        countsTowardTrophy != false && (type != "CUSTOM" || visibility == "PUBLIC")
+    }
+
+    // A personal checklist only its creator can see
+    var isPrivateCustom: Bool {
+        type == "CUSTOM" && visibility != "PUBLIC"
+    }
+}
+
+struct AchievementSet: Identifiable, Codable, TrophyRoleSet {
     let id: String
     let title: String
     let type: String
@@ -153,16 +172,6 @@ struct AchievementSet: Identifiable, Codable {
     let dlcId: String?
     let dlc: DLCRef?
     let achievements: [Achievement]
-
-    // The rule the backend awards the trophy by (trophyEligibleSetWhere)
-    var gatesTrophy: Bool {
-        countsTowardTrophy != false && (type != "CUSTOM" || visibility == "PUBLIC")
-    }
-
-    // A personal checklist only its creator can see
-    var isPrivateCustom: Bool {
-        type == "CUSTOM" && visibility != "PUBLIC"
-    }
 }
 
 struct Achievement: Identifiable, Codable {
@@ -1284,9 +1293,12 @@ struct DLCDetail: Identifiable, Decodable {
     let bundles: [DLCBundleRef]?
 }
 
-struct AchievementSetSummary: Identifiable, Decodable {
+struct AchievementSetSummary: Identifiable, Decodable, TrophyRoleSet {
     let id: String
     let title: String
+    let type: String
+    let visibility: String
+    let countsTowardTrophy: Bool?
     let achievementCount: Int
 }
 
