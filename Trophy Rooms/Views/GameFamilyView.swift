@@ -69,7 +69,7 @@ struct GameFamilyView: View {
                                             .font(.title3)
                                             .fontWeight(.bold)
                                             .foregroundColor(.accentColor)
-                                        Text("Achievements")
+                                        Text("Trophies")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
                                     }
@@ -80,7 +80,7 @@ struct GameFamilyView: View {
                                                 .font(.title3)
                                                 .fontWeight(.bold)
                                                 .foregroundColor(.accentColor)
-                                            Text("Trophies")
+                                            Text("Platinums")
                                                 .font(.caption)
                                                 .foregroundColor(.secondary)
                                         }

@@ -297,7 +297,7 @@ private struct DLCAchievementSetRow: View {
                 Label("\(achievementSet.achievementCount)", systemImage: "trophy.fill")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .accessibilityLabel("\(achievementSet.achievementCount) achievements")
+                    .accessibilityLabel("\(achievementSet.achievementCount) trophies")
             }
 
             Spacer()

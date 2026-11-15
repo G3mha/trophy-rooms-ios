@@ -546,7 +546,7 @@ private struct GameHeader: View {
                     HStack(spacing: 4) {
                         Image(systemName: "trophy.fill")
                             .foregroundColor(Color.accentColor)
-                        Text("\(game.trophyCount) trophies")
+                        Text("\(game.trophyCount) Platinums")
                             .font(.subheadline)
                     }
                 }
@@ -563,7 +563,7 @@ private struct GameHeader: View {
                             .font(.subheadline)
                     }
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(totalAchievements) achievements")
+                    .accessibilityLabel("\(totalAchievements) trophies")
                 }
             }
 
@@ -687,7 +687,7 @@ private struct TrophySection: View {
                     niche
 
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(platinum?.title ?? (isEarned ? "Trophy Earned" : "The Trophy"))
+                        Text(platinum?.title ?? (isEarned ? "Platinum Earned" : "The Platinum"))
                             .font(.title3.weight(.bold))
 
                         if let description = platinum?.description, !description.isEmpty {
@@ -702,7 +702,7 @@ private struct TrophySection: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                         } else if (platinum?.description ?? "").isEmpty {
-                            Text("Complete all \(achievements.count) achievements to earn it.")
+                            Text("Earn all \(achievements.count) trophies to get it.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -722,7 +722,7 @@ private struct TrophySection: View {
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
-                .accessibilityHint(isExpanded ? "Hides the achievements" : "Shows the achievements")
+                .accessibilityHint(isExpanded ? "Hides the trophies" : "Shows the trophies")
 
                 // For a player who already finished the game elsewhere
                 if isAuthenticated && !isEarned {
@@ -742,7 +742,7 @@ private struct TrophySection: View {
                         }
                         Button("Cancel", role: .cancel) {}
                     } message: {
-                        Text("This marks every achievement for the trophy as done and awards it. To undo it, you untick achievements one at a time.")
+                        Text("This marks every trophy as earned and awards the Platinum. To undo it, you untick trophies one at a time.")
                     }
                 }
 
@@ -972,7 +972,7 @@ private struct AchievementSetView: View {
             }
 
             if achievementSet.achievements.isEmpty {
-                Text("No achievements yet")
+                Text("No trophies yet")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.top, 2)
