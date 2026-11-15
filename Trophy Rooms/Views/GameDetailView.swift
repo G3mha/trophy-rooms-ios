@@ -557,11 +557,13 @@ private struct GameHeader: View {
                     .reduce(0) { $0 + $1.achievements.count }
                 if totalAchievements > 0 {
                     HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
+                        Image(systemName: "trophy.fill")
                             .foregroundColor(Cabinet.brass)
-                        Text("\(totalAchievements) achievements")
+                        Text("\(totalAchievements)")
                             .font(.subheadline)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(totalAchievements) achievements")
                 }
             }
 
