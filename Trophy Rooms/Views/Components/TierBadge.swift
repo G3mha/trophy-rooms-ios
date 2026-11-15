@@ -21,10 +21,10 @@ extension AchievementTier {
 
     var accessibilityLabel: String {
         switch self {
-        case .BRONZE: return "Bronze achievement"
-        case .SILVER: return "Silver achievement"
-        case .GOLD: return "Gold achievement"
-        case .PLATINUM: return "Platinum achievement"
+        case .BRONZE: return "Bronze trophy"
+        case .SILVER: return "Silver trophy"
+        case .GOLD: return "Gold trophy"
+        case .PLATINUM: return "Platinum"
         }
     }
 }

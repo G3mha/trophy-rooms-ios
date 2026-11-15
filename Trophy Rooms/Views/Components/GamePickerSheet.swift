@@ -172,7 +172,7 @@ struct GameRow: View {
                     .foregroundStyle(.secondary)
                 }
 
-                Text("\(game.achievementCount) achievements")
+                Text("\(game.achievementCount) trophies")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -243,7 +243,7 @@ struct GroupedGameRow: View {
                             }
                         }
 
-                        Text("\(group.totalAchievements) achievements")
+                        Text("\(group.totalAchievements) trophies")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }

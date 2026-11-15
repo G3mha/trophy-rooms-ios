@@ -33,7 +33,7 @@ struct DLCCard: View {
                             Image(systemName: "star.fill")
                                 .font(.caption2)
                                 .foregroundStyle(.yellow)
-                            Text("\(achievementCount) achievement sets")
+                            Text("\(achievementCount) trophy lists")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
