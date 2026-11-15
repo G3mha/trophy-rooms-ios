@@ -16,7 +16,7 @@ struct LibraryView: View {
                     showAuth = true
                 }
             } else if viewModel.isLoading {
-                CabinetLoadingView("Loading library...")
+                CabinetLoadingView("Loading library...", layout: .grid)
             } else if let error = viewModel.errorMessage {
                 VStack(spacing: 16) {
                     Text("Error: \(error)")

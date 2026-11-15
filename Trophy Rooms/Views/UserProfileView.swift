@@ -8,7 +8,7 @@ struct UserProfileView: View {
     var body: some View {
         Group {
             if viewModel.isLoading {
-                CabinetLoadingView("Loading profile...")
+                CabinetLoadingView("Loading profile...", layout: .detail)
             } else if let error = viewModel.errorMessage {
                 VStack(spacing: 16) {
                     Text("Error: \(error)")

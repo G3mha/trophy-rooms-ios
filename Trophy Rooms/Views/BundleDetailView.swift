@@ -11,7 +11,7 @@ struct BundleDetailView: View {
     var body: some View {
         Group {
             if viewModel.isLoading {
-                CabinetLoadingView("Loading bundle...")
+                CabinetLoadingView("Loading bundle...", layout: .detail)
             } else if let error = viewModel.errorMessage {
                 Text("Error: \(error)")
                     .foregroundColor(.red)
