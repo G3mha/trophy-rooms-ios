@@ -280,7 +280,7 @@ struct GroupedGameRow: View {
 
                                 Spacer()
 
-                                Text("\(game.achievementCount) sets")
+                                Text("\(game.achievementCount) trophies")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
