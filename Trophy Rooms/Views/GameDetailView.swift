@@ -95,6 +95,11 @@ struct GameDetailView: View {
                                 Task {
                                     await viewModel.toggleAchievement(achievement)
                                 }
+                            },
+                            onMarkAll: {
+                                Task {
+                                    await viewModel.markAllComplete()
+                                }
                             }
                         )
 
@@ -637,7 +642,9 @@ private struct TrophySection: View {
     let sets: [AchievementSet]
     let isAuthenticated: Bool
     let onToggle: (Achievement) -> Void
+    let onMarkAll: () -> Void
     @State private var isExpanded = false
+    @State private var isConfirmingMarkAll = false
 
     // Best first, the order the list is grouped in
     private static let tiers: [AchievementTier] = [.PLATINUM, .GOLD, .SILVER, .BRONZE]
@@ -701,6 +708,28 @@ private struct TrophySection: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
                 .accessibilityHint(isExpanded ? "Hides the achievements" : "Shows the achievements")
+
+                // For a player who already finished the game elsewhere
+                if isAuthenticated && !isEarned {
+                    Button("Mark all complete") {
+                        isConfirmingMarkAll = true
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .tint(Cabinet.brass)
+                    .confirmationDialog(
+                        "Mark all \(achievements.count) complete?",
+                        isPresented: $isConfirmingMarkAll,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Mark all complete") {
+                            onMarkAll()
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("This marks every achievement for the trophy as done and awards it. To undo it, you untick achievements one at a time.")
+                    }
+                }
 
                 if isExpanded {
                     VStack(alignment: .leading, spacing: 16) {
