@@ -153,6 +153,16 @@ struct AchievementSet: Identifiable, Codable {
     let dlcId: String?
     let dlc: DLCRef?
     let achievements: [Achievement]
+
+    // The rule the backend awards the trophy by (trophyEligibleSetWhere)
+    var gatesTrophy: Bool {
+        countsTowardTrophy != false && (type != "CUSTOM" || visibility == "PUBLIC")
+    }
+
+    // A personal checklist only its creator can see
+    var isPrivateCustom: Bool {
+        type == "CUSTOM" && visibility != "PUBLIC"
+    }
 }
 
 struct Achievement: Identifiable, Codable {
