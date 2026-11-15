@@ -72,9 +72,9 @@ private struct ProfileHeader: View {
                 .fontWeight(.bold)
 
             // Quick stats
-            HStack(spacing: 32) {
+            HStack(alignment: .top, spacing: 32) {
                 QuickStat(value: "\(user.trophyCount)", label: "Trophies", icon: "trophy.fill", color: Cabinet.Tint.warm)
-                QuickStat(value: "\(user.achievementCount)", label: "Achievements", icon: "star.fill", color: Cabinet.Tint.amber)
+                QuickStat(value: "\(user.achievementCount)", label: "Achievements", showsLabel: false, icon: "trophy.fill", color: Cabinet.Tint.amber)
                 QuickStat(value: "\(user.gamesWithAchievementsCount)", label: "Games", icon: "gamecontroller.fill", color: Cabinet.Tint.info)
             }
         }
@@ -98,6 +98,7 @@ private struct ProfileHeader: View {
 private struct QuickStat: View {
     let value: String
     let label: String
+    var showsLabel = true
     let icon: String
     let color: Color
 
@@ -108,10 +109,14 @@ private struct QuickStat: View {
                 .foregroundColor(color)
             Text(value)
                 .font(.headline)
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            if showsLabel {
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(value) \(label)")
     }
 }
 
