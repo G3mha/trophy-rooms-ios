@@ -21,7 +21,7 @@ enum LeaderboardType: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .trophies: return "trophy"
-        case .achievements: return "star"
+        case .achievements: return "trophy"
         case .games: return "gamecontroller"
         case .fastest: return "bolt"
         }
