@@ -8,7 +8,7 @@ struct DLCDetailView: View {
     var body: some View {
         Group {
             if viewModel.isLoading {
-                CabinetLoadingView("Loading DLC...")
+                CabinetLoadingView("Loading DLC...", layout: .detail)
             } else if let error = viewModel.errorMessage {
                 Text("Error: \(error)")
                     .foregroundColor(.red)
