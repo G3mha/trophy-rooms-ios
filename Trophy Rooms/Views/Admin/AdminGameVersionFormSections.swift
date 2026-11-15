@@ -27,7 +27,9 @@ struct AdminGameVersionPlatformsSection: View {
     var body: some View {
         Section {
             if isLoadingGames {
-                ProgressView("Loading platforms...")
+                CabinetLoadingView("Loading platforms...")
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             } else if availableGames.isEmpty {
                 Text("No platform versions available")
                     .foregroundStyle(.secondary)
@@ -134,7 +136,9 @@ struct AdminGameVersionCoverPreviewSection: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                 } placeholder: {
-                    ProgressView()
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(CabinetLoadingView.fill)
+                        .aspectRatio(3 / 4, contentMode: .fit)
                 }
                 .frame(height: 150)
                 .frame(maxWidth: .infinity)
@@ -153,7 +157,9 @@ struct AdminGameVersionDLCSection: View {
     var body: some View {
         Section {
             if isLoadingDlcs {
-                ProgressView("Loading DLCs...")
+                CabinetLoadingView("Loading DLCs...")
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             } else if availableDlcs.isEmpty {
                 Text("No DLCs available for this game")
                     .foregroundStyle(.secondary)
