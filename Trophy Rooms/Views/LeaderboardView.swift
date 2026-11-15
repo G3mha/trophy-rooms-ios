@@ -82,7 +82,14 @@ private struct LeaderboardEntryRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.displayName)
                     .font(.headline)
-                Text(valueLabel)
+                Group {
+                    if type == .achievements {
+                        Label("\(entry.value)", systemImage: "trophy.fill")
+                            .accessibilityLabel(valueLabel)
+                    } else {
+                        Text(valueLabel)
+                    }
+                }
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
