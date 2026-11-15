@@ -25,13 +25,13 @@ struct AdminDashboardView: View {
                 NavigationLink {
                     AdminAchievementSetsView()
                 } label: {
-                    Label("Achievement Sets", systemImage: "list.bullet.rectangle")
+                    Label("Trophy Lists", systemImage: "list.bullet.rectangle")
                 }
 
                 NavigationLink {
                     AdminAchievementsView()
                 } label: {
-                    Label("Achievements", systemImage: "star")
+                    Label("Trophies", systemImage: "star")
                 }
 
                 NavigationLink {

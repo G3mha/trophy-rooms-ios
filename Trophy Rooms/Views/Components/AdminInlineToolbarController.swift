@@ -35,7 +35,7 @@ struct AdminInlineToolbarController {
         case .game: return "Game"
         case .bundle: return "Bundle"
         case .dlc: return "DLC"
-        case .achievementSet: return "Achievement Set"
+        case .achievementSet: return "Trophy List"
         }
     }
 }
