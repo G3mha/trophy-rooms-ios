@@ -1,4 +1,5 @@
 import SwiftUI
+import Kingfisher
 
 struct GameDetailView: View {
     @EnvironmentObject private var authManager: AuthManager
@@ -90,6 +91,7 @@ struct GameDetailView: View {
                         // ahead of edition/bundle metadata
                         TrophySection(
                             sets: game.achievementSets.filter(\.gatesTrophy),
+                            coverUrl: game.coverUrl,
                             isAuthenticated: authManager.isSignedIn,
                             onToggle: { achievement in
                                 Task {
@@ -638,10 +640,11 @@ private struct FactChip: View {
 }
 
 // The trophy and its one list: every achievement in the sets that gate it,
-// grouped by tier. The silhouette stands in a cabinet niche whose light comes
-// up as the player closes in on the trophy.
+// grouped by tier. The trophy's art stands in a cabinet niche whose light
+// comes up as the player closes in on the trophy.
 private struct TrophySection: View {
     let sets: [AchievementSet]
+    let coverUrl: String?
     let isAuthenticated: Bool
     let onToggle: (Achievement) -> Void
     let onMarkAll: () -> Void
@@ -801,19 +804,41 @@ private struct TrophySection: View {
         }
     }
 
+    // The platinum's own icon when it has one, else the box art, framed like a
+    // display piece. Icons are square, covers are 3:4.
+    private var artURL: URL? {
+        URL(string: platinum?.iconUrl ?? coverUrl ?? "")
+    }
+
+    private var artHeight: CGFloat {
+        platinum?.iconUrl != nil ? 92 : 123
+    }
+
     private var niche: some View {
         VStack(spacing: 0) {
-            TrophySilhouette(kind: .cup)
-                .fill(Cabinet.ink)
-                .frame(width: 50, height: 87)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            if let artURL {
+                // Starts grey and dim, comes up to full colour as the player
+                // closes in
+                KFImage(artURL)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 92, height: artHeight)
+                    .clipped()
+                    .grayscale(min(1, (1 - glow) * 1.34))
+                    .brightness(-0.4 * (1 - glow))
+            } else {
+                TrophySilhouette(kind: .cup)
+                    .fill(Cabinet.ink)
+                    .frame(width: 50, height: 87)
+                    .frame(width: 92, height: 106, alignment: .bottom)
+            }
 
             // The lit shelf the trophy stands on
             Rectangle()
                 .fill(Cabinet.brass)
                 .frame(height: 6)
         }
-        .frame(width: 92, height: 112)
+        .frame(width: 92)
         .background(
             ZStack {
                 Cabinet.walnutDeep
