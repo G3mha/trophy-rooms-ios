@@ -172,7 +172,8 @@ struct GameRow: View {
                     .foregroundStyle(.secondary)
                 }
 
-                Text("\(game.achievementCount) trophies")
+                Label("\(game.achievementCount)", systemImage: "trophy.fill")
+                    .accessibilityLabel("\(game.achievementCount) trophies")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -243,7 +244,8 @@ struct GroupedGameRow: View {
                             }
                         }
 
-                        Text("\(group.totalAchievements) trophies")
+                        Label("\(group.totalAchievements)", systemImage: "trophy.fill")
+                            .accessibilityLabel("\(group.totalAchievements) trophies")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
@@ -280,7 +282,8 @@ struct GroupedGameRow: View {
 
                                 Spacer()
 
-                                Text("\(game.achievementCount) trophies")
+                                Label("\(game.achievementCount)", systemImage: "trophy.fill")
+                                    .accessibilityLabel("\(game.achievementCount) trophies")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
