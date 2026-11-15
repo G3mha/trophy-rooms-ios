@@ -862,9 +862,10 @@ private struct GameRowView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                Text("\(game.achievementCount) achievements")
+                Label("\(game.achievementCount)", systemImage: "trophy.fill")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    .accessibilityLabel("\(game.achievementCount) achievements")
             }
         }
     }
@@ -896,9 +897,10 @@ private struct GroupedGameRowView: View {
                     }
                 }
 
-                Text("\(group.totalAchievementCount) achievements")
+                Label("\(group.totalAchievementCount)", systemImage: "trophy.fill")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    .accessibilityLabel("\(group.totalAchievementCount) achievements")
             }
         }
     }
