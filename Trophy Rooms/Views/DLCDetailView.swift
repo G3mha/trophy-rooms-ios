@@ -294,9 +294,10 @@ private struct DLCAchievementSetRow: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
 
-                Text("\(achievementSet.achievementCount) achievements")
+                Label("\(achievementSet.achievementCount)", systemImage: "trophy.fill")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .accessibilityLabel("\(achievementSet.achievementCount) achievements")
             }
 
             Spacer()
