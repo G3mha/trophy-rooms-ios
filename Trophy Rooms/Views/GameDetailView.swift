@@ -1021,6 +1021,13 @@ private struct AchievementRow: View {
     let accentColor: Color
     let onToggle: () -> Void
 
+    // Descriptions can spoil the game, so each one stays hidden until asked for
+    @State private var showsDescription = false
+
+    var hasDescription: Bool {
+        !(achievement.description ?? "").isEmpty
+    }
+
     var isCompleted: Bool {
         achievement.isCompleted == true
     }
@@ -1050,9 +1057,24 @@ private struct AchievementRow: View {
                     if let tier = achievement.tier {
                         TierBadge(tier: tier)
                     }
+
+                    if hasDescription {
+                        Button {
+                            Motion.animate(.easeInOut(duration: 0.2)) { showsDescription.toggle() }
+                        } label: {
+                            Image(systemName: showsDescription ? "eye.slash" : "eye")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 28, height: 28)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(showsDescription ? "Hide description" : "Show description")
+                        .accessibilityValue(achievement.title)
+                    }
                 }
 
-                if let description = achievement.description, !description.isEmpty {
+                if showsDescription, let description = achievement.description, !description.isEmpty {
                     Text(description)
                         .font(.caption)
                         .foregroundStyle(.secondary)
