@@ -86,9 +86,20 @@ struct GameDetailView: View {
                             }
                         }
 
-                        // Achievement Sets - the page's main event, ahead of
-                        // edition/bundle metadata
-                        AchievementSetGroups(sets: game.achievementSets) { set in
+                        // The trophy and its list - the page's main event,
+                        // ahead of edition/bundle metadata
+                        TrophySection(
+                            sets: game.achievementSets.filter(\.gatesTrophy),
+                            isAuthenticated: authManager.isSignedIn,
+                            onToggle: { achievement in
+                                Task {
+                                    await viewModel.toggleAchievement(achievement)
+                                }
+                            }
+                        )
+
+                        // Sets that don't gate the trophy stay as their own cards
+                        AchievementSetGroups(sets: game.achievementSets.filter { !$0.gatesTrophy }) { set in
                             AchievementSetView(
                                 achievementSet: set,
                                 isAuthenticated: authManager.isSignedIn,
@@ -616,6 +627,155 @@ private struct FactChip: View {
         .padding(.vertical, 8)
         .background(Capsule().fill(Cabinet.card))
         .overlay(Capsule().stroke(Cabinet.brass.opacity(0.18), lineWidth: 1))
+    }
+}
+
+// The trophy and its one list: every achievement in the sets that gate it,
+// grouped by tier. The silhouette stands in a cabinet niche whose light comes
+// up as the player closes in on the trophy.
+private struct TrophySection: View {
+    let sets: [AchievementSet]
+    let isAuthenticated: Bool
+    let onToggle: (Achievement) -> Void
+    @State private var isExpanded = false
+
+    // Best first, the order the list is grouped in
+    private static let tiers: [AchievementTier] = [.PLATINUM, .GOLD, .SILVER, .BRONZE]
+
+    private var achievements: [Achievement] {
+        sets.flatMap(\.achievements)
+    }
+
+    private var completedCount: Int {
+        achievements.filter { $0.isCompleted == true }.count
+    }
+
+    private var fraction: Double {
+        achievements.isEmpty ? 0 : Double(completedCount) / Double(achievements.count)
+    }
+
+    private var isEarned: Bool {
+        !achievements.isEmpty && completedCount == achievements.count
+    }
+
+    // A signed-out visitor sees the niche fully lit, and it never goes dark
+    // enough to hide the silhouette
+    private var glow: Double {
+        isAuthenticated ? 0.25 + 0.75 * fraction : 1
+    }
+
+    var body: some View {
+        if !achievements.isEmpty {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 16) {
+                    niche
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(isEarned ? "Trophy Earned" : "The Trophy")
+                            .font(.title3.weight(.bold))
+
+                        if isAuthenticated {
+                            AchievementSetProgressBar(progress: fraction, accentColor: Cabinet.brass)
+                            Text("\(completedCount) of \(achievements.count)")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("Complete all \(achievements.count) achievements to earn it.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Image(systemName: isExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(Cabinet.brass)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    Motion.animate(.easeInOut(duration: 0.24)) {
+                        isExpanded.toggle()
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint(isExpanded ? "Hides the achievements" : "Shows the achievements")
+
+                if isExpanded {
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(Self.tiers, id: \.self) { tier in
+                            tierGroup(tier)
+                        }
+                    }
+                    // Plain fade: a move transition slides ghost rows across
+                    // neighboring cards while the container resizes
+                    .transition(.opacity)
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Cabinet.card)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Cabinet.brass.opacity(0.20), lineWidth: 1)
+            )
+        }
+    }
+
+    private var niche: some View {
+        VStack(spacing: 0) {
+            TrophySilhouette(kind: .cup)
+                .fill(Cabinet.ink)
+                .frame(width: 50, height: 87)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+
+            // The lit shelf the trophy stands on
+            Rectangle()
+                .fill(Cabinet.brass)
+                .frame(height: 6)
+        }
+        .frame(width: 92, height: 112)
+        .background(
+            ZStack {
+                Cabinet.walnutDeep
+                RadialGradient(
+                    colors: [Cabinet.amber.opacity(0.6 * glow), .clear],
+                    center: .bottom,
+                    startRadius: 0,
+                    endRadius: 100
+                )
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .stroke(Cabinet.brass.opacity(0.3), lineWidth: 1)
+        )
+        .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private func tierGroup(_ tier: AchievementTier) -> some View {
+        let inTier = achievements.filter { ($0.tier ?? .BRONZE) == tier }
+        if !inTier.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(tier.rawValue.capitalized)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                ForEach(inTier) { achievement in
+                    AchievementRow(
+                        achievement: achievement,
+                        isAuthenticated: isAuthenticated,
+                        accentColor: Cabinet.brass,
+                        onToggle: { onToggle(achievement) }
+                    )
+                }
+            }
+        }
     }
 }
 
