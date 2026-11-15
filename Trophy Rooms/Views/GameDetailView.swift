@@ -554,7 +554,7 @@ private struct GameHeader: View {
                 // Only the sets that award the trophy, the rule the backend uses
                 let totalAchievements = game.achievementSets
                     .filter(\.gatesTrophy)
-                    .reduce(0) { $0 + $1.achievements.count }
+                    .reduce(0) { $0 + $1.achievements.filter { $0.tier != .PLATINUM }.count }
                 if totalAchievements > 0 {
                     HStack(spacing: 4) {
                         Image(systemName: "trophy.fill")
@@ -648,11 +648,18 @@ private struct TrophySection: View {
     @State private var isExpanded = false
     @State private var isConfirmingMarkAll = false
 
-    // Best first, the order the list is grouped in
-    private static let tiers: [AchievementTier] = [.PLATINUM, .GOLD, .SILVER, .BRONZE]
+    // Best first, the order the list is grouped in. No Platinum: it is the
+    // trophy itself and heads the card instead.
+    private static let tiers: [AchievementTier] = [.GOLD, .SILVER, .BRONZE]
+
+    // The trophy under the game's own name. The backend awards it once
+    // everything else is done, so it is neither ticked nor counted.
+    private var platinum: Achievement? {
+        sets.flatMap(\.achievements).first { $0.tier == .PLATINUM }
+    }
 
     private var achievements: [Achievement] {
-        sets.flatMap(\.achievements)
+        sets.flatMap(\.achievements).filter { $0.tier != .PLATINUM }
     }
 
     private var completedCount: Int {
@@ -680,15 +687,21 @@ private struct TrophySection: View {
                     niche
 
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(isEarned ? "Trophy Earned" : "The Trophy")
+                        Text(platinum?.title ?? (isEarned ? "Trophy Earned" : "The Trophy"))
                             .font(.title3.weight(.bold))
+
+                        if let description = platinum?.description, !description.isEmpty {
+                            Text(description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
 
                         if isAuthenticated {
                             AchievementSetProgressBar(progress: fraction, accentColor: Cabinet.brass)
                             Text("\(completedCount) of \(achievements.count)")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
-                        } else {
+                        } else if (platinum?.description ?? "").isEmpty {
                             Text("Complete all \(achievements.count) achievements to earn it.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
