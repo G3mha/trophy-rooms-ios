@@ -647,6 +647,16 @@ private struct TrophySection: View {
     let onMarkAll: () -> Void
     @State private var isExpanded = false
     @State private var isConfirmingMarkAll = false
+    // Hidden like every other trophy description, so it can't spoil anything
+    @State private var showsPlatinumDescription = false
+
+    private var hasPlatinumDescription: Bool {
+        !(platinum?.description ?? "").isEmpty
+    }
+
+    private func togglePlatinumDescription() {
+        Motion.animate(.easeInOut(duration: 0.2)) { showsPlatinumDescription.toggle() }
+    }
 
     // Best first, the order the list is grouped in. No Platinum: it is the
     // trophy itself and heads the card instead.
@@ -687,10 +697,23 @@ private struct TrophySection: View {
                     niche
 
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(platinum?.title ?? (isEarned ? "Platinum Earned" : "The Platinum"))
-                            .font(.title3.weight(.bold))
+                        HStack(spacing: 6) {
+                            Text(platinum?.title ?? (isEarned ? "Platinum Earned" : "The Platinum"))
+                                .font(.title3.weight(.bold))
 
-                        if let description = platinum?.description, !description.isEmpty {
+                            if hasPlatinumDescription {
+                                Button(action: togglePlatinumDescription) {
+                                    Image(systemName: showsPlatinumDescription ? "eye.slash" : "eye")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 28, height: 28)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+
+                        if showsPlatinumDescription, let description = platinum?.description, !description.isEmpty {
                             Text(description)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -723,6 +746,15 @@ private struct TrophySection: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
                 .accessibilityHint(isExpanded ? "Hides the trophies" : "Shows the trophies")
+                // The combined element hides the eye button from VoiceOver
+                .accessibilityActions {
+                    if hasPlatinumDescription {
+                        Button(
+                            showsPlatinumDescription ? "Hide description" : "Show description",
+                            action: togglePlatinumDescription
+                        )
+                    }
+                }
 
                 // For a player who already finished the game elsewhere
                 if isAuthenticated && !isEarned {
