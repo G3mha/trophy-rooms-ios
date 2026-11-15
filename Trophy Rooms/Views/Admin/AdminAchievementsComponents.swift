@@ -8,10 +8,10 @@ struct AdminAchievementsSetSelectorButton: View {
         Button(action: onTap) {
             HStack {
                 VStack(alignment: .leading) {
-                    Text("Achievement Set")
+                    Text("Trophy List")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(currentSetTitle.isEmpty ? "Select a set..." : currentSetTitle)
+                    Text(currentSetTitle.isEmpty ? "Select a list..." : currentSetTitle)
                         .font(.headline)
                 }
                 Spacer()
@@ -40,12 +40,12 @@ struct AdminAchievementsContent: View {
     var body: some View {
         if selectedSetId.isEmpty {
             ContentUnavailableView(
-                "No Set Selected",
+                "No List Selected",
                 systemImage: "list.bullet.rectangle",
-                description: Text("Select an achievement set to view and manage achievements")
+                description: Text("Select a trophy list to view and manage trophies")
             )
         } else if isLoading {
-            CabinetLoadingView("Loading achievements...")
+            CabinetLoadingView("Loading trophies...")
         } else if let errorMessage {
             ContentUnavailableView(
                 "Error",
@@ -54,9 +54,9 @@ struct AdminAchievementsContent: View {
             )
         } else if achievements.isEmpty {
             ContentUnavailableView(
-                "No Achievements",
+                "No Trophies",
                 systemImage: "star",
-                description: Text("This set has no achievements yet. Add some!")
+                description: Text("This list has no trophies yet. Add some!")
             )
         } else {
             List {
@@ -192,15 +192,15 @@ struct AdminAchievementsSetPickerSheet: View {
                                 .foregroundStyle(.secondary)
                         }
                         if let count = set.achievementCount {
-                            Text("\(count) achievements")
+                            Text("\(count) trophies")
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
                         }
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: "Search sets")
-            .navigationTitle("Select Set")
+            .searchable(text: $searchText, prompt: "Search lists")
+            .navigationTitle("Select List")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

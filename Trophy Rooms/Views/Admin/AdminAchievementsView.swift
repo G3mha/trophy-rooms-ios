@@ -30,7 +30,7 @@ struct AdminAchievementsView: View {
                 onDelete: { screenState.presentDelete(for: $0) }
             )
         }
-        .navigationTitle("Achievements")
+        .navigationTitle("Trophies")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 if screenState.isSelecting {
@@ -42,7 +42,7 @@ struct AdminAchievementsView: View {
                         Button {
                             screenState.showingCreateSheet = true
                         } label: {
-                            Label("Add Achievement", systemImage: "plus")
+                            Label("Add Trophy", systemImage: "plus")
                         }
                         .disabled(viewModel.selectedSetId.isEmpty)
 
@@ -94,7 +94,7 @@ struct AdminAchievementsView: View {
         .sheet(isPresented: $screenState.showingCSVImportSheet) {
             AdminCSVImportSheet(viewModel: viewModel)
         }
-        .alert("Delete Achievement", isPresented: $screenState.showingDeleteConfirmation) {
+        .alert("Delete Trophy", isPresented: $screenState.showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) {
                 screenState.achievementToDelete = nil
             }
@@ -111,7 +111,7 @@ struct AdminAchievementsView: View {
                 Text("Are you sure you want to delete \"\(achievement.title)\"? This action cannot be undone.")
             }
         }
-        .alert("Delete \(screenState.selectedIds.count) Achievements", isPresented: $screenState.showingBulkDeleteConfirmation) {
+        .alert("Delete \(screenState.selectedIds.count) Trophies", isPresented: $screenState.showingBulkDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 Task {
@@ -120,7 +120,7 @@ struct AdminAchievementsView: View {
                 }
             }
         } message: {
-            Text("Are you sure you want to delete \(screenState.selectedIds.count) achievement(s)? This action cannot be undone.")
+            Text("Are you sure you want to delete \(screenState.selectedIds.count) trophies? This action cannot be undone.")
         }
     }
 }

@@ -5,7 +5,7 @@ struct AdminAchievementFormController {
     let achievement: AdminAchievement?
 
     var navigationTitle: String {
-        achievement == nil ? "New Achievement" : "Edit Achievement"
+        achievement == nil ? "New Trophy" : "Edit Trophy"
     }
 
     var saveButtonTitle: String {

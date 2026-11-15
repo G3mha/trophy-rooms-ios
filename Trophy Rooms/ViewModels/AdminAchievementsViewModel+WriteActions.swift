@@ -18,11 +18,11 @@ extension AdminAchievementsViewModel {
             )
             if response.createAchievement.success {
                 await fetchAchievements(setId: achievementSetId)
-                setSuccessMessage("Achievement created successfully")
+                setSuccessMessage("Trophy created successfully")
                 return true
             }
 
-            setErrorMessage("Failed to create achievement")
+            setErrorMessage("Failed to create trophy")
             return false
         }
     }
@@ -46,11 +46,11 @@ extension AdminAchievementsViewModel {
                 if !selectedSetId.isEmpty {
                     await fetchAchievements(setId: selectedSetId)
                 }
-                setSuccessMessage("Achievement updated successfully")
+                setSuccessMessage("Trophy updated successfully")
                 return true
             }
 
-            setErrorMessage("Failed to update achievement")
+            setErrorMessage("Failed to update trophy")
             return false
         }
     }
@@ -61,12 +61,12 @@ extension AdminAchievementsViewModel {
             if response.deleteAchievement.success {
                 DispatchQueue.main.async {
                     self.achievements.removeAll { $0.id == id }
-                    self.successMessage = "Achievement deleted successfully"
+                    self.successMessage = "Trophy deleted successfully"
                 }
                 return true
             }
 
-            setErrorMessage("Failed to delete achievement")
+            setErrorMessage("Failed to delete trophy")
             return false
         }
     }
@@ -77,12 +77,12 @@ extension AdminAchievementsViewModel {
             if response.bulkDeleteAchievements.success {
                 DispatchQueue.main.async {
                     self.achievements.removeAll { ids.contains($0.id) }
-                    self.successMessage = "Deleted \(response.bulkDeleteAchievements.deletedCount) achievement(s)"
+                    self.successMessage = "Deleted \(response.bulkDeleteAchievements.deletedCount) trophies"
                 }
                 return response.bulkDeleteAchievements.deletedCount
             }
 
-            setErrorMessage("Failed to delete achievements")
+            setErrorMessage("Failed to delete trophies")
             return 0
         }
     }

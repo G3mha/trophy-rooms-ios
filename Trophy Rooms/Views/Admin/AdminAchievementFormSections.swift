@@ -11,7 +11,7 @@ struct AdminAchievementDetailsSection: View {
             TextField("Description", text: $description, axis: .vertical)
                 .lineLimit(3...6)
         } header: {
-            Text("Achievement Details")
+            Text("Trophy Details")
         }
     }
 }

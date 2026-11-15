@@ -96,7 +96,7 @@ extension AdminAchievementsViewModel {
         }
 
         guard !achievements.isEmpty else {
-            setErrorMessage("No valid achievements found in CSV")
+            setErrorMessage("No valid trophies found in CSV")
             return false
         }
 
@@ -109,7 +109,7 @@ extension AdminAchievementsViewModel {
             DispatchQueue.main.async {
                 self.importResult = result
                 if result.success {
-                    self.successMessage = "Imported \(result.createdCount) achievements (\(result.skippedCount) skipped)"
+                    self.successMessage = "Imported \(result.createdCount) trophies (\(result.skippedCount) skipped)"
                     self.csvPreviewData = []
                 } else {
                     self.errorMessage = "Import failed"
