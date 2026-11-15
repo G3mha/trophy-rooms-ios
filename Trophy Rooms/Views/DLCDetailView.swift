@@ -56,14 +56,9 @@ struct DLCDetailView: View {
                         }
 
                         // Achievement Sets Section
-                        if let achievementSets = dlc.achievementSets, !achievementSets.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Achievement Sets (\(achievementSets.count))")
-                                    .font(.headline)
-
-                                ForEach(achievementSets) { set in
-                                    DLCAchievementSetRow(achievementSet: set)
-                                }
+                        if let achievementSets = dlc.achievementSets {
+                            AchievementSetGroups(sets: achievementSets) { set in
+                                DLCAchievementSetRow(achievementSet: set)
                             }
                         }
 
