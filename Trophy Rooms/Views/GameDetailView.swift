@@ -88,15 +88,17 @@ struct GameDetailView: View {
 
                         // Achievement Sets - the page's main event, ahead of
                         // edition/bundle metadata
-                        AchievementSetGroups(
-                            sets: game.achievementSets,
-                            isAuthenticated: authManager.isSignedIn,
-                            onToggle: { achievement in
-                                Task {
-                                    await viewModel.toggleAchievement(achievement)
+                        AchievementSetGroups(sets: game.achievementSets) { set in
+                            AchievementSetView(
+                                achievementSet: set,
+                                isAuthenticated: authManager.isSignedIn,
+                                onToggle: { achievement in
+                                    Task {
+                                        await viewModel.toggleAchievement(achievement)
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
 
                         // Game Versions Section
                         if let versions = game.versions, !versions.isEmpty {
@@ -614,46 +616,6 @@ private struct FactChip: View {
         .padding(.vertical, 8)
         .background(Capsule().fill(Cabinet.card))
         .overlay(Capsule().stroke(Cabinet.brass.opacity(0.18), lineWidth: 1))
-    }
-}
-
-// Groups a game's sets by what a player needs to know: does the set gate the
-// trophy, is it a bonus list, or is it their own private checklist
-private struct AchievementSetGroups: View {
-    let sets: [AchievementSet]
-    let isAuthenticated: Bool
-    let onToggle: (Achievement) -> Void
-
-    var body: some View {
-        group("For the Trophy", sets: sets.filter(\.gatesTrophy))
-        group(
-            "Extra Lists",
-            note: "These don't count toward the trophy.",
-            sets: sets.filter { !$0.gatesTrophy && !$0.isPrivateCustom }
-        )
-        group("Your Lists", sets: sets.filter(\.isPrivateCustom))
-    }
-
-    @ViewBuilder
-    private func group(_ title: String, note: String? = nil, sets: [AchievementSet]) -> some View {
-        if !sets.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(title)
-                    .font(.headline)
-                if let note {
-                    Text(note)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                ForEach(sets) { set in
-                    AchievementSetView(
-                        achievementSet: set,
-                        isAuthenticated: isAuthenticated,
-                        onToggle: onToggle
-                    )
-                }
-            }
-        }
     }
 }
 
