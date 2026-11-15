@@ -73,8 +73,8 @@ private struct ProfileHeader: View {
 
             // Quick stats
             HStack(alignment: .top, spacing: 32) {
-                QuickStat(value: "\(user.trophyCount)", label: "Trophies", icon: "trophy.fill", color: Cabinet.Tint.warm)
-                QuickStat(value: "\(user.achievementCount)", label: "Achievements", showsLabel: false, icon: "trophy.fill", color: Cabinet.Tint.amber)
+                QuickStat(value: "\(user.trophyCount)", label: "Platinums", icon: "trophy.fill", color: Cabinet.Tint.warm)
+                QuickStat(value: "\(user.achievementCount)", label: "Trophies", showsLabel: false, icon: "trophy.fill", color: Cabinet.Tint.amber)
                 QuickStat(value: "\(user.gamesWithAchievementsCount)", label: "Games", icon: "gamecontroller.fill", color: Cabinet.Tint.info)
             }
         }
@@ -210,7 +210,7 @@ private struct RecentAchievementsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Achievements")
+            Text("Recent Trophies")
                 .font(.headline)
 
             ForEach(achievements) { achievement in
@@ -240,7 +240,7 @@ private struct RecentAchievementRow: View {
                     .fill(tierColor.opacity(0.3))
                     .frame(width: 40, height: 40)
                     .overlay(
-                        Image(systemName: "star.fill")
+                        Image(systemName: "trophy.fill")
                             .foregroundColor(tierColor)
                     )
             }
