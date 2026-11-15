@@ -146,7 +146,7 @@ private struct SearchResultsView: View {
     var body: some View {
         Group {
             if viewModel.isLoading && !viewModel.hasResults {
-                SearchSkeletonList()
+                CabinetLoadingView("Searching")
             } else if !viewModel.hasResults && !viewModel.isLoading {
                 ContentUnavailableView.search(text: query)
             } else {
@@ -273,48 +273,5 @@ private struct SearchItemRow: View {
             Cabinet.card,
             in: RoundedRectangle(cornerRadius: 12, style: .continuous)
         )
-    }
-}
-
-private struct SearchSkeletonList: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var pulsing = false
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 8) {
-                ForEach(0..<6, id: \.self) { _ in
-                    HStack(spacing: 12) {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color(.tertiarySystemFill))
-                            .frame(width: 48, height: 64)
-                        VStack(alignment: .leading, spacing: 6) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(.tertiarySystemFill))
-                                .frame(width: 180, height: 14)
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(.tertiarySystemFill))
-                                .frame(width: 120, height: 10)
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .padding(12)
-                    .background(
-                        Cabinet.card,
-                        in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    )
-                }
-            }
-            .padding(.horizontal)
-            .padding(.top, 8)
-        }
-        .scrollDisabled(true)
-        .opacity(pulsing ? 0.5 : 1)
-        .cabinetAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulsing)
-        // Never start the pulse under Reduce Motion: the animation is nil
-        // there, so flipping `pulsing` would dim the skeleton to 50% and
-        // leave it there rather than resting at full opacity.
-        .onAppear { pulsing = !reduceMotion }
-        .accessibilityLabel("Searching")
     }
 }
