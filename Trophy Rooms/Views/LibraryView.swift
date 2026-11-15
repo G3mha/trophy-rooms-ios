@@ -272,7 +272,7 @@ private struct LibraryItemRow: View {
                 Label("\(item.achievementCount)", systemImage: "trophy.fill")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                    .accessibilityLabel("\(item.achievementCount) achievements")
+                    .accessibilityLabel("\(item.achievementCount) trophies")
             }
 
             Spacer()

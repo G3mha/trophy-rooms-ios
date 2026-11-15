@@ -789,13 +789,13 @@ private struct ActivityRow: View {
                 }
 
                 if activity.type == "TROPHY" {
-                    Text("Earned a trophy in \(activity.gameTitle)")
+                    Text("Earned the Platinum in \(activity.gameTitle)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 } else {
                     HStack(spacing: 4) {
-                        Text(activity.achievementTitle ?? "Achievement")
+                        Text(activity.achievementTitle ?? "Trophy")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         if let tier = activity.achievementTier {
@@ -851,7 +851,7 @@ private struct GameRowView: View {
                 Label("\(game.achievementCount)", systemImage: "trophy.fill")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .accessibilityLabel("\(game.achievementCount) achievements")
+                    .accessibilityLabel("\(game.achievementCount) trophies")
             }
         }
     }
@@ -886,7 +886,7 @@ private struct GroupedGameRowView: View {
                 Label("\(group.totalAchievementCount)", systemImage: "trophy.fill")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .accessibilityLabel("\(group.totalAchievementCount) achievements")
+                    .accessibilityLabel("\(group.totalAchievementCount) trophies")
             }
         }
     }
@@ -1070,13 +1070,13 @@ private struct GameFiltersSheet: View {
                         }
                     }
 
-                    Picker("Achievements", selection: $achievementFilter) {
+                    Picker("Trophies", selection: $achievementFilter) {
                         ForEach(AchievementFilter.allCases) { filter in
                             Text(filter.title).tag(filter)
                         }
                     }
 
-                    Picker("Min Achievements", selection: $minAchievementCount) {
+                    Picker("Min Trophies", selection: $minAchievementCount) {
                         ForEach(MinAchievementOption.allCases) { option in
                             Text(option.title).tag(option.value)
                         }

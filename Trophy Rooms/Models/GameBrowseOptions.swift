@@ -15,9 +15,9 @@ enum AchievementFilter: String, CaseIterable, Identifiable {
         case .all:
             return "All"
         case .withAchievements:
-            return "With Achievements"
+            return "With Trophies"
         case .withoutAchievements:
-            return "Without Achievements"
+            return "Without Trophies"
         }
     }
 
@@ -54,9 +54,9 @@ enum SortOption: String, CaseIterable, Identifiable {
         case .oldest:
             return "Oldest"
         case .mostAchievements:
-            return "Most Achievements"
-        case .mostTrophies:
             return "Most Trophies"
+        case .mostTrophies:
+            return "Most Platinums"
         }
     }
 

@@ -20,8 +20,8 @@ struct StatsView: View {
                 CabinetLoadingView("Loading stats...")
             } else if let stats = viewModel.stats {
                 VStack(spacing: 16) {
-                    StatRow(title: "Trophies", value: stats.totalTrophies)
-                    StatRow(title: "Achievements", value: stats.totalAchievements)
+                    StatRow(title: "Platinums", value: stats.totalTrophies)
+                    StatRow(title: "Trophies", value: stats.totalAchievements)
                     StatRow(title: "Games Played", value: stats.totalGamesPlayed)
                 }
                 .padding()

@@ -77,7 +77,7 @@ struct TrophyRoomView: View {
                         if progressViewModel.completedGames.isEmpty && progressViewModel.inProgressGames.isEmpty {
                             CabinetEmptyState(
                                 title: "No progress yet",
-                                message: "Start completing achievements to track your progress!"
+                                message: "Start earning trophies to track your progress!"
                             )
                             .padding(.vertical, 24)
                         }
@@ -114,8 +114,8 @@ private struct StatsHeader: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            TrophyRoomStatCard(title: "Trophies", value: stats.totalTrophies, icon: "trophy.fill", color: Color.accentColor)
-            TrophyRoomStatCard(title: "Achievements", value: stats.totalAchievements, icon: "star.fill", color: Cabinet.Tint.amber)
+            TrophyRoomStatCard(title: "Platinums", value: stats.totalTrophies, icon: "trophy.fill", color: Color.accentColor)
+            TrophyRoomStatCard(title: "Trophies", value: stats.totalAchievements, icon: "star.fill", color: Cabinet.Tint.amber)
             TrophyRoomStatCard(title: "Games", value: stats.totalGamesPlayed, icon: "gamecontroller.fill", color: Cabinet.Tint.info)
         }
     }
@@ -178,7 +178,7 @@ private struct CompletedGameCard: View {
                 Label("\(progress.earnedCount)/\(progress.totalCount)", systemImage: "trophy.fill")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                    .accessibilityLabel("\(progress.earnedCount) of \(progress.totalCount) achievements")
+                    .accessibilityLabel("\(progress.earnedCount) of \(progress.totalCount) trophies")
             }
         }
         .padding()
@@ -225,7 +225,7 @@ private struct GameProgressCard: View {
                 ProgressBar(
                     progress: progress.percentComplete,
                     foregroundColor: progressColor,
-                    label: "Achievements earned"
+                    label: "Trophies earned"
                 )
 
                 HStack {
