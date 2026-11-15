@@ -22,7 +22,7 @@ struct AdminGameFormController {
 
     var removeConfirmationMessage: String? {
         guard let game else { return nil }
-        return "Remove \(game.platformName ?? "this platform") from \"\(game.title)\"? This deletes that platform-specific entry, including its achievement sets and achievements."
+        return "Remove \(game.platformName ?? "this platform") from \"\(game.title)\"? This deletes that platform-specific entry, including its trophy lists and trophies."
     }
 
     func save(draft: AdminGameFormDraft) async -> Bool {

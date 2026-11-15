@@ -35,9 +35,9 @@ struct GameCloneFormContent: View {
             }
 
             Section {
-                Toggle("Copy Achievement Sets", isOn: $copyAchievementSets)
+                Toggle("Copy Trophy Lists", isOn: $copyAchievementSets)
             } footer: {
-                Text("When enabled, all achievement sets from the source game will be copied to the cloned games")
+                Text("When enabled, all trophy lists from the source game will be copied to the cloned games")
             }
 
             if let errorMessage {

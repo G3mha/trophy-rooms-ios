@@ -132,7 +132,7 @@ struct AdminGamesView: View {
                 }
             }
         } message: {
-            Text("Are you sure you want to delete \(screenState.selectedIds.count) game(s)? This will also delete all related achievement sets and achievements. This action cannot be undone.")
+            Text("Are you sure you want to delete \(screenState.selectedIds.count) game(s)? This will also delete all related trophy lists and trophies. This action cannot be undone.")
         }
         .sheet(isPresented: $screenState.showingCloneSheet) {
             if let game = screenState.gameToClone {

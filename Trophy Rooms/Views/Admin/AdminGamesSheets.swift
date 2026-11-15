@@ -54,9 +54,9 @@ struct CloneGameSheet: View {
                 }
 
                 Section {
-                    Toggle("Copy Achievement Sets", isOn: $copyAchievementSets)
+                    Toggle("Copy Trophy Lists", isOn: $copyAchievementSets)
                 } footer: {
-                    Text("If enabled, all achievement sets and their achievements will be copied to the new game.")
+                    Text("If enabled, all trophy lists and their trophies will be copied to the new game.")
                 }
 
                 if let errorMessage = viewModel.errorMessage {

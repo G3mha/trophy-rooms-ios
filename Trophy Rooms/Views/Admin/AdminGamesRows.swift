@@ -41,7 +41,7 @@ struct AdminGameRow: View {
                                 .font(.subheadline)
                         }
                     }
-                    Text("\(game.achievementSetCount) sets")
+                    Text("\(game.achievementSetCount) lists")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 } else {
@@ -52,7 +52,7 @@ struct AdminGameRow: View {
                         if let slug = game.platformSlug {
                             PlatformIcon(slug: slug, size: 14)
                         }
-                        Text("\(game.achievementSetCount) sets")
+                        Text("\(game.achievementSetCount) lists")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
@@ -102,7 +102,7 @@ struct AdminGameGroupRow: View {
                     }
                 }
 
-                Text("\(group.games.count) platforms, \(group.totalAchievementSets) sets")
+                Text("\(group.games.count) platforms, \(group.totalAchievementSets) lists")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }

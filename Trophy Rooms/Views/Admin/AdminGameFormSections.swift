@@ -191,7 +191,7 @@ struct AdminGameFamilyActionsSection: View {
             }
             .disabled(isSaving)
         } footer: {
-            Text("This removes only the current platform entry from the game family. Any achievement sets and achievements attached to this platform will also be deleted.")
+            Text("This removes only the current platform entry from the game family. Any trophy lists and trophies attached to this platform will also be deleted.")
         }
     }
 }

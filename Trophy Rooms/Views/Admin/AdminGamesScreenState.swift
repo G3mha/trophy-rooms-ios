@@ -48,9 +48,9 @@ final class AdminGamesScreenState: ObservableObject {
 
     func deleteAlertMessage(for game: AdminGameItem) -> String {
         if game.gameFamilyId != nil {
-            return "Remove \(game.platformName ?? "this platform") from \"\(game.title)\"? This deletes that platform-specific entry, including all achievement sets and achievements attached to it. This action cannot be undone."
+            return "Remove \(game.platformName ?? "this platform") from \"\(game.title)\"? This deletes that platform-specific entry, including all trophy lists and trophies attached to it. This action cannot be undone."
         }
 
-        return "Are you sure you want to delete \"\(game.title)\"? This will also delete all achievement sets and achievements. This action cannot be undone."
+        return "Are you sure you want to delete \"\(game.title)\"? This will also delete all trophy lists and trophies. This action cannot be undone."
     }
 }

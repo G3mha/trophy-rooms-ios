@@ -103,7 +103,7 @@ private struct AdminDLCRow: View {
             Spacer()
 
             if let count = dlc.achievementSetCount, count > 0 {
-                Text("\(count) sets")
+                Text("\(count) lists")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }

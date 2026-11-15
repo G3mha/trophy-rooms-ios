@@ -120,7 +120,7 @@ private struct AdminGameVersionRow: View {
                 }
             }
             Spacer()
-            Text("\(version.achievementSetCount ?? 0) sets")
+            Text("\(version.achievementSetCount ?? 0) lists")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
