@@ -175,9 +175,10 @@ private struct CompletedGameCard: View {
                     Image(systemName: "trophy.fill")
                         .foregroundColor(Color.accentColor)
                 }
-                Text("\(progress.earnedCount)/\(progress.totalCount) achievements")
+                Label("\(progress.earnedCount)/\(progress.totalCount)", systemImage: "trophy.fill")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .accessibilityLabel("\(progress.earnedCount) of \(progress.totalCount) achievements")
             }
         }
         .padding()
