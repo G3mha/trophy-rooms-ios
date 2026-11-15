@@ -21,7 +21,7 @@ struct AdminSetDetailsSection: View {
                 }
             }
         } header: {
-            Text("Set Details")
+            Text("List Details")
         }
     }
 }
@@ -95,7 +95,7 @@ struct AdminSetDLCSection: View {
             } header: {
                 Text("DLC (Optional)")
             } footer: {
-                Text("Select a DLC if this achievement set belongs to specific downloadable content")
+                Text("Select a DLC if this trophy list belongs to specific downloadable content")
             }
         }
     }

@@ -5,7 +5,7 @@ struct AdminSetFormController {
     let achievementSet: AdminAchievementSet?
 
     var navigationTitle: String {
-        achievementSet == nil ? "New Set" : "Edit Set"
+        achievementSet == nil ? "New List" : "Edit List"
     }
 
     var saveButtonTitle: String {

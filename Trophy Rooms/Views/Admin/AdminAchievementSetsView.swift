@@ -24,8 +24,8 @@ struct AdminAchievementSetsView: View {
                 onDelete: { screenState.presentDelete(for: $0) }
             )
         }
-        .searchable(text: $viewModel.searchText, prompt: "Search sets or games")
-        .navigationTitle("Achievement Sets")
+        .searchable(text: $viewModel.searchText, prompt: "Search lists or games")
+        .navigationTitle("Trophy Lists")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 if screenState.isSelecting {
@@ -37,7 +37,7 @@ struct AdminAchievementSetsView: View {
                         Button {
                             screenState.showingCreateSheet = true
                         } label: {
-                            Label("Add Set", systemImage: "plus")
+                            Label("Add List", systemImage: "plus")
                         }
 
                         Button {
@@ -78,7 +78,7 @@ struct AdminAchievementSetsView: View {
         .sheet(item: $screenState.setToEdit) { set in
             AdminSetFormSheet(viewModel: viewModel, achievementSet: set)
         }
-        .alert("Delete Achievement Set", isPresented: $screenState.showingDeleteConfirmation) {
+        .alert("Delete Trophy List", isPresented: $screenState.showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) {
                 screenState.setToDelete = nil
             }
@@ -92,10 +92,10 @@ struct AdminAchievementSetsView: View {
             }
         } message: {
             if let set = screenState.setToDelete {
-                Text("Are you sure you want to delete \"\(set.title)\"? This will also delete all achievements in this set. This action cannot be undone.")
+                Text("Are you sure you want to delete \"\(set.title)\"? This will also delete all trophies in this list. This action cannot be undone.")
             }
         }
-        .alert("Delete \(screenState.selectedIds.count) Sets", isPresented: $screenState.showingBulkDeleteConfirmation) {
+        .alert("Delete \(screenState.selectedIds.count) Lists", isPresented: $screenState.showingBulkDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 Task {
@@ -104,7 +104,7 @@ struct AdminAchievementSetsView: View {
                 }
             }
         } message: {
-            Text("Are you sure you want to delete \(screenState.selectedIds.count) achievement set(s)? This will also delete all achievements in these sets. This action cannot be undone.")
+            Text("Are you sure you want to delete \(screenState.selectedIds.count) trophy list(s)? This will also delete all trophies in these lists. This action cannot be undone.")
         }
     }
 }

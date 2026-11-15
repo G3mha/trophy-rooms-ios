@@ -13,7 +13,7 @@ struct AdminAchievementSetsListContent: View {
 
     var body: some View {
         if isLoading && achievementSets.isEmpty {
-            CabinetLoadingView("Loading achievement sets...")
+            CabinetLoadingView("Loading trophy lists...")
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
         } else if let errorMessage {
@@ -76,7 +76,7 @@ private struct AdminAchievementSetRow: View {
                         .cornerRadius(4)
 
                     if let count = set.achievementCount {
-                        Text("\(count) achievements")
+                        Text("\(count) trophies")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }

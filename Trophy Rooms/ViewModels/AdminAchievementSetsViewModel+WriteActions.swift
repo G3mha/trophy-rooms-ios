@@ -20,11 +20,11 @@ extension AdminAchievementSetsViewModel {
             )
             if response.createAchievementSet.success {
                 await fetchAchievementSets()
-                setSuccessMessage("Achievement set created successfully")
+                setSuccessMessage("Trophy list created successfully")
                 return true
             }
 
-            setErrorMessage("Failed to create achievement set")
+            setErrorMessage("Failed to create trophy list")
             return false
         }
     }
@@ -50,11 +50,11 @@ extension AdminAchievementSetsViewModel {
             )
             if response.updateAchievementSet.success {
                 await fetchAchievementSets()
-                setSuccessMessage("Achievement set updated successfully")
+                setSuccessMessage("Trophy list updated successfully")
                 return true
             }
 
-            setErrorMessage("Failed to update achievement set")
+            setErrorMessage("Failed to update trophy list")
             return false
         }
     }
@@ -65,12 +65,12 @@ extension AdminAchievementSetsViewModel {
             if response.deleteAchievementSet.success {
                 DispatchQueue.main.async {
                     self.achievementSets.removeAll { $0.id == id }
-                    self.successMessage = "Achievement set deleted successfully"
+                    self.successMessage = "Trophy list deleted successfully"
                 }
                 return true
             }
 
-            setErrorMessage("Failed to delete achievement set")
+            setErrorMessage("Failed to delete trophy list")
             return false
         }
     }
@@ -81,12 +81,12 @@ extension AdminAchievementSetsViewModel {
             if response.bulkDeleteAchievementSets.success {
                 DispatchQueue.main.async {
                     self.achievementSets.removeAll { ids.contains($0.id) }
-                    self.successMessage = "Deleted \(response.bulkDeleteAchievementSets.deletedCount) set(s)"
+                    self.successMessage = "Deleted \(response.bulkDeleteAchievementSets.deletedCount) list(s)"
                 }
                 return response.bulkDeleteAchievementSets.deletedCount
             }
 
-            setErrorMessage("Failed to delete achievement sets")
+            setErrorMessage("Failed to delete trophy lists")
             return 0
         }
     }
