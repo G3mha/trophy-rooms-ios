@@ -27,11 +27,8 @@ struct CachedImage: View {
         if let urlString = url, let imageUrl = URL(string: urlString) {
             KFImage(imageUrl)
                 .placeholder {
-                    placeholder
-                        .overlay {
-                            ProgressView()
-                                .tint(.secondary)
-                        }
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(CabinetLoadingView.fill)
                 }
                 .retry(maxCount: 3, interval: .seconds(2))
                 .onFailure { _ in }
@@ -82,11 +79,8 @@ struct CachedImageFixed: View {
         if let urlString = url, let imageUrl = URL(string: urlString) {
             KFImage(imageUrl)
                 .placeholder {
-                    placeholder
-                        .overlay {
-                            ProgressView()
-                                .tint(.secondary)
-                        }
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(CabinetLoadingView.fill)
                 }
                 .retry(maxCount: 3, interval: .seconds(2))
                 .onFailure { _ in }

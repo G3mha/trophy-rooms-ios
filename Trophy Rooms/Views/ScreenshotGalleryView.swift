@@ -92,8 +92,10 @@ struct FullScreenGalleryView: View {
                         AsyncImage(url: url) { phase in
                             switch phase {
                             case .empty:
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(CabinetLoadingView.fill)
+                                    .aspectRatio(16 / 9, contentMode: .fit)
+                                    .padding()
                             case .success(let image):
                                 image
                                     .resizable()
