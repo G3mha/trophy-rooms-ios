@@ -68,8 +68,8 @@ private struct LeaderboardEntryRow: View {
 
     var valueLabel: String {
         switch type {
-        case .trophies: return "\(entry.value) trophies"
-        case .achievements: return "\(entry.value) achievements"
+        case .trophies: return "\(entry.value) Platinums"
+        case .achievements: return "\(entry.value) trophies"
         case .games: return "\(entry.value) games"
         case .fastest: return ""
         }
