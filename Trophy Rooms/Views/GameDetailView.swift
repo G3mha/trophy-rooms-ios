@@ -88,17 +88,15 @@ struct GameDetailView: View {
 
                         // Achievement Sets - the page's main event, ahead of
                         // edition/bundle metadata
-                        ForEach(game.achievementSets) { set in
-                            AchievementSetView(
-                                achievementSet: set,
-                                isAuthenticated: authManager.isSignedIn,
-                                onToggle: { achievement in
-                                    Task {
-                                        await viewModel.toggleAchievement(achievement)
-                                    }
+                        AchievementSetGroups(
+                            sets: game.achievementSets,
+                            isAuthenticated: authManager.isSignedIn,
+                            onToggle: { achievement in
+                                Task {
+                                    await viewModel.toggleAchievement(achievement)
                                 }
-                            )
-                        }
+                            }
+                        )
 
                         // Game Versions Section
                         if let versions = game.versions, !versions.isEmpty {
@@ -537,7 +535,7 @@ private struct GameHeader: View {
 
                 // Only the sets that award the trophy, the rule the backend uses
                 let totalAchievements = game.achievementSets
-                    .filter { $0.countsTowardTrophy != false && ($0.type != "CUSTOM" || $0.visibility == "PUBLIC") }
+                    .filter(\.gatesTrophy)
                     .reduce(0) { $0 + $1.achievements.count }
                 if totalAchievements > 0 {
                     HStack(spacing: 4) {
@@ -619,6 +617,46 @@ private struct FactChip: View {
     }
 }
 
+// Groups a game's sets by what a player needs to know: does the set gate the
+// trophy, is it a bonus list, or is it their own private checklist
+private struct AchievementSetGroups: View {
+    let sets: [AchievementSet]
+    let isAuthenticated: Bool
+    let onToggle: (Achievement) -> Void
+
+    var body: some View {
+        group("For the Trophy", sets: sets.filter(\.gatesTrophy))
+        group(
+            "Extra Lists",
+            note: "These don't count toward the trophy.",
+            sets: sets.filter { !$0.gatesTrophy && !$0.isPrivateCustom }
+        )
+        group("Your Lists", sets: sets.filter(\.isPrivateCustom))
+    }
+
+    @ViewBuilder
+    private func group(_ title: String, note: String? = nil, sets: [AchievementSet]) -> some View {
+        if !sets.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(title)
+                    .font(.headline)
+                if let note {
+                    Text(note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(sets) { set in
+                    AchievementSetView(
+                        achievementSet: set,
+                        isAuthenticated: isAuthenticated,
+                        onToggle: onToggle
+                    )
+                }
+            }
+        }
+    }
+}
+
 private struct AchievementSetView: View {
     let achievementSet: AchievementSet
     let isAuthenticated: Bool
@@ -667,29 +705,6 @@ private struct AchievementSetView: View {
         }
     }
 
-    var showsVisibilityChip: Bool {
-        achievementSet.visibility.uppercased() != "PUBLIC"
-    }
-
-    var displayType: String {
-        switch achievementSet.type.uppercased() {
-        case "OFFICIAL":
-            return "Official"
-        case "COMPLETIONIST":
-            return "Completionist"
-        case "CUSTOM":
-            return "Custom"
-        case "COMMUNITY":
-            return "Community"
-        default:
-            return achievementSet.type.capitalized
-        }
-    }
-
-    var displayVisibility: String {
-        achievementSet.visibility.capitalized
-    }
-
     var canExpand: Bool {
         !achievementSet.achievements.isEmpty
     }
@@ -712,29 +727,25 @@ private struct AchievementSetView: View {
                             }
                         }
 
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 6) {
-                                PlaqueBadge(label: displayType, tint: accentColor)
-                                if showsVisibilityChip {
-                                    AchievementSetChip(
-                                        label: displayVisibility,
-                                        systemImage: "eye.slash",
-                                        tint: .secondary
-                                    )
-                                }
-                                if let version = achievementSet.gameVersion {
-                                    AchievementSetChip(
-                                        label: version.name,
-                                        systemImage: "square.stack.3d.up.fill",
-                                        tint: .blue
-                                    )
-                                }
-                                if let dlc = achievementSet.dlc {
-                                    AchievementSetChip(
-                                        label: dlc.name,
-                                        systemImage: "puzzlepiece.extension.fill",
-                                        tint: .blue
-                                    )
+                        // The group heading already says whether a set is
+                        // required, extra or private, so only edition chips stay
+                        if achievementSet.gameVersion != nil || achievementSet.dlc != nil {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 6) {
+                                    if let version = achievementSet.gameVersion {
+                                        AchievementSetChip(
+                                            label: version.name,
+                                            systemImage: "square.stack.3d.up.fill",
+                                            tint: .blue
+                                        )
+                                    }
+                                    if let dlc = achievementSet.dlc {
+                                        AchievementSetChip(
+                                            label: dlc.name,
+                                            systemImage: "puzzlepiece.extension.fill",
+                                            tint: .blue
+                                        )
+                                    }
                                 }
                             }
                         }
