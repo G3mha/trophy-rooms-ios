@@ -20,8 +20,8 @@ Physical collectors get first-class treatment. Record region, condition, and whe
 A PLAY JOURNAL THAT KEEPS YOU HONEST
 Log what you played and for how long in a single tap. Daily entries build a streak worth protecting, and weekly and all-time totals show where your hours really went.
 
-ACHIEVEMENTS AND TROPHIES
-Some games have achievement lists you can work through. You tick each one off yourself as you earn it, and nothing syncs from your consoles or PC stores. Finish a list and the trophy lands in your room. Only a small set of games has lists so far.
+TROPHY LISTS
+Some games have a trophy list you can work through. You tick each trophy off yourself as you earn it, and nothing syncs from your consoles or PC stores. Finish a list and the game's Platinum lands in your room. Only a small set of games has lists so far.
 
 BUILT ON A REAL CATALOG
 Search more than 28,000 games across 38 platforms. Cover art and release dates are already filled in, so you can add a game without typing anything.
