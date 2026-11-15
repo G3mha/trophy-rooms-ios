@@ -109,7 +109,7 @@ extension AdminAchievementsViewModel {
             DispatchQueue.main.async {
                 self.importResult = result
                 if result.success {
-                    self.successMessage = "Imported \(result.createdCount) trophies (\(result.skippedCount) skipped)"
+                    self.successMessage = "Imported \(result.createdCount) \(result.createdCount == 1 ? "trophy" : "trophies") (\(result.skippedCount) skipped)"
                     self.csvPreviewData = []
                 } else {
                     self.errorMessage = "Import failed"
