@@ -20,10 +20,10 @@ struct BundlesView: View {
 
             if viewModel.isLoading && viewModel.bundles.isEmpty {
                 Section {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
+                    CabinetLoadingView("Loading bundles...")
+                        .listRowInsets(EdgeInsets())
                 }
-                .listRowBackground(Cabinet.card)
+                .listRowBackground(Color.clear)
             } else if let error = viewModel.errorMessage {
                 Section {
                     Text(error)

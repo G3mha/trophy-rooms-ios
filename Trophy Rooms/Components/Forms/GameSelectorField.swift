@@ -127,7 +127,7 @@ struct BaseGamePickerSheet: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading && viewModel.games.isEmpty {
-                    ProgressView("Loading games...")
+                    CabinetLoadingView("Loading games...")
                 } else if !viewModel.isLoading, let error = viewModel.errorMessage, viewModel.games.isEmpty {
                     ContentUnavailableView {
                         Label("Error", systemImage: "exclamationmark.triangle")
@@ -149,7 +149,7 @@ struct BaseGamePickerSheet: View {
                         Text("No base games available")
                     }
                 } else if filteredGames.isEmpty && viewModel.isLoading {
-                    ProgressView("Searching...")
+                    CabinetLoadingView("Searching...")
                 } else {
                     List {
                         ForEach(filteredGames) { game in
@@ -302,7 +302,7 @@ struct MultiBaseGamePickerSheet: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading && viewModel.games.isEmpty {
-                    ProgressView("Loading games...")
+                    CabinetLoadingView("Loading games...")
                 } else if !viewModel.isLoading, let error = viewModel.errorMessage, viewModel.games.isEmpty {
                     ContentUnavailableView {
                         Label("Error", systemImage: "exclamationmark.triangle")
@@ -324,7 +324,7 @@ struct MultiBaseGamePickerSheet: View {
                         Text("No base games available")
                     }
                 } else if filteredGames.isEmpty && viewModel.isLoading {
-                    ProgressView("Searching...")
+                    CabinetLoadingView("Searching...")
                 } else {
                     List {
                         // Selected games section

@@ -270,11 +270,7 @@ private struct GamesGridTab: View {
 
     var body: some View {
         if viewModel.isLoading && viewModel.games.isEmpty {
-            VStack {
-                Spacer()
-                CabinetLoadingView("Loading games...")
-                Spacer()
-            }
+            CabinetLoadingView("Loading games...", layout: .grid)
         } else if let error = viewModel.errorMessage, viewModel.games.isEmpty {
             // Only when there is nothing to show: a failed append must never
             // replace a grid the user has already scrolled through
@@ -436,12 +432,7 @@ private struct LeaderboardSectionContent: View {
 
             // Leaderboard content
             if viewModel.isLoading {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                }
-                .padding()
+                CabinetLoadingView("Loading leaderboard...")
             } else if let error = viewModel.errorMessage {
                 Text("Error: \(error)")
                     .foregroundColor(.red)
@@ -673,12 +664,7 @@ private struct ActivitySectionContent: View {
 
             // Activity content
             if viewModel.isLoading {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                }
-                .padding()
+                CabinetLoadingView("Loading activity...")
             } else if let error = viewModel.errorMessage {
                 Text("Error: \(error)")
                     .foregroundColor(.red)
@@ -914,11 +900,7 @@ private struct GlobalSearchResultsView: View {
     var body: some View {
         Group {
             if viewModel.isLoading {
-                VStack {
-                    Spacer()
-                    CabinetLoadingView("Searching...")
-                    Spacer()
-                }
+                CabinetLoadingView("Searching...")
             } else if let error = viewModel.errorMessage {
                 VStack {
                     Spacer()

@@ -45,7 +45,7 @@ struct GamePickerSheet: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading && viewModel.games.isEmpty {
-                    ProgressView("Loading games...")
+                    CabinetLoadingView("Loading games...")
                 } else if !viewModel.isLoading, let error = viewModel.errorMessage, viewModel.games.isEmpty {
                     ContentUnavailableView {
                         Label("Error", systemImage: "exclamationmark.triangle")
@@ -67,7 +67,7 @@ struct GamePickerSheet: View {
                         Text("Search for a game to add")
                     }
                 } else if filteredGames.isEmpty && viewModel.isLoading {
-                    ProgressView("Searching...")
+                    CabinetLoadingView("Searching...")
                 } else {
                     List {
                         ForEach(groupedGames) { group in
