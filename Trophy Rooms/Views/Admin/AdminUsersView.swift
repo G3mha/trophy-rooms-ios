@@ -32,8 +32,7 @@ struct AdminUsersView: View {
             .background(Color(.systemGray6))
 
             if viewModel.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                CabinetLoadingView("Loading users...")
             } else if let error = viewModel.errorMessage {
                 ContentUnavailableView(
                     "Error",

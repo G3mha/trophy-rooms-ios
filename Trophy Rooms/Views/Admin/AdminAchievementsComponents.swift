@@ -45,8 +45,7 @@ struct AdminAchievementsContent: View {
                 description: Text("Select an achievement set to view and manage achievements")
             )
         } else if isLoading {
-            ProgressView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            CabinetLoadingView("Loading achievements...")
         } else if let errorMessage {
             ContentUnavailableView(
                 "Error",

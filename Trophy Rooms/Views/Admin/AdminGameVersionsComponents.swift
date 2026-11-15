@@ -32,8 +32,9 @@ struct AdminGameVersionsListSection: View {
         if selectedGame != nil {
             Section {
                 if isLoading && versions.isEmpty {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
+                    CabinetLoadingView("Loading versions...")
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 } else if let errorMessage {
                     Text(errorMessage)
                         .foregroundStyle(.red)

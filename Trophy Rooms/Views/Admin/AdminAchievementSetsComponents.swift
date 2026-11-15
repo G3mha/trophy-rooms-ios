@@ -13,8 +13,9 @@ struct AdminAchievementSetsListContent: View {
 
     var body: some View {
         if isLoading && achievementSets.isEmpty {
-            ProgressView()
-                .frame(maxWidth: .infinity)
+            CabinetLoadingView("Loading achievement sets...")
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
         } else if let errorMessage {
             Text(errorMessage)
                 .foregroundStyle(.red)

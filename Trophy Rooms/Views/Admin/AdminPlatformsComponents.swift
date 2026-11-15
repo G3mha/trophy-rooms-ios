@@ -13,8 +13,9 @@ struct AdminPlatformsListContent: View {
 
     var body: some View {
         if isLoading && platforms.isEmpty {
-            ProgressView()
-                .frame(maxWidth: .infinity)
+            CabinetLoadingView("Loading platforms...")
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
         } else if let errorMessage {
             Text(errorMessage)
                 .foregroundStyle(.red)

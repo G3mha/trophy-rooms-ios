@@ -11,7 +11,7 @@ struct AdminGameFormSheetWrapper: View {
     var body: some View {
         Group {
             if isLoading {
-                ProgressView("Loading game...")
+                CabinetLoadingView("Loading game...", layout: .detail)
             } else if let game = gameToEdit {
                 AdminGameFormSheet(
                     viewModel: viewModel,

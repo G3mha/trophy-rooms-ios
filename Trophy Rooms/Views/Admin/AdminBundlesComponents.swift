@@ -25,8 +25,9 @@ struct AdminBundlesListSection: View {
     var body: some View {
         Section {
             if viewModel.isLoading && viewModel.bundles.isEmpty {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
+                CabinetLoadingView("Loading bundles...")
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             } else if let error = viewModel.errorMessage {
                 Text(error)
                     .foregroundStyle(.red)

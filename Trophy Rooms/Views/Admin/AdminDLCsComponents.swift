@@ -31,8 +31,9 @@ struct AdminDLCListSection: View {
         if selectedGame != nil {
             Section {
                 if isLoading && dlcs.isEmpty {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
+                    CabinetLoadingView("Loading DLCs...")
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 } else if let errorMessage {
                     Text(errorMessage)
                         .foregroundStyle(.red)

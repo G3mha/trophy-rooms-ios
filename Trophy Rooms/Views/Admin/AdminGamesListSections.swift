@@ -46,8 +46,9 @@ struct AdminGamesListContent: View {
 
     var body: some View {
         if viewModel.isLoading && viewModel.games.isEmpty {
-            ProgressView()
-                .frame(maxWidth: .infinity)
+            CabinetLoadingView("Loading games...")
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
         } else if let error = viewModel.errorMessage {
             Text(error)
                 .foregroundStyle(.red)
