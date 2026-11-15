@@ -59,7 +59,9 @@ struct AdminAchievementIconPreviewSection: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                 } placeholder: {
-                    ProgressView()
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(CabinetLoadingView.fill)
+                        .aspectRatio(1, contentMode: .fit)
                 }
                 .frame(height: 80)
                 .frame(maxWidth: .infinity)

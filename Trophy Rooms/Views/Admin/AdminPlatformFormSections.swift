@@ -35,7 +35,8 @@ struct AdminPlatformConsolePictureSection: View {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .empty:
-                        ProgressView()
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(CabinetLoadingView.fill)
                             .frame(maxWidth: .infinity)
                             .frame(height: 120)
                     case .success(let image):

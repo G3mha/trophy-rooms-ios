@@ -72,7 +72,9 @@ struct AdminBundleCoverPreviewSection: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                 } placeholder: {
-                    ProgressView()
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(CabinetLoadingView.fill)
+                        .aspectRatio(3 / 4, contentMode: .fit)
                 }
                 .frame(height: 150)
                 .frame(maxWidth: .infinity)
