@@ -58,10 +58,6 @@ struct ActivityView: View {
 private struct ActivityEntryRow: View {
     let activity: ActivityEntry
 
-    var icon: String {
-        activity.type == "TROPHY" ? "trophy.fill" : "star.fill"
-    }
-
     var iconColor: Color {
         if activity.type == "TROPHY" {
             return Color(red: 0.898, green: 0.894, blue: 0.886)
@@ -99,7 +95,7 @@ private struct ActivityEntryRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
+            Image(systemName: "trophy.fill")
                 .font(.title2)
                 .foregroundColor(iconColor)
                 .frame(width: 32)
