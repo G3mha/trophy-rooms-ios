@@ -8,9 +8,8 @@ import SwiftUI
 /// Semantic tints are preserved (green completes, crimson warns); only the
 /// treatment is unified.
 ///
-/// Two exceptions deliberately look different because their context differs:
-/// - `PlaqueBadge` (engraved brass) is reserved for awards/achievement sets
-/// - `.overlay` style adds a dark scrim so tags stay legible over cover art
+/// One exception deliberately looks different because its context differs:
+/// the `.overlay` style adds a dark scrim so tags stay legible over cover art.
 struct Tag: View {
     enum Style {
         /// Default: on a card or the canvas

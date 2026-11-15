@@ -1148,43 +1148,6 @@ private struct AchievementSetChip: View {
     }
 }
 
-/// Engraved brass nameplate - the cabinet identity's label motif. Tinted
-/// gradients cover the non-official set types while keeping the plate shape.
-private struct PlaqueBadge: View {
-    let label: String
-    var tint: Color = Cabinet.brass
-
-    var body: some View {
-        Text(label.uppercased())
-            .font(.caption2.weight(.bold))
-            .tracking(1.8)
-            .foregroundStyle(Color(red: 0.20, green: 0.14, blue: 0.06))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [tint.opacity(0.95), tint.opacity(0.72), tint.opacity(0.58)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .stroke(Color.black.opacity(0.35), lineWidth: 1)
-            )
-            .overlay(alignment: .top) {
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .fill(Color.white.opacity(0.30))
-                    .frame(height: 1)
-                    .padding(.horizontal, 3)
-                    .padding(.top, 1)
-            }
-    }
-}
-
 private struct AchievementSetProgressBar: View {
     let progress: Double
     let accentColor: Color
