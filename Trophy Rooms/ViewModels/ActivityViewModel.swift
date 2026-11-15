@@ -11,8 +11,8 @@ enum ActivityFilter: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .all: return "All"
-        case .achievements: return "Achievements"
-        case .trophies: return "Trophies"
+        case .achievements: return "Trophies"
+        case .trophies: return "Platinums"
         }
     }
 

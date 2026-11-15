@@ -30,7 +30,7 @@ struct ActivityView: View {
                         Text("No activity yet")
                             .font(.headline)
                             .foregroundColor(.secondary)
-                        Text("Be the first to earn an achievement!")
+                        Text("Be the first to earn a trophy!")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -112,7 +112,7 @@ private struct ActivityEntryRow: View {
 
                 if activity.type == "TROPHY" {
                     HStack(spacing: 6) {
-                        Text("Earned a trophy in \(activity.gameTitle)")
+                        Text("Earned the Platinum in \(activity.gameTitle)")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         if let platformSlug = activity.platformSlug, let platformName = activity.platformName {
@@ -123,7 +123,7 @@ private struct ActivityEntryRow: View {
                     }
                 } else {
                     HStack(spacing: 4) {
-                        Text(activity.achievementTitle ?? "Achievement")
+                        Text(activity.achievementTitle ?? "Trophy")
                             .font(.subheadline)
                         if let tier = activity.achievementTier {
                             TierBadge(tier: tier)
