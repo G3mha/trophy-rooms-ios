@@ -183,6 +183,40 @@ class GameDetailViewModel: ObservableObject {
         }
     }
 
+    // Marks every achievement that gates the trophy, for a player who already
+    // finished the game elsewhere. Optimistic like toggleAchievement.
+    func markAllComplete() async {
+        guard let currentGame = game, let gameFamilyId = currentGame.gameFamilyId else { return }
+
+        var updatedGame = currentGame
+        for achievement in currentGame.achievementSets.filter(\.gatesTrophy).flatMap(\.achievements)
+        where achievement.isCompleted != true {
+            updatedGame = updatedGame.replacingAchievement(achievement.withCompletionState(true))
+        }
+        game = updatedGame
+
+        let mutation = """
+        mutation MarkAllAchievementsComplete($gameFamilyId: ID!) {
+            markAllAchievementsComplete(gameFamilyId: $gameFamilyId) {
+                success
+            }
+        }
+        """
+
+        do {
+            let response: SimpleMutationResponse = try await NetworkService.shared.fetch(
+                query: mutation,
+                variables: ["gameFamilyId": gameFamilyId]
+            )
+            if response.markAllAchievementsComplete?.success != true {
+                game = currentGame
+            }
+        } catch {
+            game = currentGame
+            self.errorMessage = error.localizedDescription
+        }
+    }
+
     func checkBuylist(gameId: String) async {
         let query = """
         query IsInBuylist($gameId: ID) {
