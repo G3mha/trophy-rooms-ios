@@ -192,7 +192,7 @@ struct AdminAchievementsSetPickerSheet: View {
                                 .foregroundStyle(.secondary)
                         }
                         if let count = set.achievementCount {
-                            Text("\(count) trophies")
+                            Text("\(count) \(count == 1 ? "trophy" : "trophies")")
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
                         }

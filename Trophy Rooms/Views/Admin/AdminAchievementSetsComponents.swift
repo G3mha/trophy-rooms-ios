@@ -76,7 +76,7 @@ private struct AdminAchievementSetRow: View {
                         .cornerRadius(4)
 
                     if let count = set.achievementCount {
-                        Text("\(count) trophies")
+                        Text("\(count) \(count == 1 ? "trophy" : "trophies")")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
