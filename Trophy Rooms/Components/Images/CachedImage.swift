@@ -68,49 +68,10 @@ struct CachedImageFixed: View {
     }
 }
 
-// MARK: - Convenience Factory Methods
-
-extension CachedImage {
-    /// Standard game cover for grids (3:4 aspect ratio)
-    static func gameCover(url: String?, cornerRadius: CGFloat = 8) -> CachedImage {
-        CachedImage(url: url, aspectRatio: 3/4, cornerRadius: cornerRadius)
-    }
-
-    /// Square cover (1:1 aspect ratio)
-    static func square(url: String?, icon: String = "gamecontroller") -> CachedImage {
-        CachedImage(url: url, aspectRatio: 1, placeholderIcon: icon)
-    }
-
-    /// DLC cover (1:1 aspect ratio with puzzle icon)
-    static func dlc(url: String?) -> CachedImage {
-        CachedImage(url: url, aspectRatio: 1, placeholderIcon: "puzzlepiece.extension")
-    }
-
-    /// Bundle cover (1:1 aspect ratio with stack icon)
-    static func bundle(url: String?) -> CachedImage {
-        CachedImage(url: url, aspectRatio: 1, placeholderIcon: "square.stack.3d.up")
-    }
-}
-
 extension CachedImageFixed {
     /// Standard game cover for rows (60x80)
     static func gameRow(url: String?) -> CachedImageFixed {
         CachedImageFixed(url: url, width: 60, height: 80)
-    }
-
-    /// Small cover for lists (60x60)
-    static func small(url: String?, icon: String = "gamecontroller") -> CachedImageFixed {
-        CachedImageFixed(url: url, width: 60, height: 60, placeholderIcon: icon)
-    }
-
-    /// Medium cover for cards (100x133)
-    static func medium(url: String?) -> CachedImageFixed {
-        CachedImageFixed(url: url, width: 100, height: 133)
-    }
-
-    /// Large cover for detail views (150x200)
-    static func large(url: String?) -> CachedImageFixed {
-        CachedImageFixed(url: url, width: 150, height: 200, cornerRadius: 12)
     }
 
     /// DLC cover (60x60)
@@ -122,7 +83,7 @@ extension CachedImageFixed {
 // MARK: - Previews
 
 #Preview("Game Cover") {
-    CachedImage.gameCover(url: nil)
+    CachedImage(url: nil)
         .frame(width: 120)
 }
 
@@ -130,19 +91,6 @@ extension CachedImageFixed {
     CachedImageFixed.gameRow(url: nil)
 }
 
-#Preview("Small") {
-    CachedImageFixed.small(url: nil)
-}
-
-#Preview("Medium") {
-    CachedImageFixed.medium(url: nil)
-}
-
-#Preview("Large") {
-    CachedImageFixed.large(url: nil)
-}
-
 #Preview("DLC") {
-    CachedImage.dlc(url: nil)
-        .frame(width: 60)
+    CachedImageFixed.dlc(url: nil)
 }
