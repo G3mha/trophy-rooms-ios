@@ -93,13 +93,8 @@ private struct AdminAchievementRow: View {
                     .onTapGesture { onToggleSelection() }
             }
 
-            AsyncImage(url: achievement.iconUrl.flatMap { URL(string: $0) }) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Circle()
-                    .fill(tierColor(achievement.tier))
+            RemoteImage(url: achievement.iconUrl) {
+                tierColor(achievement.tier)
             }
             .frame(width: 44, height: 44)
             .clipShape(Circle())

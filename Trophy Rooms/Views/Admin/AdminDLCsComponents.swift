@@ -130,20 +130,8 @@ private struct AdminDLCRow: View {
 
     @ViewBuilder
     private var coverImage: some View {
-        if let coverUrl = dlc.effectiveCoverUrl, let url = URL(string: coverUrl) {
-            AsyncImage(url: url) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Color.gray.opacity(0.3)
-            }
+        RemoteImage(url: dlc.effectiveCoverUrl, icon: nil)
             .frame(width: 50, height: 50)
             .cornerRadius(8)
-        } else {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 50, height: 50)
-        }
     }
 }

@@ -19,13 +19,7 @@ struct AdminGameRow: View {
             }
 
             if !isSubRow {
-                AsyncImage(url: game.coverUrl.flatMap { URL(string: $0) }) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
+                RemoteImage(url: game.coverUrl, icon: nil)
                 .frame(width: 50, height: 50)
                 .cornerRadius(8)
             }
@@ -74,13 +68,7 @@ struct AdminGameGroupRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: group.coverUrl.flatMap { URL(string: $0) }) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Color.gray.opacity(0.3)
-            }
+            RemoteImage(url: group.coverUrl, icon: nil)
             .frame(width: 50, height: 50)
             .cornerRadius(8)
 

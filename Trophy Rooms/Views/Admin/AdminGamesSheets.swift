@@ -18,13 +18,7 @@ struct CloneGameSheet: View {
             Form {
                 Section {
                     HStack(spacing: 12) {
-                        AsyncImage(url: game.coverUrl.flatMap { URL(string: $0) }) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Color.gray.opacity(0.3)
-                        }
+                        RemoteImage(url: game.coverUrl, icon: nil)
                         .frame(width: 60, height: 60)
                         .cornerRadius(8)
 
