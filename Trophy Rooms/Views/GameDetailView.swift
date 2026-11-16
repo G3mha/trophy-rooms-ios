@@ -1009,7 +1009,8 @@ private struct AchievementSetView: View {
                     ForEach(achievementSet.achievements) { achievement in
                         AchievementRow(
                             achievement: achievement,
-                            isAuthenticated: isAuthenticated,
+                            // The backend awards the Platinum, so it shows without a tick
+                            isAuthenticated: isAuthenticated && achievement.tier != .PLATINUM,
                             accentColor: accentColor,
                             onToggle: { onToggle(achievement) }
                         )
