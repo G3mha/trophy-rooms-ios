@@ -12,38 +12,13 @@ struct ScreenshotGalleryView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(Array(screenshots.enumerated()), id: \.offset) { index, urlString in
-                        if let url = URL(string: urlString) {
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .empty:
-                                    Rectangle()
-                                        .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 160, height: 90)
-                                        .cornerRadius(8)
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 160, height: 90)
-                                        .clipped()
-                                        .cornerRadius(8)
-                                        .onTapGesture {
-                                            selectedIndex = index
-                                        }
-                                case .failure:
-                                    Rectangle()
-                                        .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 160, height: 90)
-                                        .cornerRadius(8)
-                                        .overlay(
-                                            Image(systemName: "photo")
-                                                .foregroundColor(.gray)
-                                        )
-                                @unknown default:
-                                    EmptyView()
-                                }
+                        // Tappable even after a failed load: the viewer loads it again
+                        RemoteImage(url: urlString, icon: "photo")
+                            .frame(width: 160, height: 90)
+                            .cornerRadius(8)
+                            .onTapGesture {
+                                selectedIndex = index
                             }
-                        }
                     }
                 }
                 .padding(.horizontal, 1)
@@ -88,28 +63,15 @@ struct FullScreenGalleryView: View {
 
             TabView(selection: $currentIndex) {
                 ForEach(Array(screenshots.enumerated()), id: \.offset) { index, urlString in
-                    if let url = URL(string: urlString) {
-                        AsyncImage(url: url) { phase in
-                            switch phase {
-                            case .empty:
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(CabinetLoadingView.fill)
-                                    .aspectRatio(16 / 9, contentMode: .fit)
-                                    .padding()
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                            case .failure:
-                                Image(systemName: "photo")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.gray)
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
-                        .tag(index)
+                    // A 16:9 slot (what IGDB screenshots are) so the loading
+                    // fill doesn't cover the whole black page
+                    RemoteImage(url: urlString, contentMode: .fit) {
+                        Image(systemName: "photo")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
                     }
+                    .aspectRatio(16 / 9, contentMode: .fit)
+                    .tag(index)
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
