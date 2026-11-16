@@ -17,6 +17,7 @@ class GameDetailViewModel: ObservableObject {
     @Published var isCollectionLoading = false
     @Published var ownedDlcIds: Set<String> = []
     @Published var isDlcOwnershipLoading: Set<String> = []
+    private var pendingToggles = 0
 
     func fetchGame(id: String, forceRefresh: Bool = false) async {
         // Load from cache immediately (no loading state)
@@ -143,7 +144,10 @@ class GameDetailViewModel: ObservableObject {
         do {
             let response: GameDetailResponse = try await NetworkService.shared.fetch(query: query, variables: ["id": id])
             await CacheManager.shared.set(.game(id: id), value: response)
-            game = response.game
+            // A tick still being saved would be undone by this older answer; its own reload follows
+            if pendingToggles == 0 {
+                game = response.game
+            }
         } catch is CancellationError {
             // Cancelled - keep cached data
         } catch {
@@ -175,9 +179,16 @@ class GameDetailViewModel: ObservableObject {
         }
         """
 
+        pendingToggles += 1
         do {
             let _: SimpleMutationResponse = try await NetworkService.shared.fetch(query: mutation, variables: ["achievementId": achievementId])
+            pendingToggles -= 1
+            // Reload for the new share of players, and the Platinum the backend may have awarded
+            if pendingToggles == 0, let gameId = game?.id {
+                await fetchGame(id: gameId, forceRefresh: true)
+            }
         } catch {
+            pendingToggles -= 1
             game = previousGame
             self.errorMessage = error.localizedDescription
         }

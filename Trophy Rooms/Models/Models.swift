@@ -196,7 +196,6 @@ extension Achievement {
             iconUrl: iconUrl,
             tier: tier,
             isCompleted: isCompleted,
-            // shortcut: stays as loaded after a tick, the next load of the game corrects it
             earnedPercent: earnedPercent,
             achievementSetId: achievementSetId
         )
