@@ -1,5 +1,4 @@
 import SwiftUI
-import Kingfisher
 
 struct GameDetailView: View {
     @EnvironmentObject private var authManager: AuthManager
@@ -505,12 +504,8 @@ private struct GameHeader: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            if let coverUrl = effectiveCoverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray
-                }
+            if let coverUrl = effectiveCoverUrl {
+                RemoteImage(url: coverUrl, contentMode: .fit)
                 .frame(width: 100, height: 140)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(
@@ -790,9 +785,7 @@ private struct TrophySection: View {
             if let artURL {
                 // Starts grey and dim, comes up to full colour as the player
                 // closes in
-                KFImage(artURL)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
+                RemoteImage(url: artURL.absoluteString) { Color.clear }
                     .frame(width: 92, height: artHeight)
                     .clipped()
                     .grayscale(min(1, (1 - glow) * 1.34))
@@ -1154,20 +1147,7 @@ private struct AchievementIconView: View {
     let isCompleted: Bool
 
     var body: some View {
-        AsyncImage(url: url) { phase in
-            switch phase {
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(1, contentMode: .fill)
-            case .empty:
-                iconPlaceholder
-            case .failure:
-                iconPlaceholder
-            @unknown default:
-                iconPlaceholder
-            }
-        }
+        RemoteImage(url: url.absoluteString) { iconPlaceholder }
         .frame(width: 52, height: 52)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
@@ -1285,26 +1265,10 @@ private struct BaseGameFamilyRow: View {
     var body: some View {
         NavigationLink(destination: GameFamilyRouter(title: gameFamily.title)) {
             HStack(spacing: 12) {
-                if let coverUrl = gameFamily.coverUrl, let url = URL(string: coverUrl) {
-                    AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Color.gray.opacity(0.3)
-                    }
+                RemoteImage(url: gameFamily.coverUrl)
+                    .font(.caption)
                     .frame(width: 40, height: 56)
                     .cornerRadius(4)
-                } else {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 40, height: 56)
-                        .overlay {
-                            Image(systemName: "gamecontroller")
-                                .font(.caption)
-                                .foregroundStyle(.gray)
-                        }
-                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(gameFamily.title)
@@ -1334,26 +1298,10 @@ private struct DerivedGameFamilyRow: View {
     var body: some View {
         NavigationLink(destination: GameFamilyRouter(title: gameFamily.title)) {
             HStack(spacing: 12) {
-                if let coverUrl = gameFamily.coverUrl, let url = URL(string: coverUrl) {
-                    AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Color.gray.opacity(0.3)
-                    }
+                RemoteImage(url: gameFamily.coverUrl)
+                    .font(.caption)
                     .frame(width: 40, height: 56)
                     .cornerRadius(4)
-                } else {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 40, height: 56)
-                        .overlay {
-                            Image(systemName: "gamecontroller")
-                                .font(.caption)
-                                .foregroundStyle(.gray)
-                        }
-                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(gameFamily.title)
@@ -1409,28 +1357,9 @@ private struct GameVersionsSectionView: View {
 
             ForEach(versions) { version in
                 HStack(spacing: 12) {
-                    Group {
-                        if let coverUrl = coverUrlForVersion(version),
-                           let url = URL(string: coverUrl) {
-                            AsyncImage(url: url) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            } placeholder: {
-                                Color.gray.opacity(0.3)
-                            }
-                            .frame(width: 40, height: 56)
-                        } else {
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 40, height: 56)
-                                .overlay {
-                                    Image(systemName: "square.stack.3d.up")
-                                        .font(.caption)
-                                        .foregroundStyle(.gray)
-                                }
-                        }
-                    }
+                    RemoteImage(url: coverUrlForVersion(version), icon: "square.stack.3d.up")
+                    .font(.caption)
+                    .frame(width: 40, height: 56)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
