@@ -65,17 +65,11 @@ struct AdminBundleCoverPreviewSection: View {
     let coverUrl: String
 
     var body: some View {
-        if !coverUrl.isEmpty, let url = URL(string: coverUrl) {
+        if !coverUrl.isEmpty, URL(string: coverUrl) != nil {
             Section {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(CabinetLoadingView.fill)
-                        .aspectRatio(3 / 4, contentMode: .fit)
-                }
+                RemoteImage(url: coverUrl, contentMode: .fit, icon: "photo")
+                    .aspectRatio(3 / 4, contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 .frame(height: 150)
                 .frame(maxWidth: .infinity)
             } header: {

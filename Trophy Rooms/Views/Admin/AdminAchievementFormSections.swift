@@ -52,17 +52,11 @@ struct AdminAchievementIconPreviewSection: View {
     let iconUrl: String
 
     var body: some View {
-        if !iconUrl.isEmpty, let url = URL(string: iconUrl) {
+        if !iconUrl.isEmpty, URL(string: iconUrl) != nil {
             Section {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(CabinetLoadingView.fill)
-                        .aspectRatio(1, contentMode: .fit)
-                }
+                RemoteImage(url: iconUrl, contentMode: .fit, icon: "photo")
+                    .aspectRatio(1, contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 .frame(height: 80)
                 .frame(maxWidth: .infinity)
             } header: {

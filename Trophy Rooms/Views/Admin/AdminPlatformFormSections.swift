@@ -31,30 +31,14 @@ struct AdminPlatformConsolePictureSection: View {
         Section("Console Picture") {
             URLTextField("Console Picture URL", text: $consolePictureUrl)
 
-            if !consolePictureUrl.isEmpty, let url = URL(string: consolePictureUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(CabinetLoadingView.fill)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 120)
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 120)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    case .failure:
-                        Image(systemName: "photo")
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 120)
-                    @unknown default:
-                        EmptyView()
-                    }
+            if !consolePictureUrl.isEmpty, URL(string: consolePictureUrl) != nil {
+                RemoteImage(url: consolePictureUrl, contentMode: .fit) {
+                    Image(systemName: "photo")
+                        .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity)
+                .frame(height: 120)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
     }
