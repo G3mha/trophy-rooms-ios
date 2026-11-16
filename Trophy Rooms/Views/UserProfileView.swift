@@ -226,24 +226,15 @@ private struct RecentAchievementRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Achievement icon
-            if let iconUrl = item.achievement.iconUrl, let url = URL(string: iconUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                }
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
-            } else {
-                Circle()
-                    .fill(tierColor.opacity(0.3))
-                    .frame(width: 40, height: 40)
+            RemoteImage(url: item.achievement.iconUrl, contentMode: .fit) {
+                tierColor.opacity(0.3)
                     .overlay(
                         Image(systemName: "trophy.fill")
                             .foregroundColor(tierColor)
                     )
             }
+            .frame(width: 40, height: 40)
+            .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
