@@ -151,20 +151,9 @@ private struct CompletedGameCard: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let coverUrl = progress.gameCoverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray
-                }
+            RemoteImage(url: progress.gameCoverUrl, contentMode: .fit, icon: nil)
                 .frame(width: 50, height: 70)
                 .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 70)
-                    .cornerRadius(8)
-            }
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
@@ -202,20 +191,9 @@ private struct GameProgressCard: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let coverUrl = progress.gameCoverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray
-                }
+            RemoteImage(url: progress.gameCoverUrl, contentMode: .fit, icon: nil)
                 .frame(width: 50, height: 70)
                 .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 70)
-                    .cornerRadius(8)
-            }
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(progress.gameTitle)
