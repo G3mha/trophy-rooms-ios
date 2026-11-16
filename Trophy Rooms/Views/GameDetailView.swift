@@ -640,6 +640,12 @@ private struct FactChip: View {
 // The trophy and its one list: every achievement in the sets that gate it,
 // grouped by tier. The trophy's art stands in a cabinet niche whose light
 // comes up as the player closes in on the trophy.
+private extension Array where Element == Achievement {
+    var withoutPlatinum: [Achievement] {
+        filter { $0.tier != .PLATINUM }
+    }
+}
+
 private struct TrophySection: View {
     let sets: [AchievementSet]
     let coverUrl: String?
@@ -668,7 +674,7 @@ private struct TrophySection: View {
     }
 
     private var achievements: [Achievement] {
-        sets.flatMap(\.achievements).filter { $0.tier != .PLATINUM }
+        sets.flatMap(\.achievements).withoutPlatinum
     }
 
     private var completedCount: Int {
@@ -858,12 +864,13 @@ private struct AchievementSetView: View {
     let onToggle: (Achievement) -> Void
     @State private var isExpanded = false
 
+    // The backend awards the Platinum, so it stays out of both sides of the progress
     var completedCount: Int {
-        achievementSet.achievements.filter { $0.isCompleted == true }.count
+        achievementSet.achievements.withoutPlatinum.filter { $0.isCompleted == true }.count
     }
 
     var totalCount: Int {
-        achievementSet.achievements.count
+        achievementSet.achievements.withoutPlatinum.count
     }
 
     var completionFraction: Double {
