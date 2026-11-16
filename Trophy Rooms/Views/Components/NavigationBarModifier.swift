@@ -58,23 +58,13 @@ private struct ProfileImage: View {
     var size: CGFloat = 30
 
     var body: some View {
-        if let urlString = imageUrl, let url = URL(string: urlString) {
-            AsyncImage(url: url) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-            }
-            .frame(width: size, height: size)
-            .clipShape(Circle())
-        } else {
+        RemoteImage(url: imageUrl) {
             Image(systemName: "person.circle.fill")
                 .resizable()
-                .frame(width: size, height: size)
                 .foregroundColor(.gray)
         }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
     }
 }
 
