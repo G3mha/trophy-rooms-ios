@@ -1,7 +1,7 @@
 import SwiftUI
-import Kingfisher
 
-/// A reusable cached image component using Kingfisher for reliable loading and caching
+/// A remote image in a fixed-ratio slot that takes the width it is given
+/// (grid cells). Loading, retry and the fallback live in `RemoteImage`.
 struct CachedImage: View {
     let url: String?
     let aspectRatio: CGFloat
@@ -24,36 +24,22 @@ struct CachedImage: View {
     }
 
     var body: some View {
-        if let urlString = url, let imageUrl = URL(string: urlString) {
-            KFImage(imageUrl)
-                .placeholder {
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .fill(CabinetLoadingView.fill)
-                }
-                .retry(maxCount: 3, interval: .seconds(2))
-                .onFailure { _ in }
-                .resizable()
-                .aspectRatio(aspectRatio, contentMode: contentMode)
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-        } else {
-            placeholder
-        }
-    }
-
-    private var placeholder: some View {
-        RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(Color.gray.opacity(0.3))
+        // The slot sets the size and the image fills it, so art that isn't
+        // exactly this ratio is cropped instead of stretched
+        Color.clear
             .aspectRatio(aspectRatio, contentMode: .fit)
             .overlay {
-                Image(systemName: placeholderIcon)
-                    .foregroundStyle(.gray)
+                RemoteImage(url: url, contentMode: contentMode, icon: placeholderIcon)
             }
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            // Clipping hides the cropped overflow but doesn't stop it taking taps
+            .contentShape(Rectangle())
     }
 }
 
 // MARK: - Fixed Size Variant
 
-/// A cached image with fixed dimensions (for row layouts)
+/// A remote image with fixed dimensions (for row layouts)
 struct CachedImageFixed: View {
     let url: String?
     let width: CGFloat
@@ -76,31 +62,9 @@ struct CachedImageFixed: View {
     }
 
     var body: some View {
-        if let urlString = url, let imageUrl = URL(string: urlString) {
-            KFImage(imageUrl)
-                .placeholder {
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .fill(CabinetLoadingView.fill)
-                }
-                .retry(maxCount: 3, interval: .seconds(2))
-                .onFailure { _ in }
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: width, height: height)
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-        } else {
-            placeholder
-        }
-    }
-
-    private var placeholder: some View {
-        RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(Color.gray.opacity(0.3))
+        RemoteImage(url: url, icon: placeholderIcon)
             .frame(width: width, height: height)
-            .overlay {
-                Image(systemName: placeholderIcon)
-                    .foregroundStyle(.gray)
-            }
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
     }
 }
 
