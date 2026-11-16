@@ -38,25 +38,10 @@ struct GameFamilyView: View {
                     Section {
                         HStack(spacing: 16) {
                             // Cover Image
-                            if let coverUrl = viewModel.coverUrl, let url = URL(string: coverUrl) {
-                                AsyncImage(url: url) { image in
-                                    image.resizable().aspectRatio(contentMode: .fit)
-                                } placeholder: {
-                                    Color.gray.opacity(0.3)
-                                }
+                            RemoteImage(url: viewModel.coverUrl, contentMode: .fit)
+                                .font(.system(size: 32))
                                 .frame(width: 100, height: 133)
                                 .cornerRadius(8)
-                            } else {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 100, height: 133)
-                                    .cornerRadius(8)
-                                    .overlay(
-                                        Image(systemName: "gamecontroller")
-                                            .font(.system(size: 32))
-                                            .foregroundColor(.secondary)
-                                    )
-                            }
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(viewModel.displayTitle)
