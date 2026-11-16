@@ -164,7 +164,6 @@ class GameDetailViewModel: ObservableObject {
     func toggleAchievement(_ achievement: Achievement) async {
         let achievementId = achievement.id
         let shouldMarkComplete = achievement.isCompleted != true
-        let previousGame = game
 
         if let currentGame = game {
             game = currentGame.replacingAchievement(achievement.withCompletionState(shouldMarkComplete))
@@ -189,7 +188,8 @@ class GameDetailViewModel: ObservableObject {
             // The server can refuse a tick without throwing
             let result = shouldMarkComplete ? response.markAchievementComplete : response.unmarkAchievementComplete
             if result?.success == false {
-                game = previousGame
+                // Put back only this trophy, other ticks may still be in flight
+                game = game?.replacingAchievement(achievement)
                 toggleError = result?.error?.message ?? "Try again."
             }
             // Reload for the new share of players, and the Platinum the backend may have awarded
@@ -198,7 +198,7 @@ class GameDetailViewModel: ObservableObject {
             }
         } catch {
             pendingToggles -= 1
-            game = previousGame
+            game = game?.replacingAchievement(achievement)
             toggleError = error.localizedDescription
         }
     }
