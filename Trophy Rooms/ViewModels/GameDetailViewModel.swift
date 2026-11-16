@@ -132,7 +132,7 @@ class GameDetailViewModel: ObservableObject {
                         iconUrl
                         tier
                         isCompleted
-                        userCount
+                        earnedPercent
                         achievementSetId
                     }
                 }

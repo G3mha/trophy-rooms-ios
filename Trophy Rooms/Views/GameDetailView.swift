@@ -1109,8 +1109,8 @@ private struct AchievementRow: View {
                         .lineLimit(2)
                 }
 
-                if let userCount = achievement.userCount, userCount > 0 {
-                    Text("\(userCount) users")
+                if let earnedPercent = achievement.earnedPercent {
+                    Text("\(earnedPercent.formatted(.number.precision(.fractionLength(0...1))))% of players")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

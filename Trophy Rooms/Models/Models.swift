@@ -181,7 +181,9 @@ struct Achievement: Identifiable, Codable {
     let iconUrl: String?
     let tier: AchievementTier?
     let isCompleted: Bool?
-    let userCount: Int?
+    // Share of the game's players who earned it, 0 to 100. Nil when nobody
+    // has the game in their library.
+    let earnedPercent: Double?
     let achievementSetId: String
 }
 
@@ -194,14 +196,10 @@ extension Achievement {
             iconUrl: iconUrl,
             tier: tier,
             isCompleted: isCompleted,
-            userCount: updatedUserCount(for: isCompleted),
+            // shortcut: stays as loaded after a tick, the next load of the game corrects it
+            earnedPercent: earnedPercent,
             achievementSetId: achievementSetId
         )
-    }
-
-    private func updatedUserCount(for isCompleted: Bool) -> Int? {
-        guard let userCount else { return nil }
-        return isCompleted ? userCount + 1 : max(0, userCount - 1)
     }
 }
 
