@@ -730,7 +730,7 @@ private struct CollectionItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            CoverImage.gameRow(url: item.displayCoverUrl)
+            CachedImageFixed.gameRow(url: item.displayCoverUrl)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.displayTitle)

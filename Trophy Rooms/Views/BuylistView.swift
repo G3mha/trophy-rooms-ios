@@ -256,7 +256,7 @@ struct BuylistItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            CoverImage(
+            CachedImageFixed(
                 url: item.displayCoverUrl,
                 width: 60,
                 height: 80,

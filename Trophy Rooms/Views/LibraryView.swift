@@ -255,7 +255,7 @@ private struct LibraryItemRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            CoverImage.gameRow(url: item.gameCoverUrl)
+            CachedImageFixed.gameRow(url: item.gameCoverUrl)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.gameTitle)

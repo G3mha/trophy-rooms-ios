@@ -61,7 +61,7 @@ struct ConvertToCollectionSheet: View {
                 // Item info section
                 Section {
                     HStack(spacing: 12) {
-                        CoverImage(
+                        CachedImageFixed(
                             url: buylistItem.displayCoverUrl,
                             width: 60,
                             height: 80,
