@@ -1008,7 +1008,6 @@ struct StatsResponse: Decodable {
 struct SimpleMutationResponse: Decodable {
     let markAchievementComplete: MutationResult?
     let unmarkAchievementComplete: MutationResult?
-    let markAllAchievementsComplete: MutationResult?
 }
 
 struct MutationResult: Decodable {
