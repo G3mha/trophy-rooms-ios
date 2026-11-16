@@ -133,24 +133,10 @@ private struct BundleHeader: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            if let coverUrl = bundle.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
+            RemoteImage(url: bundle.coverUrl, contentMode: .fit, icon: "shippingbox")
+                .font(.largeTitle)
                 .frame(width: 100, height: 100)
                 .cornerRadius(12)
-            } else {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 100, height: 100)
-                    .overlay {
-                        Image(systemName: "shippingbox")
-                            .font(.largeTitle)
-                            .foregroundStyle(.gray)
-                    }
-            }
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(bundle.name)
@@ -447,25 +433,9 @@ private struct BundleGameFamilyRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let coverUrl = gameFamily.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
+            RemoteImage(url: gameFamily.coverUrl)
                 .frame(width: 50, height: 70)
                 .cornerRadius(6)
-            } else {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 70)
-                    .overlay {
-                        Image(systemName: "gamecontroller")
-                            .foregroundStyle(.gray)
-                    }
-            }
 
             Text(gameFamily.title)
                 .font(.subheadline)
@@ -488,25 +458,9 @@ private struct BundleDLCRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let coverUrl = dlc.coverUrl, let url = URL(string: coverUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
+            RemoteImage(url: dlc.coverUrl, icon: "puzzlepiece.extension")
                 .frame(width: 50, height: 50)
                 .cornerRadius(6)
-            } else {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 50, height: 50)
-                    .overlay {
-                        Image(systemName: "puzzlepiece.extension")
-                            .foregroundStyle(.gray)
-                    }
-            }
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
