@@ -1009,6 +1009,7 @@ struct SimpleMutationResponse: Decodable {
 
 struct MutationResult: Decodable {
     let success: Bool
+    let error: MutationError?
 }
 
 // MARK: - Leaderboard Responses

@@ -6,6 +6,8 @@ class GameDetailViewModel: ObservableObject {
     @Published var game: GameDetail?
     @Published var isLoading = false
     @Published var errorMessage: String?
+    // A failed tick shows as an alert, so it doesn't replace the page like errorMessage does
+    @Published var toggleError: String?
     @Published var isInBuylist = false
     @Published var isBuylistLoading = false
     @Published var buylistItemId: String?
@@ -175,14 +177,21 @@ class GameDetailViewModel: ObservableObject {
         mutation \(mutationName)($achievementId: ID!) {
             \(mutationField)(achievementId: $achievementId) {
                 success
+                error { code message field }
             }
         }
         """
 
         pendingToggles += 1
         do {
-            let _: SimpleMutationResponse = try await NetworkService.shared.fetch(query: mutation, variables: ["achievementId": achievementId])
+            let response: SimpleMutationResponse = try await NetworkService.shared.fetch(query: mutation, variables: ["achievementId": achievementId])
             pendingToggles -= 1
+            // The server can refuse a tick without throwing
+            let result = shouldMarkComplete ? response.markAchievementComplete : response.unmarkAchievementComplete
+            if result?.success == false {
+                game = previousGame
+                toggleError = result?.error?.message ?? "Try again."
+            }
             // Reload for the new share of players, and the Platinum the backend may have awarded
             if pendingToggles == 0, let gameId = game?.id {
                 await fetchGame(id: gameId, forceRefresh: true)
@@ -190,7 +199,7 @@ class GameDetailViewModel: ObservableObject {
         } catch {
             pendingToggles -= 1
             game = previousGame
-            self.errorMessage = error.localizedDescription
+            toggleError = error.localizedDescription
         }
     }
 

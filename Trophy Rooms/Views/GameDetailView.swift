@@ -289,6 +289,14 @@ struct GameDetailView: View {
                 }
             }
         }
+        .alert("Couldn't save that trophy", isPresented: Binding(
+            get: { viewModel.toggleError != nil },
+            set: { if !$0 { viewModel.toggleError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.toggleError ?? "")
+        }
         .safeAreaInset(edge: .bottom) {
             // Admin bar lives on the entity page itself, above the tab bar;
             // it renders nothing (zero inset) for non-admins.
