@@ -29,7 +29,7 @@ struct RootView: View {
                 .id(authManager.userId)
             }
 
-            Tab("Trophies", systemImage: "trophy.fill", value: .trophies) {
+            Tab("Trophy Room", systemImage: "trophy.fill", value: .trophies) {
                 NavigationStack {
                     TrophyRoomView()
                         .cabinetCanvas()
