@@ -122,6 +122,42 @@ final class AuthManager: ObservableObject {
         return OpenIDConnectCredentials(provider: .apple, idToken: idToken, nonce: rawNonce)
     }
 
+    // MARK: - Account settings
+
+    /// Fetched from the server: the session's copy lags behind identity
+    /// links and email confirmations
+    func currentUser() async throws -> User {
+        try await client.auth.user()
+    }
+
+    /// Secure email change is on, so the switch waits until links sent to
+    /// both the old and the new address are opened
+    func changeEmail(to email: String) async throws {
+        try await client.auth.update(user: UserAttributes(email: email), redirectTo: Self.callbackURL)
+    }
+
+    func changePassword(to password: String) async throws {
+        try await client.auth.update(user: UserAttributes(password: password))
+    }
+
+    /// `launch` runs the provider's web page and returns the callback URL
+    func linkGoogle(launch: (URL) async throws -> URL) async throws {
+        let response = try await client.auth.getLinkIdentityURL(
+            provider: .google,
+            redirectTo: Self.callbackURL
+        )
+        try await client.auth.session(from: launch(response.url))
+    }
+
+    /// Native Apple sheet, same as sign-in, so no web round trip
+    func linkApple() async throws {
+        try await client.auth.linkIdentityWithIdToken(credentials: appleCredentials())
+    }
+
+    func unlink(_ identity: UserIdentity) async throws {
+        try await client.auth.unlinkIdentity(identity)
+    }
+
     // MARK: - Session lifecycle
 
     func signOut() async {
