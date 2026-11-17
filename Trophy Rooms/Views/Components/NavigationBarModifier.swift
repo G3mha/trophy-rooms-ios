@@ -106,6 +106,14 @@ private struct UserMenuSheet: View {
                     }
                 }
 
+                Section {
+                    NavigationLink {
+                        AccountView()
+                    } label: {
+                        Label("Account Settings", systemImage: "gearshape")
+                    }
+                }
+
                 // Admin section
                 if adminViewModel.canAccessAdmin {
                     Section {
