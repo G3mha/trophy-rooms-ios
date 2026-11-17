@@ -93,15 +93,20 @@ final class AuthManager: ObservableObject {
     /// Web-based Google flow through the Supabase callback; the redirect URL
     /// must be allow-listed in Supabase Auth settings.
     func signInWithGoogle() async throws {
-        try await client.auth.signInWithOAuth(
-            provider: .google,
-            redirectTo: URL(string: "trophyrooms://auth-callback")
-        )
+        try await client.auth.signInWithOAuth(provider: .google, redirectTo: Self.callbackURL)
     }
+
+    /// The app's deep link back from Supabase-hosted pages (OAuth, email links)
+    static let callbackURL = URL(string: "trophyrooms://auth-callback")!
 
     /// Fully native Sign in with Apple: system sheet, then the identity
     /// token is exchanged with Supabase (nonce-bound).
     func signInWithApple() async throws {
+        try await client.auth.signInWithIdToken(credentials: appleCredentials())
+    }
+
+    /// Runs the system Apple sheet and returns its nonce-bound identity token
+    private func appleCredentials() async throws -> OpenIDConnectCredentials {
         let rawNonce = Self.randomNonceString()
         let credential = try await AppleCredentialController().requestCredential(
             nonceHash: Self.sha256(rawNonce)
@@ -114,13 +119,7 @@ final class AuthManager: ObservableObject {
             throw AuthManagerError.missingAppleToken
         }
 
-        try await client.auth.signInWithIdToken(
-            credentials: OpenIDConnectCredentials(
-                provider: .apple,
-                idToken: idToken,
-                nonce: rawNonce
-            )
-        )
+        return OpenIDConnectCredentials(provider: .apple, idToken: idToken, nonce: rawNonce)
     }
 
     // MARK: - Session lifecycle
