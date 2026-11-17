@@ -565,6 +565,10 @@ private struct GameHeader: View {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("\(totalAchievements) trophies")
                 }
+
+                if let releaseDate = game.releaseDate {
+                    FactChip(icon: "calendar", label: formatReleaseDate(releaseDate))
+                }
             }
 
             Spacer()
@@ -576,7 +580,7 @@ private struct GameMetadata: View {
     let game: GameDetail
 
     var hasMetadata: Bool {
-        game.releaseDate != nil || game.developer != nil || game.publisher != nil || game.genre != nil || game.esrbRating != nil
+        game.developer != nil || game.publisher != nil || game.genre != nil || game.esrbRating != nil
     }
 
     var body: some View {
@@ -584,9 +588,6 @@ private struct GameMetadata: View {
         if hasMetadata {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    if let releaseDate = game.releaseDate {
-                        FactChip(icon: "calendar", label: formatDate(releaseDate))
-                    }
                     if let developer = game.developer {
                         FactChip(icon: "hammer.fill", label: developer)
                     }
@@ -603,19 +604,19 @@ private struct GameMetadata: View {
             }
         }
     }
+}
 
-    func formatDate(_ dateString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate]
+private func formatReleaseDate(_ dateString: String) -> String {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withFullDate]
 
-        if let date = formatter.date(from: dateString) {
-            let displayFormatter = DateFormatter()
-            displayFormatter.dateStyle = .medium
-            return displayFormatter.string(from: date)
-        }
-
-        return dateString
+    if let date = formatter.date(from: dateString) {
+        let displayFormatter = DateFormatter()
+        displayFormatter.dateStyle = .medium
+        return displayFormatter.string(from: date)
     }
+
+    return dateString
 }
 
 private struct FactChip: View {
