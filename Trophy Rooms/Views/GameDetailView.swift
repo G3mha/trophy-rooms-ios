@@ -849,7 +849,7 @@ private struct TrophySection: View {
                 ForEach(inTier) { achievement in
                     AchievementRow(
                         achievement: achievement,
-                        isAuthenticated: isAuthenticated,
+                        canToggle: isAuthenticated,
                         accentColor: Cabinet.brass,
                         onToggle: { onToggle(achievement) }
                     )
@@ -1019,7 +1019,7 @@ private struct AchievementSetView: View {
                         AchievementRow(
                             achievement: achievement,
                             // The backend awards the Platinum, so it shows without a tick
-                            isAuthenticated: isAuthenticated && achievement.tier != .PLATINUM,
+                            canToggle: isAuthenticated && achievement.tier != .PLATINUM,
                             accentColor: accentColor,
                             onToggle: { onToggle(achievement) }
                         )
@@ -1055,7 +1055,7 @@ private struct AchievementSetView: View {
 
 private struct AchievementRow: View {
     let achievement: Achievement
-    let isAuthenticated: Bool
+    let canToggle: Bool
     let accentColor: Color
     let onToggle: () -> Void
 
@@ -1128,7 +1128,7 @@ private struct AchievementRow: View {
 
             Spacer()
 
-            if isAuthenticated {
+            if canToggle {
                 Button(action: onToggle) {
                     ZStack {
                         Circle()
