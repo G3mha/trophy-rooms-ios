@@ -139,8 +139,16 @@ final class AuthManager: ObservableObject {
         try await client.auth.update(user: UserAttributes(email: email), redirectTo: Self.callbackURL)
     }
 
-    func changePassword(to password: String) async throws {
-        try await client.auth.update(user: UserAttributes(password: password))
+    /// Secure password change is on: once the sign-in is over 24 hours old,
+    /// Supabase rejects this with `reauthenticationNeeded` until `nonce` is
+    /// the code from `sendReauthenticationCode()`. Before that it ignores it.
+    func changePassword(to password: String, nonce: String? = nil) async throws {
+        try await client.auth.update(user: UserAttributes(password: password, nonce: nonce))
+    }
+
+    /// Emails the code `changePassword(to:nonce:)` asks for
+    func sendReauthenticationCode() async throws {
+        try await client.auth.reauthenticate()
     }
 
     /// `launch` runs the provider's web page and returns the callback URL
