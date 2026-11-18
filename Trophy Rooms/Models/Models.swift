@@ -1287,17 +1287,29 @@ struct DLCDetail: Identifiable, Decodable {
     let isOwned: Bool?
     let gameFamily: GameFamilyRef?
     let platforms: [Platform]?
-    let achievementSets: [AchievementSetSummary]?
+    let achievementSets: [AchievementSet]?
     let bundles: [DLCBundleRef]?
 }
 
-struct AchievementSetSummary: Identifiable, Decodable, TrophyRoleSet {
-    let id: String
-    let title: String
-    let type: String
-    let visibility: String
-    let countsTowardTrophy: Bool?
-    let achievementCount: Int
+extension DLCDetail {
+    func replacingAchievement(_ updatedAchievement: Achievement) -> DLCDetail {
+        DLCDetail(
+            id: id,
+            name: name,
+            slug: slug,
+            type: type,
+            description: description,
+            coverUrl: coverUrl,
+            effectiveCoverUrl: effectiveCoverUrl,
+            releaseDate: releaseDate,
+            price: price,
+            isOwned: isOwned,
+            gameFamily: gameFamily,
+            platforms: platforms,
+            achievementSets: achievementSets?.map { $0.replacingAchievement(updatedAchievement) },
+            bundles: bundles
+        )
+    }
 }
 
 struct DLCBundleRef: Identifiable, Decodable {

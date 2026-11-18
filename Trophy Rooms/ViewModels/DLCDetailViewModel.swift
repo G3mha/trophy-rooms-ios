@@ -6,6 +6,7 @@ class DLCDetailViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var isOwnershipLoading = false
+    @Published var toggleError: String?
 
     func fetchDLC(id: String) async {
         DispatchQueue.main.async {
@@ -38,7 +39,16 @@ class DLCDetailViewModel: ObservableObject {
                     type
                     visibility
                     countsTowardTrophy
-                    achievementCount
+                    achievements {
+                        id
+                        title
+                        description
+                        iconUrl
+                        tier
+                        isCompleted
+                        earnedPercent
+                        achievementSetId
+                    }
                 }
                 bundles {
                     id
@@ -64,6 +74,22 @@ class DLCDetailViewModel: ObservableObject {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
             }
+        }
+    }
+
+    // A tick shows at once and is put back if the server refuses it
+    @MainActor
+    func toggleAchievement(_ achievement: Achievement) async {
+        let earned = achievement.isCompleted != true
+        dlc = dlc?.replacingAchievement(achievement.withCompletionState(earned))
+        do {
+            if let refusal = try await TrophyTick.send(achievementId: achievement.id, earned: earned) {
+                dlc = dlc?.replacingAchievement(achievement)
+                toggleError = refusal
+            }
+        } catch {
+            dlc = dlc?.replacingAchievement(achievement)
+            toggleError = error.localizedDescription
         }
     }
 

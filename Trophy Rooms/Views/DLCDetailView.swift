@@ -55,11 +55,17 @@ struct DLCDetailView: View {
                             }
                         }
 
-                        // Achievement Sets Section
-                        if let achievementSets = dlc.achievementSets {
-                            AchievementSetGroups(sets: achievementSets) { set in
-                                DLCAchievementSetRow(achievementSet: set)
-                            }
+                        // The DLC's trophy lists, ticked the same way as on the game screen
+                        if let achievementSets = dlc.achievementSets, !achievementSets.isEmpty {
+                            DLCTrophySection(
+                                sets: achievementSets,
+                                isAuthenticated: authManager.isSignedIn,
+                                onToggle: { achievement in
+                                    Task {
+                                        await viewModel.toggleAchievement(achievement)
+                                    }
+                                }
+                            )
                         }
 
                         // Bundles Section
@@ -84,6 +90,14 @@ struct DLCDetailView: View {
             } else {
                 Text("DLC not found")
             }
+        }
+        .alert("Couldn't save that trophy", isPresented: Binding(
+            get: { viewModel.toggleError != nil },
+            set: { if !$0 { viewModel.toggleError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.toggleError ?? "")
         }
         .cabinetCanvas()
         .navigationTitle("DLC Details")
@@ -247,33 +261,41 @@ private struct DLCParentGameRow: View {
     }
 }
 
-// MARK: - DLC Achievement Set Row
+// MARK: - DLC Trophy Section
 
-private struct DLCAchievementSetRow: View {
-    let achievementSet: AchievementSetSummary
+// The DLC's lists in the same groups as the game screen. They start open: on
+// this screen they're the content, not extras. The Platinum belongs to the
+// parent game, so there's no Platinum header here.
+private struct DLCTrophySection: View {
+    let sets: [AchievementSet]
+    let isAuthenticated: Bool
+    let onToggle: (Achievement) -> Void
+    @State private var chosenFilter = TrophyFilter.all
+    @State private var revealsDescriptions = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "star.circle.fill")
-                .font(.title2)
-                .foregroundStyle(.yellow)
+        VStack(alignment: .leading, spacing: 16) {
+            TrophyControls(
+                showsFilter: isAuthenticated,
+                filter: $chosenFilter,
+                showsReveal: sets.hasTrophyDescriptions,
+                revealsDescriptions: $revealsDescriptions
+            )
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(achievementSet.title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-
-                Label("\(achievementSet.achievementCount)", systemImage: "trophy.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel("\(achievementSet.achievementCount) trophies")
+            VStack(alignment: .leading, spacing: 20) {
+                AchievementSetGroups(sets: sets) { set in
+                    TrophyListView(
+                        achievementSet: set,
+                        filter: isAuthenticated ? chosenFilter : .all,
+                        revealsDescriptions: revealsDescriptions,
+                        isAuthenticated: isAuthenticated,
+                        startsExpanded: true,
+                        onToggle: onToggle
+                    )
+                }
             }
-
-            Spacer()
         }
-        .padding()
-        .background(Cabinet.card)
-        .cornerRadius(12)
+        .trophyCard()
     }
 }
 
