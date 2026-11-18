@@ -162,35 +162,21 @@ class GameDetailViewModel: ObservableObject {
     }
 
     func toggleAchievement(_ achievement: Achievement) async {
-        let achievementId = achievement.id
         let shouldMarkComplete = achievement.isCompleted != true
 
         if let currentGame = game {
             game = currentGame.replacingAchievement(achievement.withCompletionState(shouldMarkComplete))
         }
 
-        let mutationName = shouldMarkComplete ? "MarkAchievementComplete" : "UnmarkAchievementComplete"
-        let mutationField = shouldMarkComplete ? "markAchievementComplete" : "unmarkAchievementComplete"
-
-        let mutation = """
-        mutation \(mutationName)($achievementId: ID!) {
-            \(mutationField)(achievementId: $achievementId) {
-                success
-                error { code message field }
-            }
-        }
-        """
-
         pendingToggles += 1
         do {
-            let response: SimpleMutationResponse = try await NetworkService.shared.fetch(query: mutation, variables: ["achievementId": achievementId])
+            let refusal = try await TrophyTick.send(achievementId: achievement.id, earned: shouldMarkComplete)
             pendingToggles -= 1
             // The server can refuse a tick without throwing
-            let result = shouldMarkComplete ? response.markAchievementComplete : response.unmarkAchievementComplete
-            if result?.success == false {
+            if let refusal {
                 // Put back only this trophy, other ticks may still be in flight
                 game = game?.replacingAchievement(achievement)
-                toggleError = result?.error?.message ?? "Try again."
+                toggleError = refusal
             }
             // Reload for the new share of players, and the Platinum the backend may have awarded
             if pendingToggles == 0, let gameId = game?.id {
