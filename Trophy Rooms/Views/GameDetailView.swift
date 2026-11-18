@@ -849,8 +849,9 @@ private struct TrophySection: View {
                 ForEach(inTier) { achievement in
                     AchievementRow(
                         achievement: achievement,
+                        tracksProgress: isAuthenticated,
                         canToggle: isAuthenticated,
-                        accentColor: Cabinet.brass,
+                        revealsDescription: false,
                         onToggle: { onToggle(achievement) }
                     )
                 }
@@ -1018,9 +1019,10 @@ private struct AchievementSetView: View {
                     ForEach(achievementSet.achievements) { achievement in
                         AchievementRow(
                             achievement: achievement,
+                            tracksProgress: isAuthenticated,
                             // The backend awards the Platinum, so it shows without a tick
                             canToggle: isAuthenticated && achievement.tier != .PLATINUM,
-                            accentColor: accentColor,
+                            revealsDescription: false,
                             onToggle: { onToggle(achievement) }
                         )
                     }
@@ -1055,48 +1057,68 @@ private struct AchievementSetView: View {
 
 private struct AchievementRow: View {
     let achievement: Achievement
+    // Signed in, so earned and not yet earned look different
+    let tracksProgress: Bool
     let canToggle: Bool
-    let accentColor: Color
+    // Shows the description without the per-trophy reveal
+    let revealsDescription: Bool
     let onToggle: () -> Void
 
     // Descriptions can spoil the game, so each one stays hidden until asked for
     @State private var showsDescription = false
 
-    var hasDescription: Bool {
+    private var hasDescription: Bool {
         !(achievement.description ?? "").isEmpty
     }
 
-    var isCompleted: Bool {
+    private var isCompleted: Bool {
         achievement.isCompleted == true
     }
 
-    var rowTint: Color {
-        achievement.tier?.accentColor ?? accentColor
+    private var isLocked: Bool {
+        tracksProgress && !isCompleted
+    }
+
+    private var tier: AchievementTier {
+        achievement.tier ?? .BRONZE
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            if let iconUrl = achievement.iconUrl, let url = URL(string: iconUrl) {
-                AchievementIconView(
-                    url: url,
-                    accentColor: rowTint,
-                    isCompleted: isCompleted
-                )
+        HStack(spacing: 10) {
+            if canToggle {
+                Button(action: onToggle) {
+                    ZStack {
+                        Circle()
+                            .strokeBorder(isCompleted ? Cabinet.brass : Color.secondary, lineWidth: 2)
+                        if isCompleted {
+                            Circle()
+                                .fill(Cabinet.brass)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(Cabinet.ink)
+                        }
+                    }
+                    .frame(width: 24, height: 24)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isCompleted ? "Mark as not earned" : "Mark as earned")
+                .accessibilityValue(achievement.title)
+                .accessibilityAddTraits(isCompleted ? [.isSelected] : [])
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
+            TrophyIcon(url: achievement.iconUrl, tier: tier, isLocked: isLocked)
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 4) {
                     Text(achievement.title)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(isCompleted ? .primary : Color.primary.opacity(0.94))
-                        .lineLimit(2)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(isLocked ? Color.secondary : Color.primary)
+                        // The ring's colour carries the tier on screen
+                        .accessibilityLabel("\(achievement.title), \(tier.accessibilityLabel)")
 
-                    if let tier = achievement.tier {
-                        TierBadge(tier: tier)
-                    }
-
-                    if hasDescription {
+                    if hasDescription && !revealsDescription {
                         Button {
                             Motion.animate(.easeInOut(duration: 0.2)) { showsDescription.toggle() }
                         } label: {
@@ -1112,11 +1134,10 @@ private struct AchievementRow: View {
                     }
                 }
 
-                if showsDescription, let description = achievement.description, !description.isEmpty {
+                if revealsDescription || showsDescription, let description = achievement.description, !description.isEmpty {
                     Text(description)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(2)
                 }
 
                 if let earnedPercent = achievement.earnedPercent {
@@ -1126,61 +1147,48 @@ private struct AchievementRow: View {
                 }
             }
 
-            Spacer()
-
-            if canToggle {
-                Button(action: onToggle) {
-                    ZStack {
-                        Circle()
-                            .fill(isCompleted ? rowTint.opacity(0.2) : Color.white.opacity(0.06))
-                            .frame(width: 34, height: 34)
-                        Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                            .font(.title3)
-                            .foregroundStyle(isCompleted ? rowTint : .secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(isCompleted ? "Mark as not earned" : "Mark as earned")
-                .accessibilityValue(achievement.title)
-                .accessibilityAddTraits(isCompleted ? [.isSelected] : [])
-            }
+            Spacer(minLength: 0)
         }
-        .padding(12)
+        .padding(.vertical, 8)
+        .padding(.leading, canToggle ? 0 : 10)
+        .padding(.trailing, 12)
+        .frame(minHeight: 60)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(isCompleted ? rowTint.opacity(0.12) : rowTint.opacity(0.055))
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.white.opacity(0.04))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(isCompleted ? rowTint.opacity(0.28) : rowTint.opacity(0.12), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(
+                    tracksProgress && isCompleted ? Cabinet.brass.opacity(0.45) : Color.white.opacity(0.08),
+                    lineWidth: 1
+                )
         )
     }
 }
 
-private struct AchievementIconView: View {
-    let url: URL
-    let accentColor: Color
-    let isCompleted: Bool
+// The tier shows as a metal ring around the icon. A trophy not earned yet
+// goes grey inside it, and the ring keeps its metal.
+private struct TrophyIcon: View {
+    let url: String?
+    let tier: AchievementTier
+    let isLocked: Bool
 
     var body: some View {
-        RemoteImage(url: url.absoluteString) { iconPlaceholder }
-        .frame(width: 52, height: 52)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(accentColor.opacity(isCompleted ? 0.4 : 0.2), lineWidth: 1)
-        )
-        .shadow(color: accentColor.opacity(isCompleted ? 0.2 : 0.1), radius: 8, y: 3)
-    }
-
-    private var iconPlaceholder: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(accentColor.opacity(isCompleted ? 0.18 : 0.1))
-            .overlay(
-                Image(systemName: "photo")
-                    .font(.caption)
-                    .foregroundStyle(accentColor.opacity(0.75))
-            )
+        RemoteImage(url: url) {
+            Image(systemName: "trophy.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(tier.tierColor)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Cabinet.ink)
+        }
+        .frame(width: 40, height: 40)
+        .clipShape(Circle())
+        .grayscale(isLocked ? 1 : 0)
+        .brightness(isLocked ? -0.25 : 0)
+        .padding(3)
+        .background(Circle().fill(tier.tierColor))
+        .accessibilityHidden(true)
     }
 }
 
