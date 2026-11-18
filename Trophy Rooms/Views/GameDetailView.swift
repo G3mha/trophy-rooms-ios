@@ -652,30 +652,25 @@ private struct TrophySection: View {
     let coverUrl: String?
     let isAuthenticated: Bool
     let onToggle: (Achievement) -> Void
-    @State private var isExpanded = false
     // Hidden like every other trophy description, so it can't spoil anything
     @State private var showsPlatinumDescription = false
-
-    private var hasPlatinumDescription: Bool {
-        !(platinum?.description ?? "").isEmpty
-    }
-
-    private func togglePlatinumDescription() {
-        Motion.animate(.easeInOut(duration: 0.2)) { showsPlatinumDescription.toggle() }
-    }
 
     // Best first, the order the list is grouped in. No Platinum: it is the
     // trophy itself and heads the card instead.
     private static let tiers: [AchievementTier] = [.GOLD, .SILVER, .BRONZE]
 
+    private var gatingSets: [AchievementSet] {
+        sets.filter(\.gatesTrophy)
+    }
+
     // The trophy under the game's own name. The backend awards it once
     // everything else is done, so it is neither ticked nor counted.
     private var platinum: Achievement? {
-        sets.flatMap(\.achievements).first { $0.tier == .PLATINUM }
+        gatingSets.flatMap(\.achievements).first { $0.tier == .PLATINUM }
     }
 
     private var achievements: [Achievement] {
-        sets.flatMap(\.achievements).withoutPlatinum
+        gatingSets.flatMap(\.achievements).withoutPlatinum
     }
 
     private var completedCount: Int {
@@ -686,91 +681,32 @@ private struct TrophySection: View {
         achievements.isEmpty ? 0 : Double(completedCount) / Double(achievements.count)
     }
 
-    private var isEarned: Bool {
-        !achievements.isEmpty && completedCount == achievements.count
-    }
-
     // A signed-out visitor sees the niche fully lit, and it never goes dark
     // enough to hide the silhouette
     private var glow: Double {
         isAuthenticated ? 0.25 + 0.75 * fraction : 1
     }
 
+    private var hasPlatinumDescription: Bool {
+        !(platinum?.description ?? "").isEmpty
+    }
+
+    // Says it's the Platinum when the Platinum carries its own name
+    private var progressLine: String {
+        let count = achievements.count
+        let progress = isAuthenticated ? "\(completedCount) of \(count) trophies" : "Earn all \(count) trophies"
+        return platinum?.title != nil ? "Platinum · \(progress)" : progress
+    }
+
     var body: some View {
         if !achievements.isEmpty {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 16) {
-                    niche
+            VStack(alignment: .leading, spacing: 16) {
+                header
 
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(spacing: 6) {
-                            Text(platinum?.title ?? (isEarned ? "Platinum Earned" : "The Platinum"))
-                                .font(.title3.weight(.bold))
-
-                            if hasPlatinumDescription {
-                                Button(action: togglePlatinumDescription) {
-                                    Image(systemName: showsPlatinumDescription ? "eye.slash" : "eye")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 28, height: 28)
-                                        .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-
-                        if showsPlatinumDescription, let description = platinum?.description, !description.isEmpty {
-                            Text(description)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        if isAuthenticated {
-                            AchievementSetProgressBar(progress: fraction, accentColor: Cabinet.brass)
-                            Text("\(completedCount) of \(achievements.count)")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                        } else if (platinum?.description ?? "").isEmpty {
-                            Text("Earn all \(achievements.count) trophies to get it.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                VStack(alignment: .leading, spacing: 16) {
+                    ForEach(Self.tiers, id: \.self) { tier in
+                        tierGroup(tier)
                     }
-
-                    Spacer(minLength: 0)
-
-                    Image(systemName: isExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(Cabinet.brass)
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    Motion.animate(.easeInOut(duration: 0.24)) {
-                        isExpanded.toggle()
-                    }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityAddTraits(.isButton)
-                .accessibilityHint(isExpanded ? "Hides the trophies" : "Shows the trophies")
-                // The combined element hides the eye button from VoiceOver
-                .accessibilityActions {
-                    if hasPlatinumDescription {
-                        Button(
-                            showsPlatinumDescription ? "Hide description" : "Show description",
-                            action: togglePlatinumDescription
-                        )
-                    }
-                }
-
-                if isExpanded {
-                    VStack(alignment: .leading, spacing: 16) {
-                        ForEach(Self.tiers, id: \.self) { tier in
-                            tierGroup(tier)
-                        }
-                    }
-                    // Plain fade: a move transition slides ghost rows across
-                    // neighboring cards while the container resizes
-                    .transition(.opacity)
                 }
             }
             .padding(16)
@@ -782,6 +718,53 @@ private struct TrophySection: View {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .stroke(Cabinet.brass.opacity(0.20), lineWidth: 1)
             )
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 16) {
+            niche
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Text(platinum?.title ?? "Platinum")
+                        .font(.title3.weight(.bold))
+
+                    if hasPlatinumDescription {
+                        Button {
+                            Motion.animate(.easeInOut(duration: 0.2)) { showsPlatinumDescription.toggle() }
+                        } label: {
+                            Image(systemName: showsPlatinumDescription ? "eye.slash" : "eye")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 28, height: 28)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(showsPlatinumDescription ? "Hide description" : "Show description")
+                    }
+                }
+
+                if showsPlatinumDescription, let description = platinum?.description, !description.isEmpty {
+                    Text(description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if isAuthenticated {
+                    AchievementSetProgressBar(progress: fraction, accentColor: Cabinet.brass)
+                }
+
+                Text(progressLine)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(gatingSets.map(\.title).joined(separator: " + "))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+
+            Spacer(minLength: 0)
         }
     }
 
@@ -841,7 +824,7 @@ private struct TrophySection: View {
     private func tierGroup(_ tier: AchievementTier) -> some View {
         let inTier = achievements.filter { ($0.tier ?? .BRONZE) == tier }
         if !inTier.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text(tier.rawValue.capitalized)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
