@@ -16,7 +16,7 @@ struct TrophyShelfView: View {
                 .frame(width: 36, height: 70)
             TrophySilhouette(kind: .medal)
                 .frame(width: 44, height: 53)
-            TrophySilhouette(kind: .obelisk)
+            TrophySilhouette(kind: .shield)
                 .frame(width: 34, height: 63)
             TrophySilhouette(kind: .cup)
                 .frame(width: 48, height: 83)
@@ -47,7 +47,7 @@ struct TrophyShelfView: View {
 /// Flat trophy silhouette shapes, transcribed from the brand SVG library
 struct TrophySilhouette: Shape {
     enum Kind {
-        case cup, star, medal, obelisk
+        case cup, star, medal, shield
     }
 
     let kind: Kind
@@ -57,7 +57,7 @@ struct TrophySilhouette: Shape {
         case .cup: return cup(in: rect)
         case .star: return star(in: rect)
         case .medal: return medal(in: rect)
-        case .obelisk: return obelisk(in: rect)
+        case .shield: return shield(in: rect)
         }
     }
 
@@ -116,16 +116,27 @@ struct TrophySilhouette: Shape {
         return p
     }
 
-    // Coordinate space 55x102
-    private func obelisk(in rect: CGRect) -> Path {
+    // Coordinate space 55x102. Replaces the obelisk (rejected Nov 2026:
+    // tall narrow columns read as phallic)
+    private func shield(in rect: CGRect) -> Path {
         let s = rect.width / 55
         var p = Path()
-        p.addRoundedRect(in: frame(20, 4, 15, 60, s, rect), cornerSize: CGSize(width: 4 * s, height: 4 * s))
-        p.move(to: point(27, 0, s, rect))
-        p.addLine(to: point(34, 12, s, rect))
-        p.addLine(to: point(21, 12, s, rect))
+        // Shield, peaked top tapering to a flat foot on the stem
+        p.move(to: point(6, 6, s, rect))
+        p.addLine(to: point(27.5, 1, s, rect))
+        p.addLine(to: point(49, 6, s, rect))
+        p.addLine(to: point(49, 30, s, rect))
+        p.addCurve(to: point(32, 58, s, rect),
+                   control1: point(49, 44, s, rect),
+                   control2: point(42, 53, s, rect))
+        p.addLine(to: point(23, 58, s, rect))
+        p.addCurve(to: point(6, 30, s, rect),
+                   control1: point(13, 53, s, rect),
+                   control2: point(6, 44, s, rect))
         p.closeSubpath()
-        p.addRoundedRect(in: frame(10, 64, 35, 16, s, rect), cornerSize: CGSize(width: 3 * s, height: 3 * s))
+        // Stand
+        p.addRoundedRect(in: frame(22, 58, 11, 8, s, rect), cornerSize: CGSize(width: 2 * s, height: 2 * s))
+        p.addRoundedRect(in: frame(10, 66, 35, 14, s, rect), cornerSize: CGSize(width: 3 * s, height: 3 * s))
         p.addRoundedRect(in: frame(4, 80, 47, 22, s, rect), cornerSize: CGSize(width: 4 * s, height: 4 * s))
         return p
     }
