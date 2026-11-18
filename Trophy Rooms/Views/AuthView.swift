@@ -44,93 +44,84 @@ struct AuthView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
-                    // Header
-                    VStack(spacing: 10) {
-                        // Brand silhouettes, not platform logos: the app has
-                        // no PlayStation, Xbox, Steam or Nintendo integration
-                        TrophyShelfView()
-                            .padding(.bottom, 8)
+                // One cabinet panel with the title inside it, standing on a
+                // lit shelf edge - the same frame as the web sign-in card
+                VStack(spacing: 0) {
+                    VStack(spacing: 16) {
+                        VStack(spacing: 8) {
+                            Text(headerTitle)
+                                .font(Cabinet.display(36))
+                                .textCase(.uppercase)
+                                .foregroundStyle(Cabinet.bone)
+                                .shadow(color: Cabinet.shadowRed.opacity(0.85), radius: 0, x: 3, y: 3)
+                                .multilineTextAlignment(.center)
+                                .contentTransition(.opacity)
 
-                        Text(headerKicker)
-                            .font(Cabinet.script(26))
-                            .foregroundStyle(Cabinet.brass)
-                            .rotationEffect(.degrees(-2.5))
-                            .contentTransition(.opacity)
+                            if step == .verification {
+                                Text("We sent a verification code to \(email).")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        .padding(.bottom, 8)
 
-                        Text(headerTitle)
-                            .font(Cabinet.display(30))
-                            .textCase(.uppercase)
-                            .foregroundStyle(Cabinet.bone)
-                            .shadow(color: Cabinet.shadowRed, radius: 0, x: 3, y: 3)
-                            .contentTransition(.opacity)
-
-                        Text(headerSubtitle)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.top, 24)
-                    .padding(.bottom, 8)
-
-                    // Card
-                    VStack(spacing: 20) {
                         if step == .verification {
                             verificationView
                         } else {
                             formView
                         }
                     }
-                    .padding(24)
-                    .background(Cabinet.card)
-                    .cornerRadius(16)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 28)
+                    .padding(.bottom, 22)
 
-                    Spacer(minLength: 40)
+                    CabinetShelfEdge()
                 }
+                .background(CabinetPanelBackground())
+                .clipShape(panelShape)
+                .overlay(panelShape.strokeBorder(Cabinet.brass.opacity(0.3), lineWidth: 1))
+                // Print-style hard shadow, never blurred
+                .background(panelShape.fill(Cabinet.ink.opacity(0.6)).offset(x: 6, y: 6))
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 40)
             }
+            .cabinetCanvas()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .foregroundStyle(Cabinet.bone)
                 }
             }
         }
+        // The cabinet is always dark; keeps the keyboard and provider
+        // buttons on their dark variants even when the phone is in light mode
+        .preferredColorScheme(.dark)
         .presentationDragIndicator(.visible)
+    }
+
+    private var panelShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
     }
 
     // MARK: - Header
 
-    private var headerKicker: String {
-        switch (mode, step) {
-        case (.signIn, _): return "Your trophy room awaits"
-        case (.signUp, .form): return "Start your trophy room"
-        case (.signUp, .verification): return "Almost there"
-        }
-    }
-
     private var headerTitle: String {
         switch (mode, step) {
-        case (.signIn, _): return "Welcome Back"
-        case (.signUp, .form): return "Create Account"
-        case (.signUp, .verification): return "Verify Your Email"
-        }
-    }
-
-    private var headerSubtitle: String {
-        switch (mode, step) {
-        case (.signIn, _): return "Sign in to continue to Trophy Rooms"
-        case (.signUp, .form): return "Join Trophy Rooms and start tracking"
-        case (.signUp, .verification): return "We sent a verification code to your email"
+        case (.signIn, _): return "Sign in"
+        case (.signUp, .form): return "Create account"
+        case (.signUp, .verification): return "Verify your email"
         }
     }
 
     // MARK: - Form View
 
     private var formView: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             VStack(spacing: 12) {
                 // Apple Sign In (required alongside third-party login, guideline 4.8)
                 AppleSignInButton(isLoading: loadingAction == .apple) {
@@ -149,50 +140,36 @@ struct AuthView: View {
                 .disabled(isLoading)
             }
 
-            // Divider
-            HStack(spacing: 16) {
+            // "or" with a brass hairline on each side
+            HStack(spacing: 14) {
                 Rectangle()
-                    .fill(Color(.separator))
+                    .fill(Cabinet.brass.opacity(0.2))
                     .frame(height: 1)
                 Text("or")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .textCase(.uppercase)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                 Rectangle()
-                    .fill(Color(.separator))
+                    .fill(Cabinet.brass.opacity(0.2))
                     .frame(height: 1)
             }
+            .padding(.vertical, 4)
 
-            // Credential fields, grouped like a system login form
-            VStack(alignment: .leading, spacing: 6) {
-                VStack(spacing: 0) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "envelope")
-                            .foregroundStyle(.secondary)
-                            .frame(width: 20)
-
-                        TextField("Email", text: $email)
-                            .textFieldStyle(.plain)
-                            .textContentType(.emailAddress)
-                            .keyboardType(.emailAddress)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .focused($focusedField, equals: .email)
-                            .submitLabel(.next)
-                            .onSubmit {
-                                focusedField = .password
-                            }
+            CabinetField(label: "Email", isFocused: focusedField == .email) {
+                TextField("you@example.com", text: $email)
+                    .textContentType(.emailAddress)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .focused($focusedField, equals: .email)
+                    .submitLabel(.next)
+                    .onSubmit {
+                        focusedField = .password
                     }
-                    .padding(14)
+            }
 
-                    Divider()
-                        .padding(.leading, 44)
-
+            VStack(alignment: .leading, spacing: 6) {
+                CabinetField(label: "Password", isFocused: focusedField == .password) {
                     HStack(spacing: 10) {
-                        Image(systemName: "lock")
-                            .foregroundStyle(.secondary)
-                            .frame(width: 20)
-
                         Group {
                             if showPassword {
                                 TextField("Password", text: $password)
@@ -200,7 +177,6 @@ struct AuthView: View {
                                 SecureField("Password", text: $password)
                             }
                         }
-                        .textFieldStyle(.plain)
                         .textContentType(mode == .signUp ? .newPassword : .password)
                         .focused($focusedField, equals: .password)
                         .submitLabel(.go)
@@ -212,30 +188,17 @@ struct AuthView: View {
                             showPassword.toggle()
                         } label: {
                             Image(systemName: showPassword ? "eye.slash" : "eye")
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(showPassword ? "Hide password" : "Show password")
                     }
-                    .padding(14)
                 }
-                .background(Cabinet.canvas, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(
-                            focusedField == .email || focusedField == .password
-                                ? Color.accentColor.opacity(0.6)
-                                : Color(.separator),
-                            lineWidth: 1
-                        )
-                )
-                .cabinetAnimation(.easeOut(duration: 0.15), value: focusedField)
 
                 if mode == .signUp {
                     Text("Must be at least 8 characters")
                         .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 4)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -248,26 +211,21 @@ struct AuthView: View {
             Button {
                 submitCredentials()
             } label: {
-                HStack {
-                    if loadingAction == .credentials {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Text(mode == .signIn ? "Sign In" : "Create Account")
-                    }
+                if loadingAction == .credentials {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Text(mode == .signIn ? "Sign In" : "Create Account")
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-                .fontWeight(.semibold)
             }
-            .buttonStyle(.glassProminent)
-            .tint(.accentColor)
+            .buttonStyle(CabinetPrimaryButtonStyle())
             .disabled(isLoading || email.isEmpty || password.isEmpty)
+            .padding(.top, 4)
 
             // Switch mode
-            HStack {
+            HStack(spacing: 4) {
                 Text(mode == .signIn ? "Don't have an account?" : "Already have an account?")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Button(mode == .signIn ? "Sign up" : "Sign in") {
                     Motion.animate {
@@ -275,17 +233,18 @@ struct AuthView: View {
                         errorMessage = nil
                     }
                 }
-                .foregroundColor(Color.accentColor)
-                .fontWeight(.medium)
+                .foregroundStyle(Cabinet.brassLight)
+                .fontWeight(.semibold)
             }
             .font(.subheadline)
+            .padding(.top, 6)
         }
     }
 
     // MARK: - Verification View
 
     private var verificationView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             // Code boxes over an invisible field, so system
             // one-time-code autofill and the number pad both work
             ZStack {
@@ -313,17 +272,18 @@ struct AuthView: View {
 
                         Text(index < digits.count ? String(digits[index]) : " ")
                             .font(.title2.weight(.semibold).monospacedDigit())
-                            // Shrinks below 42 so eight boxes fit a narrow phone
-                            .frame(maxWidth: 42)
-                            .frame(height: 52)
+                            .foregroundStyle(Cabinet.bone)
+                            // Shrinks below 44 so every box fits a narrow phone
+                            .frame(maxWidth: 44)
+                            .frame(height: 54)
                             .background(
-                                Cabinet.canvas,
-                                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                Cabinet.ink.opacity(0.55),
+                                in: RoundedRectangle(cornerRadius: 8, style: .continuous)
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(
-                                        isCursor ? Color.accentColor : Color(.separator),
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(
+                                        isCursor ? Cabinet.brass : Cabinet.brass.opacity(0.24),
                                         lineWidth: isCursor ? 2 : 1
                                     )
                             )
@@ -350,49 +310,40 @@ struct AuthView: View {
                     await handleVerification()
                 }
             } label: {
-                HStack {
-                    if loadingAction == .credentials {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Text("Verify Email")
-                    }
+                if loadingAction == .credentials {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Text("Verify Email")
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-                .fontWeight(.semibold)
             }
-            .buttonStyle(.glassProminent)
-            .tint(.accentColor)
+            .buttonStyle(CabinetPrimaryButtonStyle())
             .disabled(isLoading || verificationCode.count < AuthManager.emailCodeLength)
 
-            // Resend code
-            HStack {
-                Text("Didn't receive a code?")
-                    .foregroundColor(.secondary)
+            VStack(spacing: 10) {
+                HStack(spacing: 4) {
+                    Text("Didn't receive a code?")
+                        .foregroundStyle(.secondary)
 
-                Button("Resend") {
-                    Task {
-                        await handleResendCode()
+                    Button("Resend") {
+                        Task {
+                            await handleResendCode()
+                        }
+                    }
+                    .foregroundStyle(Cabinet.brassLight)
+                    .fontWeight(.semibold)
+                }
+
+                Button("Back to sign up") {
+                    Motion.animate {
+                        step = .form
+                        verificationCode = ""
+                        errorMessage = nil
                     }
                 }
-                .foregroundColor(Color.accentColor)
-                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
             }
             .font(.subheadline)
-
-            // Back button
-            Button {
-                Motion.animate {
-                    step = .form
-                    verificationCode = ""
-                    errorMessage = nil
-                }
-            } label: {
-                Text("Back to sign up")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
         }
     }
 
@@ -506,6 +457,103 @@ struct AuthView: View {
     }
 }
 
+// MARK: - Cabinet form pieces
+// Mirrors the web auth card (trophy-rooms-web/src/components/auth).
+
+/// Labeled input on a dark inset well, brass border that brightens on focus
+private struct CabinetField<Content: View>: View {
+    let label: String
+    let isFocused: Bool
+    @ViewBuilder let content: Content
+
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Cabinet.bone)
+
+            content
+                .textFieldStyle(.plain)
+                .tint(Cabinet.brass)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 46)
+                .background(Cabinet.ink.opacity(0.55), in: shape)
+                .overlay(
+                    shape.strokeBorder(isFocused ? Cabinet.brass : Cabinet.brass.opacity(0.24), lineWidth: 1)
+                )
+                // Soft brass focus ring outside the border
+                .overlay(
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .strokeBorder(Cabinet.brass.opacity(isFocused ? 0.22 : 0), lineWidth: 3)
+                        .padding(-3)
+                )
+                .cabinetAnimation(.easeOut(duration: 0.15), value: isFocused)
+        }
+    }
+}
+
+/// Crimson call to action with a print-style hard shadow that the button
+/// presses into
+private struct CabinetPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
+        let press: CGFloat = configuration.isPressed ? 2 : 0
+
+        configuration.label
+            .font(.body.weight(.bold))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, minHeight: 46)
+            .background(Cabinet.crimson, in: shape)
+            .offset(x: press, y: press)
+            .background(shape.fill(Cabinet.shadowRed.opacity(0.85)).offset(x: 4, y: 4))
+            .opacity(isEnabled ? 1 : 0.55)
+            .contentShape(shape)
+            .cabinetAnimation(.easeOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+/// Walnut panel lit by a warm pool of light from above
+private struct CabinetPanelBackground: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Cabinet.walnut, Color(red: 0.106, green: 0.067, blue: 0.031)], // -> #1b1108
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            EllipticalGradient(
+                colors: [Cabinet.amber.opacity(0.12), .clear],
+                center: .top,
+                startRadiusFraction: 0,
+                endRadiusFraction: 0.75
+            )
+        }
+    }
+}
+
+/// Lit wooden shelf edge the panel stands on
+private struct CabinetShelfEdge: View {
+    var body: some View {
+        LinearGradient(
+            stops: [
+                .init(color: Color(red: 0.910, green: 0.835, blue: 0.675), location: 0),    // #e8d5ac
+                .init(color: Color(red: 0.690, green: 0.553, blue: 0.329), location: 0.22), // #b08d54
+                .init(color: Color(red: 0.361, green: 0.247, blue: 0.133), location: 0.6),  // #5c3f22
+                .init(color: Color(red: 0.110, green: 0.067, blue: 0.031), location: 1),    // #1c1108
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 10)
+    }
+}
+
 // MARK: - Error Banner
 
 private struct AuthErrorBanner: View {
@@ -520,7 +568,7 @@ private struct AuthErrorBanner: View {
         .foregroundStyle(.red)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
