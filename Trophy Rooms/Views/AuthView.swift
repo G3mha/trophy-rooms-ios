@@ -293,7 +293,10 @@ struct AuthView: View {
                     .keyboardType(.numberPad)
                     .textContentType(.oneTimeCode)
                     .focused($focusedField, equals: .code)
-                    .opacity(0.02)
+                    // Clear text and caret rather than near-zero opacity: the
+                    // Mail code suggestion wouldn't fill a near-invisible field
+                    .foregroundStyle(.clear)
+                    .tint(.clear)
                     .onChange(of: verificationCode) {
                         verificationCode = String(verificationCode.filter(\.isNumber).prefix(AuthManager.emailCodeLength))
                         if verificationCode.count == AuthManager.emailCodeLength {
