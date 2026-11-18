@@ -87,9 +87,10 @@ struct GameDetailView: View {
                         }
 
                         // The trophy and its list - the page's main event,
-                        // ahead of edition/bundle metadata
+                        // ahead of edition/bundle metadata. Lists that don't
+                        // gate it fold in at the bottom.
                         TrophySection(
-                            sets: game.achievementSets.filter(\.gatesTrophy),
+                            sets: game.achievementSets,
                             coverUrl: game.coverUrl,
                             isAuthenticated: authManager.isSignedIn,
                             onToggle: { achievement in
@@ -98,19 +99,6 @@ struct GameDetailView: View {
                                 }
                             }
                         )
-
-                        // Sets that don't gate the trophy stay as their own cards
-                        AchievementSetGroups(sets: game.achievementSets.filter { !$0.gatesTrophy }) { set in
-                            AchievementSetView(
-                                achievementSet: set,
-                                isAuthenticated: authManager.isSignedIn,
-                                onToggle: { achievement in
-                                    Task {
-                                        await viewModel.toggleAchievement(achievement)
-                                    }
-                                }
-                            )
-                        }
 
                         // Game Versions Section
                         if let versions = game.versions, !versions.isEmpty {
@@ -638,12 +626,31 @@ private struct FactChip: View {
     }
 }
 
-// The trophy and its one list: every achievement in the sets that gate it,
-// grouped by tier. The trophy's art stands in a cabinet niche whose light
-// comes up as the player closes in on the trophy.
+// The trophy and its list: every achievement in the sets that gate it,
+// grouped by tier, with the lists that don't gate it folded in below. The
+// trophy's art stands in a cabinet niche whose light comes up as the player
+// closes in on the trophy.
 private extension Array where Element == Achievement {
     var withoutPlatinum: [Achievement] {
         filter { $0.tier != .PLATINUM }
+    }
+}
+
+private enum TrophyFilter: String, CaseIterable {
+    case all = "All"
+    case notEarned = "Not earned"
+    case earned = "Earned"
+
+    func shows(_ achievement: Achievement) -> Bool {
+        switch self {
+        case .all: return true
+        case .notEarned: return achievement.isCompleted != true
+        case .earned: return achievement.isCompleted == true
+        }
+    }
+
+    var emptyText: String {
+        self == .earned ? "Nothing earned yet." : "All earned."
     }
 }
 
@@ -652,6 +659,8 @@ private struct TrophySection: View {
     let coverUrl: String?
     let isAuthenticated: Bool
     let onToggle: (Achievement) -> Void
+    @State private var chosenFilter = TrophyFilter.all
+    @State private var revealsDescriptions = false
     // Hidden like every other trophy description, so it can't spoil anything
     @State private var showsPlatinumDescription = false
 
@@ -663,6 +672,10 @@ private struct TrophySection: View {
         sets.filter(\.gatesTrophy)
     }
 
+    private var extraSets: [AchievementSet] {
+        sets.filter { !$0.gatesTrophy }
+    }
+
     // The trophy under the game's own name. The backend awards it once
     // everything else is done, so it is neither ticked nor counted.
     private var platinum: Achievement? {
@@ -671,6 +684,15 @@ private struct TrophySection: View {
 
     private var achievements: [Achievement] {
         gatingSets.flatMap(\.achievements).withoutPlatinum
+    }
+
+    // Only a signed-in player has anything earned to filter by
+    private var filter: TrophyFilter {
+        isAuthenticated ? chosenFilter : .all
+    }
+
+    private var visible: [Achievement] {
+        achievements.filter(filter.shows)
     }
 
     private var completedCount: Int {
@@ -691,6 +713,10 @@ private struct TrophySection: View {
         !(platinum?.description ?? "").isEmpty
     }
 
+    private var hasDescriptions: Bool {
+        sets.contains { $0.achievements.contains { !($0.description ?? "").isEmpty } }
+    }
+
     // Says it's the Platinum when the Platinum carries its own name
     private var progressLine: String {
         let count = achievements.count
@@ -699,14 +725,43 @@ private struct TrophySection: View {
     }
 
     var body: some View {
-        if !achievements.isEmpty {
+        if !achievements.isEmpty || !extraSets.isEmpty {
             VStack(alignment: .leading, spacing: 16) {
-                header
+                if !achievements.isEmpty {
+                    header
+                }
 
-                VStack(alignment: .leading, spacing: 16) {
-                    ForEach(Self.tiers, id: \.self) { tier in
-                        tierGroup(tier)
+                if isAuthenticated || hasDescriptions {
+                    controls
+                }
+
+                if !achievements.isEmpty {
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(Self.tiers, id: \.self) { tier in
+                            tierGroup(tier)
+                        }
+
+                        if visible.isEmpty {
+                            Text(filter.emptyText)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                }
+
+                if !extraSets.isEmpty {
+                    VStack(alignment: .leading, spacing: 20) {
+                        AchievementSetGroups(sets: extraSets) { set in
+                            ExtraListView(
+                                achievementSet: set,
+                                filter: filter,
+                                revealsDescriptions: revealsDescriptions,
+                                isAuthenticated: isAuthenticated,
+                                onToggle: onToggle
+                            )
+                        }
+                    }
+                    .padding(.top, achievements.isEmpty ? 0 : 8)
                 }
             }
             .padding(16)
@@ -768,6 +823,36 @@ private struct TrophySection: View {
         }
     }
 
+    private var controls: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            if isAuthenticated {
+                Picker("Show", selection: $chosenFilter) {
+                    ForEach(TrophyFilter.allCases, id: \.self) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            if hasDescriptions {
+                Button {
+                    Motion.animate(.easeInOut(duration: 0.2)) { revealsDescriptions.toggle() }
+                } label: {
+                    Label(
+                        revealsDescriptions ? "Hide descriptions" : "Show descriptions",
+                        systemImage: revealsDescriptions ? "eye.slash" : "eye"
+                    )
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
     // The platinum's own icon when it has one, else the box art, framed like a
     // display piece. Icons are square, covers are 3:4.
     private var artURL: URL? {
@@ -822,7 +907,7 @@ private struct TrophySection: View {
 
     @ViewBuilder
     private func tierGroup(_ tier: AchievementTier) -> some View {
-        let inTier = achievements.filter { ($0.tier ?? .BRONZE) == tier }
+        let inTier = visible.filter { ($0.tier ?? .BRONZE) == tier }
         if !inTier.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text(tier.rawValue.capitalized)
@@ -834,7 +919,7 @@ private struct TrophySection: View {
                         achievement: achievement,
                         tracksProgress: isAuthenticated,
                         canToggle: isAuthenticated,
-                        revealsDescription: false,
+                        revealsDescription: revealsDescriptions,
                         onToggle: { onToggle(achievement) }
                     )
                 }
@@ -843,198 +928,89 @@ private struct TrophySection: View {
     }
 }
 
-private struct AchievementSetView: View {
+// A list that doesn't gate the Platinum, folded until opened
+private struct ExtraListView: View {
     let achievementSet: AchievementSet
+    let filter: TrophyFilter
+    let revealsDescriptions: Bool
     let isAuthenticated: Bool
     let onToggle: (Achievement) -> Void
     @State private var isExpanded = false
 
-    // The backend awards the Platinum, so it stays out of both sides of the progress
-    var completedCount: Int {
-        achievementSet.achievements.withoutPlatinum.filter { $0.isCompleted == true }.count
+    // The backend awards the Platinum, so it stays out of the count
+    private var counted: [Achievement] {
+        achievementSet.achievements.withoutPlatinum
     }
 
-    var totalCount: Int {
-        achievementSet.achievements.withoutPlatinum.count
-    }
-
-    var completionFraction: Double {
-        guard totalCount > 0 else { return 0 }
-        return Double(completedCount) / Double(totalCount)
-    }
-
-    var completionPercentText: String {
-        "\(Int((completionFraction * 100).rounded()))%"
-    }
-
-    var dominantTier: AchievementTier? {
-        if achievementSet.achievements.contains(where: { $0.tier == .PLATINUM }) { return .PLATINUM }
-        if achievementSet.achievements.contains(where: { $0.tier == .GOLD }) { return .GOLD }
-        if achievementSet.achievements.contains(where: { $0.tier == .SILVER }) { return .SILVER }
-        if achievementSet.achievements.contains(where: { $0.tier == .BRONZE }) { return .BRONZE }
-        return nil
-    }
-
-    var accentColor: Color {
-        if achievementSet.dlc != nil { return .blue }
-
-        switch achievementSet.type.uppercased() {
-        case "CUSTOM":
-            return .purple
-        case "COMMUNITY":
-            return .green
-        case "COMPLETIONIST":
-            return .orange
-        default:
-            // Official/tier sets speak the cabinet's brass, not raw tier gold -
-            // tier colors stay on the individual achievement badges
-            return dominantTier != nil ? Cabinet.brass : Color(.systemGray3)
+    private var countText: String {
+        if isAuthenticated {
+            return "\(counted.filter { $0.isCompleted == true }.count) of \(counted.count)"
         }
+        return counted.count == 1 ? "1 trophy" : "\(counted.count) trophies"
     }
 
-    var canExpand: Bool {
-        !achievementSet.achievements.isEmpty
+    private var visible: [Achievement] {
+        achievementSet.achievements.filter(filter.shows)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text(achievementSet.title)
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .lineLimit(2)
+        VStack(alignment: .leading, spacing: 8) {
+            Divider()
 
-                            if completedCount == totalCount && totalCount > 0 {
-                                Image(systemName: "sparkles")
-                                    .font(.caption)
-                                    .foregroundStyle(accentColor)
-                            }
-                        }
+            Button {
+                Motion.animate(.easeInOut(duration: 0.24)) { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
 
-                        // The group heading already says whether a set is
-                        // required, extra or private, so only edition chips stay
-                        if achievementSet.gameVersion != nil || achievementSet.dlc != nil {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 6) {
-                                    if let version = achievementSet.gameVersion {
-                                        AchievementSetChip(
-                                            label: version.name,
-                                            systemImage: "square.stack.3d.up.fill",
-                                            tint: .blue
-                                        )
-                                    }
-                                    if let dlc = achievementSet.dlc {
-                                        AchievementSetChip(
-                                            label: dlc.name,
-                                            systemImage: "puzzlepiece.extension.fill",
-                                            tint: .blue
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .allowsHitTesting(false)
+                    Text(achievementSet.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.leading)
 
                     Spacer(minLength: 8)
 
-                    HStack {
-                        Text("\(totalCount)")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.06))
-                            )
+                    Text(countText)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(isExpanded ? "Hides the trophies" : "Shows the trophies")
 
-                        if canExpand {
-                            Image(systemName: isExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                                .font(.subheadline)
-                                .foregroundStyle(accentColor)
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 8) {
+                    if achievementSet.achievements.isEmpty {
+                        Text("No trophies in this list yet.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else if visible.isEmpty {
+                        Text(filter.emptyText)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(visible) { achievement in
+                            AchievementRow(
+                                achievement: achievement,
+                                tracksProgress: isAuthenticated,
+                                // The backend awards the Platinum, so it shows without a tick
+                                canToggle: isAuthenticated && achievement.tier != .PLATINUM,
+                                revealsDescription: revealsDescriptions,
+                                onToggle: { onToggle(achievement) }
+                            )
                         }
                     }
                 }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    AchievementSetProgressBar(
-                        progress: completionFraction,
-                        accentColor: accentColor
-                    )
-
-                    HStack(spacing: 5) {
-                        Text("\(completedCount) of \(totalCount) unlocked")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text("·")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(completionPercentText)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(
-                                completedCount == totalCount && totalCount > 0 ? .green : accentColor
-                            )
-                        Spacer()
-                    }
-                }
-                .allowsHitTesting(false)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                guard canExpand else { return }
-                Motion.animate(.easeInOut(duration: 0.24)) {
-                    isExpanded.toggle()
-                }
-            }
-
-            if achievementSet.achievements.isEmpty {
-                Text("No trophies yet")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 2)
-            } else if isExpanded {
-                VStack(spacing: 10) {
-                    ForEach(achievementSet.achievements) { achievement in
-                        AchievementRow(
-                            achievement: achievement,
-                            tracksProgress: isAuthenticated,
-                            // The backend awards the Platinum, so it shows without a tick
-                            canToggle: isAuthenticated && achievement.tier != .PLATINUM,
-                            revealsDescription: false,
-                            onToggle: { onToggle(achievement) }
-                        )
-                    }
-                }
                 // Plain fade: a move transition slides ghost rows across
-                // neighboring cards while the container resizes
+                // neighboring content while the container resizes
                 .transition(.opacity)
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Cabinet.card)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(accentColor.opacity(0.20), lineWidth: 1)
-        )
-        .overlay(alignment: .top) {
-            // Lit shelf edge: a thin light falling across the card's top lip
-            LinearGradient(
-                colors: [.clear, accentColor.opacity(0.7), .clear],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .frame(height: 2)
-            .padding(.horizontal, 24)
-        }
-        .shadow(color: Color.black.opacity(0.35), radius: 14, y: 8)
     }
 }
 
@@ -1175,17 +1151,6 @@ private struct TrophyIcon: View {
     }
 }
 
-private struct AchievementSetChip: View {
-    let label: String
-    let systemImage: String
-    let tint: Color
-    var compact: Bool = false
-
-    var body: some View {
-        Tag(label, icon: systemImage, tint: tint)
-    }
-}
-
 private struct AchievementSetProgressBar: View {
     let progress: Double
     let accentColor: Color
@@ -1210,7 +1175,6 @@ private struct AchievementSetProgressBar: View {
         .frame(height: 10)
     }
 }
-
 
 // MARK: - Base Game Families Section
 
