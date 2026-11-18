@@ -5,8 +5,10 @@ import PhotosUI
 /// web /profile page
 struct EditProfileView: View {
     @StateObject private var viewModel = EditProfileViewModel()
+    @Environment(\.dismiss) private var dismiss
     @State private var photoItem: PhotosPickerItem?
     @State private var pickingFor: ShowcaseList?
+    @State private var confirmDiscard = false
 
     var body: some View {
         Group {
@@ -24,13 +26,21 @@ struct EditProfileView: View {
         }
         .navigationTitle("Edit Profile")
         .navigationBarTitleDisplayMode(.inline)
+        // Unsaved edits swap the back button for one that asks first
+        .navigationBarBackButtonHidden(viewModel.hasChanges)
         .toolbar {
+            if viewModel.hasChanges {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { confirmDiscard = true }
+                }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 if viewModel.isSaving {
                     ProgressView()
                 } else {
                     Button("Save") { Task { await viewModel.save() } }
-                        .disabled(viewModel.isLoading || viewModel.loadError != nil)
+                        .fontWeight(.semibold)
+                        .disabled(!viewModel.hasChanges)
                 }
             }
             if let userId = viewModel.userId {
@@ -56,37 +66,49 @@ struct EditProfileView: View {
         .sheet(item: $pickingFor) { list in
             ShowcaseGamePicker(list: list, viewModel: viewModel)
         }
+        .confirmationDialog("Discard your changes?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) { dismiss() }
+            Button("Keep Editing", role: .cancel) {}
+        }
     }
 
     private var form: some View {
         List {
             Section {
-                HStack(spacing: 16) {
+                VStack(spacing: 14) {
                     ProfileAvatar(
                         url: viewModel.avatarUrl,
                         name: viewModel.name,
                         userId: viewModel.userId ?? "",
-                        size: 72
+                        size: 104,
+                        framed: true
                     )
-                    VStack(alignment: .leading, spacing: 10) {
-                        if viewModel.avatarBusy {
-                            ProgressView()
-                        } else {
+                    if viewModel.avatarBusy {
+                        ProgressView()
+                            .frame(height: 22)
+                    } else {
+                        HStack(spacing: 20) {
                             PhotosPicker(selection: $photoItem, matching: .images) {
                                 Text(viewModel.avatarUrl == nil ? "Upload Picture" : "Change Picture")
                             }
                             if viewModel.avatarUrl != nil {
-                                Button("Remove Picture", role: .destructive) {
+                                Button("Remove", role: .destructive) {
                                     Task { await viewModel.removeAvatar() }
                                 }
                             }
                         }
+                        .font(.subheadline.weight(.semibold))
+                        .buttonStyle(.borderless)
                     }
-                    .buttonStyle(.borderless)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .listRowBackground(Color.clear)
             } footer: {
                 if let avatarError = viewModel.avatarError {
-                    Text(avatarError).foregroundStyle(.red)
+                    Text(avatarError)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity)
                 }
             }
 
@@ -126,13 +148,15 @@ struct EditProfileView: View {
                 Section {
                     Text(saveError).foregroundStyle(.red)
                 }
-            } else if viewModel.saved {
+            } else if viewModel.saved && !viewModel.hasChanges {
                 Section {
                     Label("Profile saved", systemImage: "checkmark.circle")
                         .foregroundStyle(Cabinet.Tint.positive)
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .cabinetCanvas()
         .disabled(viewModel.isSaving)
         .sensoryFeedback(.success, trigger: viewModel.saved) { _, saved in saved }
     }
@@ -148,7 +172,8 @@ struct EditProfileView: View {
                         .frame(width: 22, alignment: .trailing)
                     RemoteImage(url: game.coverUrl) { Cabinet.card }
                         .frame(width: 30, height: 40)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                        .clipShape(RoundedRectangle(cornerRadius: 2))
+                        .background(Rectangle().fill(Cabinet.ink).offset(x: 3, y: 3))
                     Text(game.title)
                         .lineLimit(2)
                 }

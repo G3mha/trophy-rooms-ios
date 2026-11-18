@@ -25,6 +25,28 @@ final class EditProfileViewModel: ObservableObject {
     @Published var saved = false
     @Published var avatarBusy = false
     @Published var avatarError: String?
+    @Published private var savedSnapshot: Snapshot?
+
+    /// What Save would send, to tell whether anything changed
+    private struct Snapshot: Equatable {
+        let name: String
+        let bio: String
+        let handles: [String]
+        let lists: [[String]]
+    }
+
+    private var snapshot: Snapshot {
+        Snapshot(
+            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+            bio: bio.trimmingCharacters(in: .whitespacesAndNewlines),
+            handles: SocialNetwork.allCases.map { (handles[$0] ?? "").trimmingCharacters(in: .whitespaces) },
+            lists: ShowcaseList.allCases.map { (lists[$0] ?? []).map(\.id) }
+        )
+    }
+
+    var hasChanges: Bool {
+        savedSnapshot.map { $0 != snapshot } ?? false
+    }
 
     private struct MyProfile: Decodable {
         let id: String
@@ -84,6 +106,7 @@ final class EditProfileViewModel: ObservableObject {
             )
             lists = Dictionary(uniqueKeysWithValues: ShowcaseList.allCases.map { ($0, me.details.games(for: $0)) })
             candidates = [.platinums: response.platinums, .collection: response.collection]
+            savedSnapshot = snapshot
         } catch is CancellationError {
             return
         } catch {
@@ -136,6 +159,7 @@ final class EditProfileViewModel: ObservableObject {
             let platinums: ProfileResult
             let collection: ProfileResult
         }
+        let sent = snapshot
         let socialLinks = SocialNetwork.allCases.map { ["network": $0.rawValue, "handle": handles[$0] ?? ""] }
         let ids = { (list: ShowcaseList) in (self.lists[list] ?? []).map(\.id) }
         do {
@@ -155,6 +179,7 @@ final class EditProfileViewModel: ObservableObject {
                 let message = failure.result.error?.message ?? "Something went wrong. Please try again."
                 saveError = failure.list.map { "\($0.title): \(message)" } ?? message
             } else {
+                savedSnapshot = sent
                 saved = true
             }
         } catch {
