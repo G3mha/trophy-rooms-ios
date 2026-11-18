@@ -12,6 +12,8 @@ enum Cabinet {
     static let bone = Color(red: 0.937, green: 0.906, blue: 0.824)        // #efe7d2
     static let brass = Color(red: 0.788, green: 0.643, blue: 0.361)       // #c9a45c
     static let brassDeep = Color(red: 0.541, green: 0.416, blue: 0.200)   // #8a6a33
+    /// Link text on dark panels (web: --cabinet-brass-light)
+    static let brassLight = Color(red: 0.851, green: 0.725, blue: 0.541)  // #d9b98a
     static let crimson = Color(red: 0.788, green: 0.173, blue: 0.235)     // #c92c3c
     static let shadowRed = Color(red: 0.478, green: 0.102, blue: 0.133)   // #7a1a22
 
