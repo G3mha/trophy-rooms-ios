@@ -22,15 +22,9 @@ struct UserProfileView: View {
             } else if let user = viewModel.user {
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Profile header
-                        ProfileHeader(user: user)
+                        ProfileNameplate(user: user)
 
                         ProfileShowcases(profile: user.profile)
-
-                        // Stats grid
-                        if let stats = user.stats {
-                            StatsGrid(stats: stats, user: user)
-                        }
 
                         // Recent achievements
                         if !viewModel.recentAchievements.isEmpty {
@@ -51,139 +45,145 @@ struct UserProfileView: View {
     }
 }
 
-private struct ProfileHeader: View {
+/// Who the player is and their numbers, on one walnut panel
+private struct ProfileNameplate: View {
     let user: PublicUserWithAchievements
 
     var body: some View {
-        VStack(spacing: 12) {
-            ProfileAvatar(url: user.avatarUrl, name: user.name, userId: user.id)
-
-            Text(playerDisplayName(user.name, id: user.id))
-                .font(.title2)
-                .fontWeight(.bold)
-
-            ProfileAbout(profile: user.profile)
-
-            // Quick stats
-            HStack(alignment: .top, spacing: 32) {
-                QuickStat(value: "\(user.trophyCount)", label: "Platinums", icon: "trophy.fill", color: Cabinet.Tint.warm)
-                QuickStat(value: "\(user.achievementCount)", label: "Trophies", showsLabel: false, icon: "trophy.fill", color: Cabinet.Tint.amber)
-                QuickStat(value: "\(user.gamesWithAchievementsCount)", label: "Games", icon: "gamecontroller.fill", color: Cabinet.Tint.info)
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 16) {
+                    ProfileAvatar(url: user.avatarUrl, name: user.name, userId: user.id, size: 84, framed: true)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(playerDisplayName(user.name, id: user.id).uppercased())
+                            .font(Cabinet.display(30))
+                            .foregroundColor(Cabinet.bone)
+                            .shadow(color: Cabinet.shadowRed.opacity(0.85), radius: 0, x: 3, y: 3)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.7)
+                            .accessibilityAddTraits(.isHeader)
+                        if let memberSince {
+                            Text("Member since \(memberSince)")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                ProfileAbout(profile: user.profile)
             }
+            .padding(20)
+
+            ProfileLedger(user: user)
         }
-        .padding()
-        .background(Cabinet.card)
-        .cornerRadius(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .walnutPanel()
+    }
+
+    private var memberSince: String? {
+        guard let createdAt = user.createdAt else { return nil }
+        let parser = ISO8601DateFormatter()
+        parser.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = parser.date(from: createdAt) ?? {
+            parser.formatOptions = [.withInternetDateTime]
+            return parser.date(from: createdAt)
+        }()
+        return date?.formatted(.dateTime.month(.wide).year())
     }
 }
 
-private struct QuickStat: View {
+/// The nameplate's bottom rail: headline numbers and trophies by tier
+private struct ProfileLedger: View {
+    let user: PublicUserWithAchievements
+
+    private var tiers: [(tier: AchievementTier, count: Int)] {
+        guard let stats = user.stats else { return [] }
+        return [
+            (.PLATINUM, stats.platinumCount),
+            (.GOLD, stats.goldCount),
+            (.SILVER, stats.silverCount),
+            (.BRONZE, stats.bronzeCount),
+        ]
+    }
+
+    var body: some View {
+        let total = tiers.reduce(0) { $0 + $1.count }
+
+        VStack(alignment: .leading, spacing: 18) {
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 16) {
+                GridRow {
+                    LedgerStat(value: "\(user.trophyCount)", label: "Platinums")
+                    LedgerStat(value: "\(user.achievementCount)", label: "Trophies")
+                }
+                GridRow {
+                    LedgerStat(value: "\(user.gamesWithAchievementsCount)", label: "Games")
+                    if let stats = user.stats {
+                        LedgerStat(value: "\(Int(stats.completionRate.rounded()))%", label: "Completion")
+                    }
+                }
+            }
+
+            if total > 0 {
+                VStack(alignment: .leading, spacing: 10) {
+                    GeometryReader { geometry in
+                        let shown = tiers.filter { $0.count > 0 }
+                        let width = geometry.size.width - CGFloat(shown.count - 1) * 2
+                        HStack(spacing: 2) {
+                            ForEach(shown, id: \.tier) { item in
+                                Rectangle()
+                                    .fill(item.tier.tierColor)
+                                    .frame(width: max(3, width * CGFloat(item.count) / CGFloat(total)))
+                            }
+                        }
+                    }
+                    .frame(height: 8)
+                    .background(Cabinet.bone.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 2))
+                    .accessibilityHidden(true)
+
+                    FlowLayout(spacing: 14) {
+                        ForEach(tiers, id: \.tier) { item in
+                            HStack(spacing: 5) {
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(item.tier.tierColor)
+                                    .frame(width: 8, height: 8)
+                                Text(item.tier.rawValue.capitalized)
+                                    .foregroundColor(.secondary)
+                                Text("\(item.count)")
+                                    .fontWeight(.semibold)
+                            }
+                            .font(.footnote)
+                            .accessibilityElement(children: .combine)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Cabinet.ink.opacity(0.38))
+        .overlay(alignment: .top) {
+            Rectangle().fill(Cabinet.brass.opacity(0.3)).frame(height: 1)
+        }
+    }
+}
+
+private struct LedgerStat: View {
     let value: String
     let label: String
-    var showsLabel = true
-    let icon: String
-    let color: Color
 
     var body: some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
+        VStack(alignment: .leading, spacing: 3) {
             Text(value)
-                .font(.headline)
-            if showsLabel {
-                Text(label)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(value) \(label)")
-    }
-}
-
-private struct StatsGrid: View {
-    let stats: UserProfileStats
-    let user: PublicUserWithAchievements
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Statistics")
-                .font(.headline)
-
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                StatCell(title: "Completion Rate", value: String(format: "%.1f%%", stats.completionRate), icon: "percent", color: Cabinet.Tint.positive)
-                StatCell(title: "Games Played", value: "\(user.gamesWithAchievementsCount)", icon: "gamecontroller", color: Cabinet.Tint.violet)
-            }
-
-            // Tier breakdown
-            HStack(spacing: 16) {
-                TierStat(tier: .PLATINUM, count: stats.platinumCount)
-                TierStat(tier: .GOLD, count: stats.goldCount)
-                TierStat(tier: .SILVER, count: stats.silverCount)
-                TierStat(tier: .BRONZE, count: stats.bronzeCount)
-            }
-            .padding()
-            .background(Cabinet.card)
-            .cornerRadius(12)
-        }
-    }
-}
-
-private struct StatCell: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-                .frame(width: 32)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(value)
-                    .font(.headline)
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Spacer()
-        }
-        .padding()
-        .background(Cabinet.card)
-        .cornerRadius(12)
-    }
-}
-
-private struct TierStat: View {
-    let tier: AchievementTier
-    let count: Int
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Circle()
-                .fill(tierColor)
-                .frame(width: 32, height: 32)
-                .overlay(
-                    Text("\(count)")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                )
-
-            Text(tier.rawValue.capitalized)
-                .font(.caption2)
+                .font(Cabinet.display(26))
+                .foregroundColor(Cabinet.bone)
+            Text(label.uppercased())
+                .font(.caption2.weight(.semibold))
+                .tracking(1.2)
                 .foregroundColor(.secondary)
         }
-        .frame(maxWidth: .infinity)
-    }
-
-    var tierColor: Color {
-        tier.tierColor
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(value) \(label)")
     }
 }
 
