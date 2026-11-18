@@ -108,6 +108,11 @@ private struct UserMenuSheet: View {
 
                 Section {
                     NavigationLink {
+                        EditProfileView()
+                    } label: {
+                        Label("Edit Profile", systemImage: "person.crop.circle")
+                    }
+                    NavigationLink {
                         AccountView()
                     } label: {
                         Label("Account Settings", systemImage: "gearshape")
