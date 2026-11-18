@@ -526,33 +526,28 @@ private struct AuthErrorBanner: View {
 
 // MARK: - Apple Sign In Button
 // Follows Apple's HIG for custom Sign in with Apple buttons: system logo,
-// adaptive black-on-white / white-on-black, same prominence as other providers.
+// black style with an outline (as on web), same size and prominence as Google.
+// A white button would be the brightest thing on the walnut panel.
 
 struct AppleSignInButton: View {
-    @Environment(\.colorScheme) private var colorScheme
     let isLoading: Bool
     let action: () -> Void
 
-    private var fillColor: Color {
-        colorScheme == .dark ? .white : .black
-    }
-
-    private var textColor: Color {
-        colorScheme == .dark ? .black : .white
-    }
+    private let fillColor = Color.black
+    private let textColor = Color.white
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 if isLoading {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: textColor))
                 } else {
                     Image(systemName: "applelogo")
-                        .font(.system(size: 17, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
 
                     Text("Sign in with Apple")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 14, weight: .medium))
                 }
             }
             .foregroundColor(textColor)
@@ -561,6 +556,10 @@ struct AppleSignInButton: View {
             .frame(height: 40)
             .background(fillColor)
             .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Cabinet.Tint.muted, lineWidth: 1)
+            )
         }
         .disabled(isLoading)
     }
