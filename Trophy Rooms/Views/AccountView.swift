@@ -28,6 +28,9 @@ struct AccountView: View {
     @State private var passwordError: String?
     @State private var passwordSaved = false
     @State private var savingPassword = false
+    // Set while Supabase wants an emailed code (sign-in over 24 hours old)
+    @State private var codePrompt: String?
+    @State private var code = ""
 
     @State private var providerError: String?
     @State private var busyProvider: Provider?
@@ -85,23 +88,54 @@ struct AccountView: View {
             }
 
             Section {
-                SecureField("New password", text: $password)
-                    .textContentType(.newPassword)
+                if codePrompt != nil {
+                    TextField("Code", text: $code)
+                        .keyboardType(.numberPad)
+                        .textContentType(.oneTimeCode)
+                        .disabled(savingPassword)
+                        .onChange(of: code) {
+                            code = String(code.filter(\.isNumber).prefix(AuthManager.emailCodeLength))
+                            if code.count == AuthManager.emailCodeLength {
+                                Task { await savePassword(nonce: code) }
+                            }
+                        }
+                    Button {
+                        Task { await savePassword(nonce: code) }
+                    } label: {
+                        if savingPassword { ProgressView() } else { Text("Confirm") }
+                    }
+                    .disabled(savingPassword || code.count < AuthManager.emailCodeLength)
+                    Button("Resend Code") {
+                        Task { await sendCode(resend: true) }
+                    }
                     .disabled(savingPassword)
-                SecureField("Confirm new password", text: $confirmPassword)
-                    .textContentType(.newPassword)
+                    Button("Cancel") {
+                        codePrompt = nil
+                        code = ""
+                        passwordError = nil
+                    }
                     .disabled(savingPassword)
-                Button {
-                    Task { await changePassword() }
-                } label: {
-                    if savingPassword { ProgressView() } else { Text("Save Password") }
+                } else {
+                    SecureField("New password", text: $password)
+                        .textContentType(.newPassword)
+                        .disabled(savingPassword)
+                    SecureField("Confirm new password", text: $confirmPassword)
+                        .textContentType(.newPassword)
+                        .disabled(savingPassword)
+                    Button {
+                        Task { await changePassword() }
+                    } label: {
+                        if savingPassword { ProgressView() } else { Text("Save Password") }
+                    }
+                    .disabled(savingPassword || password.isEmpty || confirmPassword.isEmpty)
                 }
-                .disabled(savingPassword || password.isEmpty || confirmPassword.isEmpty)
             } header: {
                 Text("Password")
             } footer: {
                 if let passwordError {
                     Text(passwordError).foregroundStyle(.red)
+                } else if let codePrompt {
+                    Text(codePrompt)
                 } else if passwordSaved {
                     Text("Password saved.")
                 } else {
@@ -191,19 +225,44 @@ struct AccountView: View {
             passwordError = "Passwords don't match."
             return
         }
+        await savePassword()
+    }
 
+    private func savePassword(nonce: String? = nil) async {
+        // Autofill can fire the code field's auto-submit twice
+        guard !savingPassword else { return }
         savingPassword = true
         passwordError = nil
         do {
-            try await authManager.changePassword(to: password)
+            try await authManager.changePassword(to: password, nonce: nonce)
             password = ""
             confirmPassword = ""
+            codePrompt = nil
+            code = ""
             passwordSaved = true
             Haptics.success()
+        } catch let error as AuthError where error.errorCode == .reauthenticationNeeded {
+            await sendCode(resend: false)
+        } catch {
+            // A wrong or expired code comes back here with Supabase's message
+            passwordError = error.localizedDescription
+            code = ""
+        }
+        savingPassword = false
+    }
+
+    private func sendCode(resend: Bool) async {
+        passwordError = nil
+        code = ""
+        let email = user?.email ?? "your email"
+        do {
+            try await authManager.sendReauthenticationCode()
+            codePrompt = resend
+                ? "We sent a new code to \(email)."
+                : "Enter the code we emailed to \(email) to confirm it's you."
         } catch {
             passwordError = error.localizedDescription
         }
-        savingPassword = false
     }
 
     private func connect(_ provider: Provider) async {
