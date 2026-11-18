@@ -92,21 +92,29 @@ final class EditProfileViewModel: ObservableObject {
         isLoading = false
     }
 
-    /// Catalog search for the all-time list, which takes any game
+    /// Catalog search for the all-time list, which takes any game. Uses the
+    /// public global search: it keeps the ranking, and its GAME results are
+    /// game families.
     func search(_ term: String) async -> [ProfileGame] {
         struct Response: Decodable {
-            struct Page: Decodable { let items: [ProfileGame] }
-            let gameFamiliesPage: Page
+            struct Item: Decodable {
+                let id: String
+                let type: String
+                let title: String
+                let coverUrl: String?
+            }
+            struct Results: Decodable { let items: [Item] }
+            let globalSearch: Results
         }
         let query = """
-        query SearchProfileGames($search: String) {
-            gameFamiliesPage(page: 1, pageSize: 25, filter: { search: $search }) {
-                items { id title slug coverUrl }
-            }
+        query SearchProfileGames($query: String!) {
+            globalSearch(query: $query, limit: 25) { items { id type title coverUrl } }
         }
         """
-        let response: Response? = try? await NetworkService.shared.fetch(query: query, variables: ["search": term])
-        return response?.gameFamiliesPage.items ?? []
+        let response: Response? = try? await NetworkService.shared.fetch(query: query, variables: ["query": term])
+        return (response?.globalSearch.items ?? [])
+            .filter { $0.type == "GAME" }
+            .map { ProfileGame(id: $0.id, title: $0.title, slug: "", coverUrl: $0.coverUrl) }
     }
 
     func save() async {
