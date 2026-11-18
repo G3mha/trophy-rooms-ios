@@ -25,6 +25,8 @@ struct UserProfileView: View {
                         // Profile header
                         ProfileHeader(user: user)
 
+                        ProfileShowcases(profile: user.profile)
+
                         // Stats grid
                         if let stats = user.stats {
                             StatsGrid(stats: stats, user: user)
@@ -54,22 +56,13 @@ private struct ProfileHeader: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            // Avatar
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 80, height: 80)
+            ProfileAvatar(url: user.avatarUrl, name: user.name, userId: user.id)
 
-                Text(initials)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.blue)
-            }
-
-            // Name
             Text(playerDisplayName(user.name, id: user.id))
                 .font(.title2)
                 .fontWeight(.bold)
+
+            ProfileAbout(profile: user.profile)
 
             // Quick stats
             HStack(alignment: .top, spacing: 32) {
@@ -81,17 +74,6 @@ private struct ProfileHeader: View {
         .padding()
         .background(Cabinet.card)
         .cornerRadius(16)
-    }
-
-    var initials: String {
-        if let name = user.name, !name.isEmpty {
-            let parts = name.split(separator: " ")
-            if parts.count >= 2 {
-                return "\(parts[0].prefix(1))\(parts[1].prefix(1))".uppercased()
-            }
-            return String(name.prefix(2)).uppercased()
-        }
-        return String(user.id.suffix(2)).uppercased()
     }
 }
 

@@ -21,6 +21,7 @@ class UserProfileViewModel: ObservableObject {
                 achievementCount
                 trophyCount
                 gamesWithAchievementsCount
+                \(ProfileDetails.fields)
                 stats {
                     platinumCount
                     goldCount
@@ -84,6 +85,23 @@ struct PublicUserWithAchievements: Decodable, Identifiable {
     let gamesWithAchievementsCount: Int
     let stats: UserProfileStats?
     let recentAchievements: [UserAchievementItem]
+    let bio: String?
+    let avatarUrl: String?
+    let socialLinks: [SocialLink]
+    let allTime: [ProfileGame]
+    let platinums: [ProfileGame]
+    let collection: [ProfileGame]
+
+    var profile: ProfileDetails {
+        ProfileDetails(
+            bio: bio,
+            avatarUrl: avatarUrl,
+            socialLinks: socialLinks,
+            allTime: allTime,
+            platinums: platinums,
+            collection: collection
+        )
+    }
 }
 
 struct UserAchievementItem: Decodable, Identifiable {
