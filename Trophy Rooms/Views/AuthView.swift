@@ -286,7 +286,7 @@ struct AuthView: View {
 
     private var verificationView: some View {
         VStack(spacing: 24) {
-            // Six-digit code boxes over an invisible field, so system
+            // Code boxes over an invisible field, so system
             // one-time-code autofill and the number pad both work
             ZStack {
                 TextField("", text: $verificationCode)
@@ -295,8 +295,8 @@ struct AuthView: View {
                     .focused($focusedField, equals: .code)
                     .opacity(0.02)
                     .onChange(of: verificationCode) {
-                        verificationCode = String(verificationCode.filter(\.isNumber).prefix(6))
-                        if verificationCode.count == 6 {
+                        verificationCode = String(verificationCode.filter(\.isNumber).prefix(AuthManager.emailCodeLength))
+                        if verificationCode.count == AuthManager.emailCodeLength {
                             Task {
                                 await handleVerification()
                             }
@@ -304,13 +304,15 @@ struct AuthView: View {
                     }
 
                 HStack(spacing: 8) {
-                    ForEach(0..<6, id: \.self) { index in
+                    ForEach(0..<AuthManager.emailCodeLength, id: \.self) { index in
                         let digits = Array(verificationCode)
                         let isCursor = index == verificationCode.count && focusedField == .code
 
                         Text(index < digits.count ? String(digits[index]) : " ")
                             .font(.title2.weight(.semibold).monospacedDigit())
-                            .frame(width: 42, height: 52)
+                            // Shrinks below 42 so eight boxes fit a narrow phone
+                            .frame(maxWidth: 42)
+                            .frame(height: 52)
                             .background(
                                 Cabinet.canvas,
                                 in: RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -359,7 +361,7 @@ struct AuthView: View {
             }
             .buttonStyle(.glassProminent)
             .tint(.accentColor)
-            .disabled(isLoading || verificationCode.count < 6)
+            .disabled(isLoading || verificationCode.count < AuthManager.emailCodeLength)
 
             // Resend code
             HStack {
@@ -443,7 +445,7 @@ struct AuthView: View {
     }
 
     private func handleVerification() async {
-        guard verificationCode.count == 6 else { return }
+        guard verificationCode.count == AuthManager.emailCodeLength else { return }
 
         loadingAction = .credentials
         errorMessage = nil
