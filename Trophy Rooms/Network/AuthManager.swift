@@ -71,7 +71,7 @@ final class AuthManager: ObservableObject {
     // MARK: - Email + password
 
     /// Digits in every code Supabase emails (the project's mailer_otp_length)
-    static let emailCodeLength = 8
+    static let emailCodeLength = 6
 
     func signIn(email: String, password: String) async throws {
         try await client.auth.signIn(email: email, password: password)
